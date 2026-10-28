@@ -28,6 +28,7 @@
       hidden_sub: "OK shows the app again", reset_order: "Reset app order", order_reset: "App order reset",
       wx_title: "Weather", wx_auto: "Automatic (from IP)", wx_search: "Search city…", wx_unit: "Temperature unit",
       root_boot: "Open when the TV starts", root_home: "Home button opens OmarchyTV", root_needed: "rooted TV only",
+      root_keep: "Keep loaded in the background", root_keep_na: "not on this TV",
       root_missing: "Needs a rooted TV with Homebrew Channel (unrooted: see homewatch/ in the repo)", root_failed: "Could not change it: ",
       wx_min: "min ", wx_max: "max ",
       wmo: { 0: "clear", 1: "mostly clear", 2: "partly cloudy", 3: "overcast", 45: "fog", 51: "drizzle", 61: "rain", 71: "snow", 80: "showers", 95: "thunderstorm" }
@@ -55,6 +56,7 @@
       hidden_sub: "OK mostra di nuovo l'app", reset_order: "Ripristina ordine app", order_reset: "Ordine app ripristinato",
       wx_title: "Meteo", wx_auto: "Automatica (da IP)", wx_search: "Cerca città…", wx_unit: "Unità temperatura",
       root_boot: "Apri all'avvio della TV", root_home: "Il tasto Home apre OmarchyTV", root_needed: "solo TV con root",
+      root_keep: "Tieni caricata in background", root_keep_na: "non su questa TV",
       root_missing: "Serve una TV con root e Homebrew Channel (senza root: vedi homewatch/ nel repo)", root_failed: "Impossibile cambiarlo: ",
       wx_min: "min ", wx_max: "max ",
       wmo: { 0: "sereno", 1: "poco nuvoloso", 2: "parz. nuvoloso", 3: "coperto", 45: "nebbia", 51: "pioviggine", 61: "pioggia", 71: "neve", 80: "rovesci", 95: "temporale" }
@@ -82,6 +84,7 @@
       hidden_sub: "OK blendet die App wieder ein", reset_order: "App-Reihenfolge zurücksetzen", order_reset: "App-Reihenfolge zurückgesetzt",
       wx_title: "Wetter", wx_auto: "Automatisch (über IP)", wx_search: "Stadt suchen…", wx_unit: "Temperatureinheit",
       root_boot: "Beim Einschalten öffnen", root_home: "Home-Taste öffnet OmarchyTV", root_needed: "nur gerootete TVs",
+      root_keep: "Im Hintergrund geladen lassen", root_keep_na: "nicht auf diesem TV",
       root_missing: "Benötigt einen gerooteten TV mit Homebrew Channel (ohne Root: siehe homewatch/ im Repo)", root_failed: "Konnte nicht geändert werden: ",
       wx_min: "Min ", wx_max: "Max ",
       wmo: { 0: "klar", 1: "überwiegend klar", 2: "teilweise bewölkt", 3: "bedeckt", 45: "Nebel", 51: "Nieselregen", 61: "Regen", 71: "Schnee", 80: "Schauer", 95: "Gewitter" }
@@ -869,10 +872,75 @@
     } };
   }
 
+  // ---- Rooted TVs: keep OmarchyTV loaded when another app opens ---------------------------------
+  // When memory runs short (most of the time on 1-1.5 GB TVs), webOS closes web apps in the background,
+  // so every return to OmarchyTV is a cold start. LG's memory manager (memchute) skips apps on its
+  // "KeepAlive" list, and it reads /home/root/memorymanager-conf.json, a writable override of
+  // /etc/palm/memorymanager-conf.json, when that file exists. The toggle adds or removes this app in
+  // the override (keeping any other edits in it) and restarts memchute. TVs whose memchute doesn't
+  // know the override path show "not on this TV".
+  var MEM_CONF = "/etc/palm/memorymanager-conf.json";
+  var MEM_OVERRIDE = "/home/root/memorymanager-conf.json";
+  var APP_ID = "com.omarchytv.home";
+
+  function keepRead(cb) {
+    rootExec("if grep -q " + MEM_OVERRIDE + " /usr/sbin/memchute 2>/dev/null && [ -f " + MEM_CONF + " ]; then cat " + MEM_CONF +
+      "; echo; echo @@OVERRIDE@@; cat " + MEM_OVERRIDE + " 2>/dev/null; else echo UNSUPPORTED; fi", function (ok, out) {
+      if (!ok) { cb(null); return; }
+      var parts = out.split("@@OVERRIDE@@");
+      var base, over = null;
+      try { base = JSON.parse(parts[0]); } catch (e) { cb({ supported: false }); return; }
+      try { if (parts[1] && parts[1].trim()) over = JSON.parse(parts[1]); } catch (e) { over = null; }
+      cb({ supported: true, base: base, conf: over || JSON.parse(parts[0]) });
+    });
+  }
+
+  function keepRefresh(done) {
+    keepRead(function (r) {
+      // "on" / "off", "na" (memchute without the override), "noroot" (no Homebrew Channel exec)
+      state.keepLoaded = !r ? "noroot" : !r.supported ? "na" : (r.conf.KeepAlive || []).indexOf(APP_ID) >= 0 ? "on" : "off";
+      if (done) done();
+    });
+  }
+
+  function keepSet(on, done) {
+    keepRead(function (r) {
+      if (!r || !r.supported) { keepRefresh(done); return; }
+      var list = (r.conf.KeepAlive || []).filter(function (id) { return id !== APP_ID; });
+      if (on) list.push(APP_ID);
+      r.conf.KeepAlive = list;
+      var cmd;
+      if (JSON.stringify(r.conf) === JSON.stringify(r.base)) {
+        cmd = "rm -f " + MEM_OVERRIDE;   // nothing else customised: back to LG's file
+      } else {
+        var b64 = btoa(unescape(encodeURIComponent(JSON.stringify(r.conf, null, 1))));
+        cmd = "echo " + b64 + " | base64 -d > " + MEM_OVERRIDE + ".tmp && mv -f " + MEM_OVERRIDE + ".tmp " + MEM_OVERRIDE;
+      }
+      rootExec(cmd + " && systemctl restart memchute", function (ok, out) {
+        if (!ok) showToast(tr("root_failed") + out);
+        keepRefresh(done);
+      });
+    });
+  }
+
+  function keepRow() {
+    var st = state.keepLoaded;
+    var right = !st ? "…" : st === "noroot" ? tr("root_needed") : st === "na" ? tr("root_keep_na") : st;
+    return { label: tr("root_keep"), right: right, act: function () {
+      if (state.keepLoaded === "noroot") { showToast(tr("root_missing")); return; }
+      if (state.keepLoaded !== "on" && state.keepLoaded !== "off") return;
+      keepSet(state.keepLoaded === "off", function () { if (state.modalOpen) openAllSettingsModal(true); });
+    } };
+  }
+
   function openAllSettingsModal(keepFocus) {
     var focus = state.modalIdx;
     var wlist = DATA.wallpapers[cfg.theme] || [];
     if (state.root === null) rootRefresh(function () { if (state.modalOpen) openAllSettingsModal(true); });
+    if (state.keepLoaded === undefined) {
+      state.keepLoaded = null;   // checking
+      keepRefresh(function () { if (state.modalOpen) openAllSettingsModal(true); });
+    }
     openModal(tr("sys_all"), "OmarchyTV 2.11.0-testing (LG webOS)", [
       { label: "Language", right: cfg.lang || "auto", act: function () {
         var l = ["", "en", "it", "de"];
@@ -905,7 +973,8 @@
         cfg.tempUnit = cfg.tempUnit === "C" ? "F" : "C"; saveCfg(); renderAll(); openAllSettingsModal(true);
       } },
       rootRow("boot", tr("root_boot")),
-      rootRow("home", tr("root_home"))
+      rootRow("home", tr("root_home")),
+      keepRow()
     ]);
     if (keepFocus) { state.modalIdx = Math.min(focus, state.modalItems.length - 1); renderModalList(); }
   }

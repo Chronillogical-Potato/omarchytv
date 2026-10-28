@@ -31,6 +31,7 @@ The remote's `Home` button still opens LG Home. If you have an always-on machine
 
 - **Open when the TV starts**: OmarchyTV opens once the TV has booted.
 - **Home button opens OmarchyTV**: when LG Home comes up, OmarchyTV opens instead. Press `Home` while you are already in OmarchyTV to reach LG Home and its menus.
+- **Keep loaded in the background**: webOS stops closing OmarchyTV when another app needs memory, so going back to it (Home, Quick Access) doesn't restart it. It adds OmarchyTV to the `KeepAlive` list in `/home/root/memorymanager-conf.json`, the writable override of LG's memory-manager settings, and restarts the memory manager.
 
 Both run on the TV through Homebrew Channel's start-up scripts ([`app/rooted/omarchytv-home.sh`](app/rooted/omarchytv-home.sh)); turning both off removes the start-up hook. On unrooted TVs the two settings show "rooted TV only".
 
