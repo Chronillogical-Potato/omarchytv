@@ -89,6 +89,42 @@ omarchy-tv update omarchytv-webos-2.11.0-testing.ipk --tv lgtv
 
 ---
 
+## Method C — Rooted TV (Homebrew Channel, no Developer Mode)
+
+If your TV is rooted with [Homebrew Channel](https://github.com/webosbrew/webos-homebrew-channel), you can install over SSH as root. There is no Developer Mode session to renew, and the rooted-only settings described [above](#optional-make-omarchytv-act-like-the-home-screen) become available.
+
+### 1. Set up SSH
+
+In Homebrew Channel's settings, make sure **SSH Server** is on. Then copy your SSH key to the TV once, so you aren't asked for the root password every time:
+
+```bash
+# Replace 192.168.1.50 with your LG TV's LAN IP address
+ssh-copy-id root@192.168.1.50
+```
+
+### 2. Install & Launch the `.ipk`
+
+```bash
+scp omarchytv-webos-2.11.0-testing.ipk root@192.168.1.50:/tmp/omarchytv.ipk
+ssh -t root@192.168.1.50 'luna-send-pub -i luna://com.webos.appInstallService/dev/install "{\"id\":\"com.ares.defaultName\",\"ipkUrl\":\"/tmp/omarchytv.ipk\",\"subscribe\":true}"'
+```
+
+Wait for `"state":"installed"`, then press `Ctrl+C`: the command keeps listening after the install. Launch it with:
+
+```bash
+ssh -t root@192.168.1.50 'luna-send -n 1 luna://com.webos.service.applicationmanager/launch "{\"id\":\"com.omarchytv.home\"}"'
+```
+
+> **Keep the `-t`.** On webOS, `luna-send` and `luna-send-pub` print nothing unless they run in a terminal, so without `ssh -t` every command looks like it silently did nothing.
+
+To update, install the new `.ipk` the same way. To uninstall (it ends on its own after `"state":"removed"`):
+
+```bash
+ssh -t root@192.168.1.50 'luna-send-pub -i luna://com.webos.appInstallService/dev/remove "{\"id\":\"com.omarchytv.home\",\"subscribe\":true}"'
+```
+
+---
+
 ## Connecting Your Omarchy Linux PC (Live Stats, Themes & Wallpaper)
 
 The `2.11.0-testing` PC plugin includes a lightweight HTTP + CORS bridge (`omarchy-tv webos-serve`) so your LG webOS TV can display live PC telemetry (CPU, RAM, uptime, GPU, active theme, and AI credit usage) without requiring native sockets on the TV.
