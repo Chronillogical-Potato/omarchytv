@@ -371,7 +371,7 @@ omarchy-tv adb-lock --tv 192.168.1.9:5555                                 # clos
 
 
 ## Compatible Devices
-- **Works**: Android TV and Google TV devices (Android 7+). Tested on Sony KD-55XE9005 (Android 9), Google TV Streamer (Android 14), Sharp AQUOS, and Noblex/Hisense (Android 11). Needs network debugging / adb.
+- **Works**: Android TV and Google TV devices (Android 7+). Tested on Sony KD-55XE9005 (Android 9), Google TV Streamer (Android 14), Philips 55OLED718 (Android 14), Sharp AQUOS, and Noblex/Hisense (Android 11). Needs network debugging / adb.
 - **Experimental (`testing`)**: **LG webOS TVs** (webOS 3.x+ via Developer Mode / `webOS Dev Manager` or `ares-install`; see [webos/INSTALL-WEBOS.md](webos/INSTALL-WEBOS.md)).
 - **Universal WebTV Browser Mode**: Samsung Tizen and Hisense VIDAA via `OmarchyTV Mobile` (`http://<phone-ip>:8765/tv`).
 - **Untested**: Fire OS devices (Fire TV Stick 4K Max / 4K Plus, Android-based) and projectors with Android TV (e.g. JMGO global versions).
@@ -385,6 +385,7 @@ omarchy-tv adb-lock --tv 192.168.1.9:5555                                 # clos
 | Google TV Streamer | 14 | ? | 2.11.0-beta | ok (community) | tested by @TheFifeDawg |
 | Sharp AQUOS Android TV | 11+ | ? | 2.12.0-beta | ok (community) | Live TV `jp.co.sharp.av.android.aquostvapp` & scrollable menus added; reported & tested by @x_andersonleite |
 | Noblex TV (Hisense platform) | 11 | ? | 2.11.0-beta | ok (community) | tested by @ilafayajose |
+| Philips 55OLED718/12 | 14 | ? | 2.13.0-beta | ok (community) | Google TV Home lock: works with the HomeOverride accessibility workaround (no root, survives reboot); OmarchyDream + ASCII Aquarium verified; physical remote Home not verified. Tested by @sevos ([#22](https://github.com/piermark/omarchytv/issues/22)) |
 
 Tested yours? Open an issue with the "TV report" template.
 
