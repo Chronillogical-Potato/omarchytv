@@ -168,6 +168,8 @@
     <string name="link_service_off">kein Netzwerk</string>
     <string name="remote_service">OmarchyTV remote</string>
     <string name="remote_service_desc">Erlaubt einem gekoppelten Omarchy-Linux-PC, am Fernseher Zurück zu drücken. Liest nichts vom Bildschirm.</string>
+    <string name="keymap_service">OmarchyTV Fernbedienungstasten</string>
+    <string name="keymap_service_desc">Führt die Aktionen aus, die du Fernbedienungstasten zuweist, in jeder App. Sieht nur Tastendrücke; liest nichts vom Bildschirm.</string>
     <string name="link_remote">Fernbedienung (Zurück)</string>
     <string name="home_service">OmarchyTV-Home-Taste</string>
     <string name="home_service_desc">Öffnet OmarchyTV, wenn die Home-Taste den Startbildschirm des Fernsehers zeigt. Sieht nur, welcher Startbildschirm geöffnet wurde, und liest nichts vom Bildschirm.</string>
@@ -331,4 +333,27 @@
     <string name="grok_bot_open">Grok Bot (WebApp)</string>
     <string name="grok_bot_pin_all">KI-WebApps auf Home anheften</string>
     <string name="grok_bot_mcp">MCP-Server (/mcp)</string>
+    <string name="menu_remote_keys">Fernbedienungstasten</string>
+    <string name="keys_service">Bedienungshilfe</string>
+    <string name="keys_single">Einfacher Druck</string>
+    <string name="keys_double">Doppelter Druck</string>
+    <string name="keys_triple">Dreifacher Druck</string>
+    <string name="keys_long">Langer Druck</string>
+    <string name="keys_app">App</string>
+    <string name="keys_action">OmarchyTV-Aktion</string>
+    <string name="keys_intent">Intent…</string>
+    <string name="keys_intent_value">Intent</string>
+    <string name="keys_intent_title">Intent-URI</string>
+    <string name="keys_intent_bad">Keine gültige Intent-URI</string>
+    <string name="keys_hint">Benötigt den Dienst „OmarchyTV Fernbedienungstasten“ (OK in der ersten Zeile). Nicht belegte Tasten funktionieren wie gewohnt.</string>
+    <string name="keys_action_walker">Suche (Walker)</string>
+    <string name="keys_action_voice">Sprachsuche</string>
+    <string name="keys_action_home">Start</string>
+    <string name="keys_action_ask">Grok Bot</string>
+    <string name="keys_action_menu">Menü</string>
+    <string name="keys_action_screensaver">Bildschirmschoner</string>
+    <string name="keys_action_next_theme">Nächstes Theme</string>
+    <string name="keys_action_workspace">Workspace %1$s</string>
+    <string name="keys_none">Keine unterstützte Fernbedienung verbunden.</string>
+    <string name="keys_default">Ohne Belegung: %1$s</string>
 </resources>

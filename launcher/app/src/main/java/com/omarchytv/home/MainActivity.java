@@ -2,6 +2,7 @@ package com.omarchytv.home;
 
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
@@ -762,6 +763,51 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
 
     private boolean walkerVoice;
 
+    /** Intent extra from KeyMapService: the id of an OmarchyTV action to run (see LauncherConfig.KEY_ACTIONS). */
+    static final String EXTRA_ACTION = "com.omarchytv.home.extra.ACTION";
+
+    /** Runs a "keys" action binding. Unknown ids do nothing. */
+    private void runKeyAction(String id) {
+        if (home == null || movingPos >= 0) return;
+        if (id.startsWith("workspace-") || id.equals("home")) {
+            if (walker != null) walker.close();
+            if (menu != null && menu.isShowing()) menu.dismiss();
+            int ws = id.equals("home") ? 1 : id.charAt(id.length() - 1) - '0';
+            setWorkspace(ws);
+            home.onHomeShown();
+            return;
+        }
+        switch (id) {
+            case "walker":
+                openWalker();
+                break;
+            case "voice":
+                openWalker();
+                walkerVoice = true;
+                startVoiceSearch();
+                break;
+            case "ask":
+                AskActivity.open(this);
+                break;
+            case "menu":
+                if (walker != null) walker.close();
+                showMenu(null, null);
+                break;
+            case "screensaver":
+                if (walker != null) walker.close();
+                if (menu != null && menu.isShowing()) menu.dismiss();
+                startSaver();
+                break;
+            case "next-theme": {
+                String next = AskActivity.nextThemeName(this);
+                if (next != null) applyLive(null, null, AskActivity.themeEdit(next));
+                break;
+            }
+            default:
+                break;
+        }
+    }
+
     private boolean resumed, linkRefreshing, linkConfigPending;
     private String pendingSourcesId;
     /** "> omarchy" shortcuts section (between apps and "> tv"). */
@@ -943,6 +989,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
                 grid.postDelayed(() -> showMenu(page, row), 60);
             }
         });
+        // A remote key binding (KeyMapService) asked for an action: run it once, now that the home is up.
+        String keyAction = getIntent().getStringExtra(EXTRA_ACTION);
+        if (keyAction != null) {
+            getIntent().removeExtra(EXTRA_ACTION);
+            grid.post(() -> runKeyAction(keyAction));
+        }
     }
 
     @Override
@@ -1414,6 +1466,188 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         return getString(res);
     }
 
+    // ---- Launcher settings > Remote buttons (omarchytv.json "keys", run by KeyMapService) ------------------------------
+
+    /** The key (keycode name) being edited; static so the button page can reopen after the rebuild that follows a change. */
+    private static String keyEdit = "";
+
+    private static int keyCode(String name) {
+        return android.view.KeyEvent.keyCodeFromString("KEYCODE_" + name);
+    }
+
+    /** Profiles (assets/remotes.json) of the remotes connected right now. */
+    private List<RemoteProfiles.Profile> connectedRemotes() {
+        List<RemoteProfiles.Profile> all = RemoteProfiles.load(this), out = new ArrayList<>();
+        for (int id : android.view.InputDevice.getDeviceIds()) {
+            android.view.InputDevice d = android.view.InputDevice.getDevice(id);
+            RemoteProfiles.Profile p = d == null ? null : RemoteProfiles.forDevice(all, d.getVendorId(), d.getProductId());
+            if (p != null && !out.contains(p)) out.add(p);
+        }
+        return out;
+    }
+
+    private AsciiMenu.Page remoteKeysPage() {
+        AsciiMenu.Page p = new AsciiMenu.Page(str(R.string.menu_remote_keys));
+        String enabled = Settings.Secure.getString(getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+        ComponentName me = new ComponentName(this, KeyMapService.class);
+        boolean on = false;   // entries can be short (pkg/.Cls) or full (pkg/pkg.Cls): compare as components
+        for (String c : enabled != null ? enabled.split(":") : new String[0]) on |= me.equals(ComponentName.unflattenFromString(c));
+        p.add(str(R.string.keys_service), str(on ? R.string.on : R.string.off), r -> {
+            open(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
+            return false;
+        });
+        List<RemoteProfiles.Profile> remotes = connectedRemotes();
+        for (RemoteProfiles.Profile rp : remotes) {
+            for (RemoteProfiles.Button btn : rp.buttons) {
+                p.add(rp.name + " \u00b7 " + btn.name, "\u203a", r -> {
+                    keyEdit = btn.key;
+                    return push(keyButtonPage(rp, btn));
+                });
+            }
+        }
+        if (remotes.isEmpty()) p.hint(str(R.string.keys_none));
+        p.hint(str(R.string.keys_hint));
+        return p;
+    }
+
+    /** The four press types of one remote button. */
+    private AsciiMenu.Page keyButtonPage(RemoteProfiles.Profile rp, RemoteProfiles.Button btn) {
+        LauncherConfig.KeyBinding[] b = LauncherConfig.get(this).keys.get(keyCode(btn.key));
+        AsciiMenu.Page p = new AsciiMenu.Page(rp.name + " \u00b7 " + btn.name);
+        int[] labels = {R.string.keys_single, R.string.keys_double, R.string.keys_triple, R.string.keys_long};
+        for (int i = 0; i < labels.length; i++) {
+            final int press = i;
+            p.add(str(labels[i]), keySummary(b == null ? null : b[i]), r -> push(keyBindingPage(press)));
+        }
+        if (!btn.defaultBehaviour.isEmpty()) p.hint(getString(R.string.keys_default, btn.defaultBehaviour));
+        return p;
+    }
+
+    /** The button page of {@link #keyEdit} on a connected remote, else the list. */
+    private AsciiMenu.Page remoteKeyPage() {
+        for (RemoteProfiles.Profile rp : connectedRemotes()) {
+            RemoteProfiles.Button btn = rp.button(keyEdit);
+            if (btn != null) return keyButtonPage(rp, btn);
+        }
+        return remoteKeysPage();
+    }
+
+    private String keySummary(LauncherConfig.KeyBinding kb) {
+        if (kb == null) return str(R.string.off);
+        switch (kb.type) {
+            case LauncherConfig.KeyBinding.APP:
+                try {
+                    return String.valueOf(getPackageManager().getApplicationLabel(getPackageManager().getApplicationInfo(kb.value, 0)));
+                } catch (PackageManager.NameNotFoundException e) {
+                    return kb.value;
+                }
+            case LauncherConfig.KeyBinding.ACTION:
+                return keyActionLabel(kb.value);
+            default:
+                return str(R.string.keys_intent_value);
+        }
+    }
+
+    private String keyActionLabel(String id) {
+        if (id.startsWith("workspace-")) return getString(R.string.keys_action_workspace, id.substring(id.length() - 1));
+        switch (id) {
+            case "walker": return str(R.string.keys_action_walker);
+            case "voice": return str(R.string.keys_action_voice);
+            case "home": return str(R.string.keys_action_home);
+            case "ask": return str(R.string.keys_action_ask);
+            case "menu": return str(R.string.keys_action_menu);
+            case "screensaver": return str(R.string.keys_action_screensaver);
+            case "next-theme": return str(R.string.keys_action_next_theme);
+            default: return id;
+        }
+    }
+
+    /** One press type: off, an app, an OmarchyTV action or an intent. */
+    private AsciiMenu.Page keyBindingPage(int press) {
+        int[] labels = {R.string.keys_single, R.string.keys_double, R.string.keys_triple, R.string.keys_long};
+        LauncherConfig.KeyBinding[] b = LauncherConfig.get(this).keys.get(keyCode(keyEdit));
+        LauncherConfig.KeyBinding cur = b == null ? null : b[press];
+        AsciiMenu.Page p = new AsciiMenu.Page(str(labels[press]) + "  \u00b7  " + keyEdit);
+        p.add(str(R.string.off), null, r -> saveKeyBinding(press, null, null));
+        p.add(str(R.string.keys_app), "\u203a", r -> push(keyAppPage(press)));
+        p.add(str(R.string.keys_action), "\u203a", r -> push(keyActionPage(press)));
+        p.add(str(R.string.keys_intent), null, r -> {
+            handler.post(() -> keyIntentDialog(press, cur != null && LauncherConfig.KeyBinding.INTENT.equals(cur.type) ? cur.value : ""));
+            return false;
+        });
+        return p;
+    }
+
+    /** Launchable (leanback) apps by label. */
+    private AsciiMenu.Page keyAppPage(int press) {
+        PackageManager pm = getPackageManager();
+        java.util.TreeMap<String, String> apps = new java.util.TreeMap<>();   // "label\0pkg" -> pkg, sorted by label
+        for (android.content.pm.ResolveInfo ri : pm.queryIntentActivities(
+                new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LEANBACK_LAUNCHER), 0)) {
+            if (ri.activityInfo == null || ri.activityInfo.packageName.equals(getPackageName())) continue;
+            apps.put(String.valueOf(ri.loadLabel(pm)).toLowerCase(java.util.Locale.ROOT) + "\0" + ri.activityInfo.packageName,
+                    ri.activityInfo.packageName + "\0" + ri.loadLabel(pm));
+        }
+        AsciiMenu.Page p = new AsciiMenu.Page(str(R.string.keys_app));
+        for (String v : apps.values()) {
+            String[] pkgLabel = v.split("\0", 2);
+            p.add(pkgLabel[1], null, r -> saveKeyBinding(press, LauncherConfig.KeyBinding.APP, pkgLabel[0]));
+        }
+        return p;
+    }
+
+    private AsciiMenu.Page keyActionPage(int press) {
+        AsciiMenu.Page p = new AsciiMenu.Page(str(R.string.keys_action));
+        for (String id : LauncherConfig.KEY_ACTIONS) {
+            p.add(keyActionLabel(id), null, r -> saveKeyBinding(press, LauncherConfig.KeyBinding.ACTION, id));
+        }
+        return p;
+    }
+
+    /** Writes keys.<key>.<press> (type null = remove it) and reopens the Remote buttons page on that row. */
+    private boolean saveKeyBinding(int press, String type, String value) {
+        int[] labels = {R.string.keys_single, R.string.keys_double, R.string.keys_triple, R.string.keys_long};
+        String name = keyEdit, pressName = LauncherConfig.KEY_PRESSES[press];
+        applyLive("remote-key", str(labels[press]), j -> {
+            org.json.JSONObject keys = j.optJSONObject("keys");
+            if (keys == null) j.put("keys", keys = new org.json.JSONObject());
+            org.json.JSONObject k = keys.optJSONObject(name);
+            if (k == null) keys.put(name, k = new org.json.JSONObject());
+            if (type == null) k.remove(pressName);
+            else k.put(pressName, new org.json.JSONObject().put(type, value));
+            if (k.length() == 0) keys.remove(name);
+            if (keys.length() == 0) j.remove("keys");
+        });
+        return false;
+    }
+
+    /** Type an intent URI (Intent.toUri(URI_INTENT_SCHEME)); checked with Intent.parseUri. */
+    private void keyIntentDialog(int press, String current) {
+        android.widget.EditText e = new android.widget.EditText(this);
+        e.setSingleLine(true);
+        e.setText(current);
+        e.setSelection(e.getText().length());
+        e.setHint("intent:#Intent;action=android.settings.SETTINGS;end");
+        e.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+                | android.text.InputType.TYPE_TEXT_VARIATION_URI);
+        new android.app.AlertDialog.Builder(this)
+                .setTitle(R.string.keys_intent_title)
+                .setView(e)
+                .setPositiveButton(android.R.string.ok, (d, w) -> {
+                    String v = e.getText().toString().trim();
+                    try {
+                        if (!v.startsWith("intent:")) throw new java.net.URISyntaxException(v, "not an intent URI");
+                        Intent.parseUri(v, Intent.URI_INTENT_SCHEME);
+                    } catch (java.net.URISyntaxException ex) {
+                        Toast.makeText(this, R.string.keys_intent_bad, Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    saveKeyBinding(press, LauncherConfig.KeyBinding.INTENT, v);
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
     private static <T> T next(T[] values, T current) {
         for (int i = 0; i < values.length; i++) if (values[i].equals(current)) return values[(i + 1) % values.length];
         return values[0];
@@ -1464,6 +1698,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             case "webapps": return webAppsPage();
             case "assistant": return assistantPage();
             case "grok-bot": return grokBotPage();
+            case "remote-keys": return remoteKeysPage();
+            case "remote-key": return remoteKeyPage();
             default: return null;
         }
     }
@@ -1586,6 +1822,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         // v2.10: the old per-pane toggles (clock, ai, sysinfo, ...) drove the removed pane layer and did nothing on the
         // home; every home panel is switched in Widgets (workspace 5).
         p.add(str(R.string.set_widgets), "›", r -> push(widgetsPage()));
+        // Only with a remote that has a profile in assets/remotes.json: nothing to set up on other TVs.
+        if (!connectedRemotes().isEmpty()) p.add(str(R.string.menu_remote_keys), "\u203a", r -> push(remoteKeysPage()));
         p.add(str(R.string.set_prompt_name), cfg.promptUser, r -> {
             handler.post(() -> promptDialog(false));
             return false;
@@ -2508,6 +2746,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             resetIdle();   // something else is on screen: wait a full timeout after it closes
             return;
         }
+        startSaver();
+    }
+
+    private void startSaver() {
         saverShown = true;
         OmarchyLink.setScreensaver(true);
         try {
@@ -2541,6 +2783,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         if (Intent.ACTION_ASSIST.equals(intent.getAction())) setIntent(intent);   // mic key, handled in onResume
         hideSaver();
         resetIdle();
+        if (intent.hasExtra(EXTRA_ACTION)) {   // a key binding, not the HOME key: onResume runs it
+            setIntent(intent);
+            return;
+        }
         if (home != null && walker == null && (menu == null || !menu.isShowing())) {   // HOME key: back to workspace 1
             if (workspace != 1) setWorkspace(1);
             home.onHomeShown();

@@ -516,17 +516,8 @@ public class AskActivity extends Activity implements OmarchyLink.Listener {
 
         // 4. Next theme
         if (low.equals("next theme") || low.equals("tema successivo") || low.equals("cambia tema") || low.equals("switch theme")) {
-            String[] names = Theme.names(this);
-            if (names.length > 0) {
-                int idx = 0;
-                for (int i = 0; i < names.length; i++) {
-                    if (names[i].equals(t.name)) {
-                        idx = (i + 1) % names.length;
-                        break;
-                    }
-                }
-                applyLiveTheme(names[idx]);
-            }
+            String next = nextThemeName(this);
+            if (next != null) applyLiveTheme(next);
             return;
         }
 
@@ -693,8 +684,19 @@ public class AskActivity extends Activity implements OmarchyLink.Listener {
         return null;
     }
 
-    private void applyLiveTheme(String themeName) {
-        LauncherConfig.update(this, j -> {
+    /** The bundled theme after the current one (wrapping), or null if there are none. */
+    static String nextThemeName(Context c) {
+        String[] names = Theme.names(c);
+        if (names.length == 0) return null;
+        for (int i = 0; i < names.length; i++) {
+            if (names[i].equals(Theme.cur().name)) return names[(i + 1) % names.length];
+        }
+        return names[0];
+    }
+
+    /** Config edit that switches to a bundled theme (shared with the "next-theme" key action). */
+    static LauncherConfig.Edit themeEdit(String themeName) {
+        return j -> {
             JSONObject th = j.optJSONObject("theme");
             if (th == null) j.put("theme", th = new JSONObject());
             th.put("name", themeName);
@@ -704,7 +706,11 @@ public class AskActivity extends Activity implements OmarchyLink.Listener {
             th.remove("mode");
             j.put("wallpaper", "omarchy");
             j.put("wallpaperIndex", 0);
-        });
+        };
+    }
+
+    private void applyLiveTheme(String themeName) {
+        LauncherConfig.update(this, themeEdit(themeName));
         LauncherConfig.get(this);
         applyThemeStyle();
         String[] walls = WallpaperView.backgrounds(this, themeName);

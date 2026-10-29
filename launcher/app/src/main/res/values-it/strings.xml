@@ -168,6 +168,8 @@
     <string name="link_service_off">nessuna rete</string>
     <string name="remote_service">OmarchyTV remote</string>
     <string name="remote_service_desc">Permette a un PC Omarchy Linux associato di premere Indietro sulla TV. Non legge nulla dallo schermo.</string>
+    <string name="keymap_service">OmarchyTV tasti telecomando</string>
+    <string name="keymap_service_desc">Esegue le azioni assegnate ai tasti del telecomando, in qualsiasi app. Vede solo la pressione dei tasti; non legge nulla dallo schermo.</string>
     <string name="link_remote">Telecomando (Indietro)</string>
     <string name="home_service">Tasto Home OmarchyTV</string>
     <string name="home_service_desc">Apre OmarchyTV quando Home mostra la home della TV. Vede solo quale home si è aperta e non legge nulla dallo schermo.</string>
@@ -331,4 +333,27 @@
     <string name="grok_bot_open">Grok Bot (WebApp)</string>
     <string name="grok_bot_pin_all">Aggiungi WebApp AI su Home</string>
     <string name="grok_bot_mcp">Server MCP (/mcp)</string>
+    <string name="menu_remote_keys">Tasti del telecomando</string>
+    <string name="keys_service">Servizio di accessibilità</string>
+    <string name="keys_single">Pressione singola</string>
+    <string name="keys_double">Doppia pressione</string>
+    <string name="keys_triple">Tripla pressione</string>
+    <string name="keys_long">Pressione lunga</string>
+    <string name="keys_app">App</string>
+    <string name="keys_action">Azione OmarchyTV</string>
+    <string name="keys_intent">Intent…</string>
+    <string name="keys_intent_value">intent</string>
+    <string name="keys_intent_title">URI intent</string>
+    <string name="keys_intent_bad">URI intent non valido</string>
+    <string name="keys_hint">Richiede il servizio \"OmarchyTV tasti telecomando\" (OK sulla prima riga). I tasti non assegnati funzionano come sempre.</string>
+    <string name="keys_action_walker">Cerca (Walker)</string>
+    <string name="keys_action_voice">Ricerca vocale</string>
+    <string name="keys_action_home">Home</string>
+    <string name="keys_action_ask">Grok Bot</string>
+    <string name="keys_action_menu">Menu</string>
+    <string name="keys_action_screensaver">Salvaschermo</string>
+    <string name="keys_action_next_theme">Tema successivo</string>
+    <string name="keys_action_workspace">Workspace %1$s</string>
+    <string name="keys_none">Nessun telecomando supportato collegato.</string>
+    <string name="keys_default">Senza assegnazione: %1$s</string>
 </resources>

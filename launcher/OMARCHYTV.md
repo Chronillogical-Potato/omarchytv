@@ -233,6 +233,39 @@ otherwise OK opens Live TV (Android has no public "tune to number" intent).
   that key opens Walker from anywhere: `adb shell cmd role add-role-holder android.app.role.ASSISTANT com.omarchytv.home`.
   Speech recognition stays with Google. Undo: `adb shell cmd role add-role-holder android.app.role.ASSISTANT com.google.android.katniss`
   (or Settings → Apps → Default apps → Assist app).
+- **Remote buttons** (Launcher settings → Remote buttons, shown only while a remote listed in `assets/remotes.json` is
+  connected; or `"keys"` in the config): bind a remote key to an app,
+  an intent or an OmarchyTV action, separately for a single, double, triple and long press. Example (the SHIELD
+  Netflix button):
+  ```json
+  "keys": {
+    "BUTTON_12": {
+      "single": {"app": "org.smarttube.stable"},
+      "double": {"action": "walker"},
+      "triple": {"intent": "intent:#Intent;action=android.settings.SETTINGS;end"},
+      "long":   {"action": "voice"}
+    }
+  }
+  ```
+  Key names are Android `KeyEvent` keycode names without `KEYCODE_` (`BUTTON_12`, ...); unknown names are ignored. A press type has exactly one of `app` (package name, started like its tile), `intent` (an
+  `Intent.toUri(Intent.URI_INTENT_SCHEME)` string: started as an activity, sent as a broadcast if no activity
+  matches) or `action` (an OmarchyTV action id); anything else counts as unbound. Action ids: `walker` (search),
+  `voice` (search by voice), `home`, `ask`, `menu`, `screensaver`, `next-theme`, `workspace-1` … `workspace-5`.
+  Quick presses less than about 0.35 s apart count together; a press type that isn't bound falls back to the
+  highest bound count below it (double with only single bound runs single), and a lone single press runs at once
+  when nothing higher is bound. A long press (about 0.5 s) runs while the key is held.
+  Only buttons of known remotes (listed with their USB/BT ids in `app/src/main/assets/remotes.json`; today the
+  SHIELD 2019 remote's Netflix button) are intercepted, and the settings page lists the buttons of the remotes
+  that are connected. To add your remote see [REMOTES.md](REMOTES.md).
+  **A key with no bindings is left alone** (system behaviour unchanged); a bound key is consumed in every app, so on
+  the SHIELD remote `BUTTON_12` no longer launches Netflix. This needs the **OmarchyTV remote buttons** accessibility
+  service (`KeyMapService`; it sees key presses only, no screen content): enable it in Settings → Accessibility, or
+  over adb (`put` replaces any other enabled services, so list them all, colon-separated):
+  ```
+  adb shell settings put secure enabled_accessibility_services com.omarchytv.home/.KeyMapService
+  adb shell settings put secure accessibility_enabled 1
+  ```
+  The config is re-read on every key press; no restart needed.
 - **> ask**: terminal voice assistant pane; answers come from the paired Omarchy Linux PC (see PLUGINS.md).
   Optional colour key: `"assistant": {"provider":"grok","tts":false,"key":"red"}`.
 - **Omarchy Link alignment** (PROTOCOL.md §8): pairing code in memory only (new code each time the page

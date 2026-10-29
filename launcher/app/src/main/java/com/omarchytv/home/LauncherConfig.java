@@ -39,6 +39,84 @@ final class LauncherConfig {
     final List<WebApp> webapps;
     /** "assistant" (default: the mic / Search key stays with Google Assistant) or "launcher" (opens > search on Home). */
     final String voiceKey;
+    /** Remote key bindings (omarchytv.json "keys"), keyed by Android keycode; see {@link #keyBindings}. */
+    final java.util.Map<Integer, KeyBinding[]> keys;
+
+    /** What one press type of a remote key does: type is "app" (package), "intent" (URI string) or "action" (id). */
+    static final class KeyBinding {
+        static final String APP = "app", INTENT = "intent", ACTION = "action";
+        final String type, value;
+
+        KeyBinding(String type, String value) {
+            this.type = type;
+            this.value = value;
+        }
+    }
+
+    /** Press types, in the order of the KeyBinding arrays: 1, 2, 3 quick presses, then a long press. */
+    static final String[] KEY_PRESSES = {"single", "double", "triple", "long"};
+    static final int LONG_PRESS = 3;
+    /** OmarchyTV actions a key can run (see MainActivity.runKeyAction). */
+    static final String[] KEY_ACTIONS = {"walker", "voice", "home", "ask", "menu", "screensaver", "next-theme",
+            "workspace-1", "workspace-2", "workspace-3", "workspace-4", "workspace-5"};
+
+    /** Maps a key name without the KEYCODE_ prefix to an Android keycode; 0 or less = unknown. */
+    interface KeyNames {
+        int code(String name);
+    }
+
+    /**
+     * Parses omarchytv.json "keys": {"BUTTON_12": {"single": {"app": "pkg"}, "double": {"action": "walker"}, ...}}.
+     * Unknown key names, bindings that are not exactly one of app / intent / action, and unknown action ids are
+     * dropped; a key with nothing left is not in the result (so the system keeps handling it).
+     */
+    static java.util.Map<Integer, KeyBinding[]> keyBindings(JSONObject keys, KeyNames names) {
+        java.util.Map<Integer, KeyBinding[]> out = new java.util.LinkedHashMap<>();
+        if (keys == null) return out;
+        for (java.util.Iterator<String> it = keys.keys(); it.hasNext(); ) {
+            String name = it.next();
+            JSONObject presses = keys.optJSONObject(name);
+            int code = names.code(name.trim());
+            if (presses == null || code <= 0) continue;
+            KeyBinding[] b = out.containsKey(code) ? out.get(code) : new KeyBinding[KEY_PRESSES.length];
+            boolean any = false;
+            for (int i = 0; i < KEY_PRESSES.length; i++) {
+                KeyBinding kb = keyBinding(presses.optJSONObject(KEY_PRESSES[i]));
+                if (kb != null) b[i] = kb;
+                any |= b[i] != null;
+            }
+            if (any) out.put(code, b);
+        }
+        return out;
+    }
+
+    private static KeyBinding keyBinding(JSONObject o) {
+        if (o == null) return null;
+        KeyBinding found = null;
+        for (String type : new String[]{KeyBinding.APP, KeyBinding.INTENT, KeyBinding.ACTION}) {
+            if (!o.has(type)) continue;
+            if (found != null) return null;   // two kinds at once: ambiguous
+            Object v = o.opt(type);
+            String s = v instanceof String ? ((String) v).trim() : "";
+            boolean ok = !s.isEmpty() && (!type.equals(KeyBinding.INTENT) || s.startsWith("intent:"))
+                    && (!type.equals(KeyBinding.ACTION) || Arrays.asList(KEY_ACTIONS).contains(s));
+            if (!ok) return null;
+            found = new KeyBinding(type, s);
+        }
+        return found;
+    }
+
+    /** True if some press count above {@code count} (1..3) has a binding, i.e. it is worth waiting for another press. */
+    static boolean keyWaitsForMore(KeyBinding[] b, int count) {
+        for (int c = count + 1; c <= 3; c++) if (b[c - 1] != null) return true;
+        return false;
+    }
+
+    /** The binding to run for {@code count} quick presses (1..3): that one, else the highest bound count below it. */
+    static KeyBinding keyPressBinding(KeyBinding[] b, int count) {
+        for (int c = Math.min(count, 3); c >= 1; c--) if (b[c - 1] != null) return b[c - 1];
+        return null;
+    }
 
     static final class WebApp {
         final String id, name, url, icon, ua;
@@ -429,7 +507,7 @@ final class LauncherConfig {
         if (j != null) {
             for (java.util.Iterator<String> it = j.keys(); it.hasNext(); ) {
                 String k = it.next();
-                if (k.equals("ai") || k.equals("aiAt") || k.equals("aiSources")) continue;
+                if (k.equals("ai") || k.equals("aiAt") || k.equals("aiSources") || k.equals("keys")) continue;
                 Object v = j.opt(k);
                 if (k.equals("link") && v instanceof JSONObject) {
                     // only link.enabled matters for the screen; pcs/panes/providers change without a rebuild
@@ -484,6 +562,8 @@ final class LauncherConfig {
         askKey = as != null ? as.optString("key", "none") : "none";
         // v2.10: the voice key opens Walker on the home by default (the TV test: Assistant was unusable here).
         voiceKey = j != null && "assistant".equals(j.optString("voiceKey")) ? "assistant" : "launcher";
+        keys = Collections.unmodifiableMap(keyBindings(j != null ? j.optJSONObject("keys") : null,
+                n -> android.view.KeyEvent.keyCodeFromString("KEYCODE_" + n)));
         JSONObject tv = j != null ? j.optJSONObject("tv") : null;
         tvEnabled = tv == null || tv.optBoolean("enabled", true);
         JSONObject workspaces = j != null ? j.optJSONObject("workspaces") : null;
