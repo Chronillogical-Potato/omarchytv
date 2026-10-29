@@ -84,6 +84,13 @@
     <string name="ctx_info">Info app</string>
     <string name="ctx_uninstall">Disinstalla</string>
     <string name="set_hidden">App nascoste</string>
+    <string name="set_workspaces">Workspace</string>
+    <string name="ws_move_left">Sposta a sinistra</string>
+    <string name="ws_move_right">Sposta a destra</string>
+    <string name="ws_hide">Nascondi</string>
+    <string name="ws_show">Mostra</string>
+    <string name="ws_reset">Ripristina workspace</string>
+    <string name="ws_hint">Numero = posizione nella barra</string>
     <string name="hidden_none">nessuna app nascosta</string>
     <string name="unhide">mostra di nuovo</string>
     <string name="ss_size">Dimensione logo</string>

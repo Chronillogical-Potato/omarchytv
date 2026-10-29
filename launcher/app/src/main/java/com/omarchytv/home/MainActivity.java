@@ -1439,6 +1439,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             case "wallpaper": return wallpaperPage();
             case "themes": return themesPage();
             case "arrange": return arrangePage();
+            case "workspaces": return workspacesPage();
             case "screensaver": return screensaverPage();
             case "hidden": return hiddenPage();
             case "link": return linkPage();
@@ -1597,6 +1598,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             return false;
         });
         p.add(str(R.string.set_hidden), String.valueOf(cfg.hidden.size()), r -> push(hiddenPage()));
+        p.add(str(R.string.set_workspaces), "›", r -> push(workspacesPage()));
         p.add(str(R.string.set_reset_order), null, r -> {
             LauncherConfig.update(this, j -> {
                 j.remove("order");
@@ -1771,6 +1773,53 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         StringBuilder b = new StringBuilder("[");
         for (Integer v : values) b.append(v <= current ? '■' : '□');
         return b.append("] ").append(current).append("dp").toString();
+    }
+
+    /** "workspaces": {"order"}: the bar's workspaces by position, then the hidden ones; OK opens move / hide. */
+    private AsciiMenu.Page workspacesPage() {
+        LauncherConfig cfg = LauncherConfig.get(this);
+        AsciiMenu.Page p = new AsciiMenu.Page(str(R.string.set_workspaces));
+        for (int n : cfg.workspaceOrder) {
+            p.add(LauncherConfig.workspaceId(n), String.valueOf(cfg.positionOf(n)), r -> push(workspacePage(n)));
+        }
+        for (int n = 1; n <= LauncherConfig.WORKSPACE_IDS.length; n++) {
+            final int ws = n;
+            if (!cfg.workspaceShown(ws)) p.add(LauncherConfig.workspaceId(ws), str(R.string.off), r -> push(workspacePage(ws)));
+        }
+        p.add(str(R.string.ws_reset), null, r -> {
+            applyLive("workspaces", str(R.string.ws_reset), j -> {
+                org.json.JSONObject w = j.optJSONObject("workspaces");
+                if (w != null) w.remove("order");
+            });
+            return false;
+        });
+        p.hint(str(R.string.ws_hint));
+        return p;
+    }
+
+    /** One workspace: move it left / right in the bar, hide it or show it again (at the end). Home can't be hidden. */
+    private AsciiMenu.Page workspacePage(int n) {
+        List<Integer> order = new ArrayList<>(LauncherConfig.get(this).workspaceOrder);
+        int pos = order.indexOf(n);
+        AsciiMenu.Page p = new AsciiMenu.Page(LauncherConfig.workspaceId(n));
+        if (pos > 0) p.add(str(R.string.ws_move_left), null, r -> saveWorkspaceOrder(n, order, () -> Collections.swap(order, pos, pos - 1)));
+        if (pos >= 0 && pos < order.size() - 1) p.add(str(R.string.ws_move_right), null, r -> saveWorkspaceOrder(n, order, () -> Collections.swap(order, pos, pos + 1)));
+        if (n != 1 && pos >= 0) p.add(str(R.string.ws_hide), null, r -> saveWorkspaceOrder(n, order, () -> order.remove(pos)));
+        if (pos < 0) p.add(str(R.string.ws_show), null, r -> saveWorkspaceOrder(n, order, () -> order.add(n)));
+        return p;
+    }
+
+    /** Applies {@code change} to {@code order}, saves it as "workspaces": {"order"} and reopens the list on workspace {@code n}. */
+    private boolean saveWorkspaceOrder(int n, List<Integer> order, Runnable change) {
+        change.run();
+        org.json.JSONArray names = new org.json.JSONArray();
+        for (int ws : order) names.put(LauncherConfig.workspaceId(ws));
+        applyLive("workspaces", LauncherConfig.workspaceId(n), j -> {
+            org.json.JSONObject w = j.optJSONObject("workspaces");
+            if (w == null) j.put("workspaces", w = new org.json.JSONObject());
+            w.put("order", names);
+        });
+        return false;
     }
 
     /** v2.10 "Disponi riquadri": pick a home panel, move it with the D-pad (OK saves, Back cancels), or reset. */

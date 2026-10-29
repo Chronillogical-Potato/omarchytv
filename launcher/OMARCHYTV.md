@@ -240,7 +240,7 @@ otherwise OK opens Live TV (Android has no public "tune to number" intent).
   hairline, with **one wide tile "TV"** that starts the TV's Live TV app the way its own launcher would
   (Sony: `com.sony.dtv.tvx` leanback launch intent → last channel). The Live TV app is not repeated in
   the app grid. HDMI etc. stay in the Inputs pill. Toggle: logo menu → TV, or `"tv": {"enabled": false}`.
-- Reorder or hide workspaces with
+- Reorder or hide workspaces: logo menu → Launcher settings → Workspaces, or
   `"workspaces": {"order": ["home", "apps", "pc", "system"]}` (names: `home`, `tv`, `apps`, `pc`, `system`). The bar
   numbers them 1..n in that order, the number keys and CH+/CH− follow it, and the ones left out are hidden. Home
   always stays (first when left out).

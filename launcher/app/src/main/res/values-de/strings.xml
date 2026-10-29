@@ -84,6 +84,13 @@
     <string name="ctx_info">App-Info</string>
     <string name="ctx_uninstall">Deinstallieren</string>
     <string name="set_hidden">Ausgeblendete Apps</string>
+    <string name="set_workspaces">Arbeitsbereiche</string>
+    <string name="ws_move_left">Nach links</string>
+    <string name="ws_move_right">Nach rechts</string>
+    <string name="ws_hide">Ausblenden</string>
+    <string name="ws_show">Einblenden</string>
+    <string name="ws_reset">Arbeitsbereiche zurücksetzen</string>
+    <string name="ws_hint">Nummer = Position in der Leiste</string>
     <string name="hidden_none">keine ausgeblendeten Apps</string>
     <string name="unhide">wieder zeigen</string>
     <string name="ss_size">Logogröße</string>
