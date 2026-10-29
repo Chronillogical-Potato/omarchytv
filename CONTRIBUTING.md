@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping more TVs lose their ads. Three kinds of contributions are especially welcome.
+Thanks for helping more TVs lose their ads. Four kinds of contributions are especially welcome.
 
 ## 1. Add your TV model
 
@@ -50,6 +50,19 @@ brand-specific knowledge in `examples/`.
 
 `tools/tv.py` and `tools/b64push.py` exist because the stock `adb` is blocked on recent macOS. If
 you find a cleaner workaround, open an issue first.
+
+## 4. Add your remote's buttons
+
+The launcher can remap a remote's extra buttons (single, double, triple or long press), but only on remotes
+it knows. Adding one is a data change in `launcher/app/src/main/assets/remotes.json`:
+
+1. Find the remote's vendor and product id and the keycode of the button you want.
+2. Check the button really reaches an accessibility service. Some are handled by the system first and can't
+   be supported.
+3. Add the entry and fill in `notes` with the TV or box, Android version and firmware you verified it on.
+4. Run `./gradlew :app:testReleaseUnitTest` in `launcher/`; it checks the file.
+
+`launcher/REMOTES.md` has the commands for each step.
 
 ## Pull requests
 
