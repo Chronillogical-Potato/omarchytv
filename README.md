@@ -51,7 +51,7 @@ All releases are on **[GitHub Releases](https://github.com/piermark/omarchytv/re
 
 ![Omarchy Aquarium: my homage to Future Crew's Second Reality, running on the webOS build](docs/media/aquarium-homage.gif)
 
-*The new default screensaver, my Aquarium homage to Future Crew's* Second Reality *(all code, art and audio are mine). Short clip with the original tracker-style audio: [aquarium-homage-demo.mp4](docs/media/aquarium-homage-demo.mp4).*
+*The new default screensaver, my Aquarium homage to Future Crew's* Second Reality *(all code, art and audio are mine). Short clip with the original tracker-style audio: ▶ [watch aquarium-homage-demo.mp4 on GitHub](https://github.com/piermark/omarchytv/blob/main/docs/media/aquarium-homage-demo.mp4) (GitHub plays it in the file viewer; [direct download](https://raw.githubusercontent.com/piermark/omarchytv/main/docs/media/aquarium-homage-demo.mp4)).*
 
 | Android TV · Home | Android TV · Cinemarchy 0.1.0-alpha | Android TV · Grok Bot Companion |
 |---|---|---|
@@ -276,6 +276,85 @@ Full PC plugin documentation: **[pc-plugin/README.md](pc-plugin/README.md)** and
 - Both share the same web app (`webos/app`), including Cinemarchy 0.1.0-alpha, the Grok Bot companion (Blue key), the plugin marketplace and both Aquariums.
 
 ---
+
+### 6. Guides for the new `2.13.0-beta` features
+
+Every command below comes from `omarchy-tv --help` in this release. I tested these features with the unit tests, the Android TV emulator and the webOS/Tizen simulator, not yet on every real TV.
+
+| Ambilight & Lights (webOS) | Grok Bot companion in a corner | Random theme / wallpaper toggles |
+|---|---|---|
+| ![Ambilight & Lights menu](docs/media/webos-lights.jpg) | ![Companion moved to the bottom-left corner](docs/media/webos-companion-corner.jpg) | ![Themes list with Random theme and Random wallpaper / intro](docs/media/webos-themes-random.jpg) |
+
+#### Wireless Extended Display (PC → TV, Hyprland, experimental)
+```bash
+omarchy-tv screen extend                 # 1920x1080@30 by default
+omarchy-tv screen extend 1280x720@30 --audio
+omarchy-tv screen stop                   # removes the virtual monitor and stops the stream
+omarchy-tv screen start [--audio]        # mirror instead of extend ("Schermo PC")
+```
+`screen extend` runs `hyprctl output create headless`, sizes the new monitor (`hyprctl keyword monitor NAME,WxH@FPS,auto,1`) and streams it to the TV as H.264 MPEG-TS over `omarchy-link` (gpu-screen-recorder or wf-recorder). Move windows to it with `Super+Shift+arrow` or `hyprctl dispatch movewindow mon:NAME`. It needs Hyprland with `hyprctl output` and a paired TV.
+
+#### Ambilight and Hue / Home Assistant follow the theme
+- **Android TV:** `Settings → Ambilight & Lights`. On Philips TVs I use the local JointSpace API (`TV IP (JointSpace)`, `Auto-detect TV`, `Test connection`). Modes: `theme colours`, `theme + follow video`, `follow video`, `cinema (dim)`, plus `Brightness`. Opening an app or a video switches back to follow video. Under `Lights hub` you choose a Philips Hue Bridge or Home Assistant, then `Test hub` and `Apply theme colours now`.
+- **LG webOS / Samsung Tizen:** `Settings → Ambilight & Lights`. Cycle `Lights hub` (off → Philips Hue → Home Assistant). For Hue: `Find Hue Bridge` (or type the IP), press the bridge button, then `Pair`. For Home Assistant: enter the URL, a long-lived token and the `light.` entity id(s).
+- When you change theme, the lights take the theme's accent colour; Cinemarchy dims them.
+
+#### Plugin Engine and the plugins.omarchy.org catalog
+- **On the TV:** `Settings → Plugins (SpaceX TV · Grok Bot)` turns each plugin on or off and opens it (SpaceX TV launches & streams, Grok Bot Companion).
+- **From the PC:**
+```bash
+omarchy-tv plugins list                  # installed plugins, on/off
+omarchy-tv plugins enable|disable <ID>   # e.g. com.sighmon.spacex-tv
+omarchy-tv plugins add my-plugin.json    # a declarative TV manifest -> ~/.config/omarchy-tv/plugins/
+omarchy-tv plugins remove <ID>
+omarchy-tv plugins sync                  # push the enabled set to the TV
+omarchy-tv plugins items <ID> | play <ID> <N>
+omarchy-tv plugins catalog [QUERY] [--all]
+```
+`plugins catalog` reads [plugins.omarchy.org/catalog.json](https://plugins.omarchy.org/catalog.json). By default I only show TV-relevant entries (media, themes, wallpapers, screensavers, ambience, or entries with a TV manifest); `--all` also shows desktop-only bar/shell plugins. The catalog is browse-only: each entry shows its repo and its PC install command, and only entries with an OmarchyTV TV manifest (`TV ✓`) can be added to the TV.
+
+#### IPTV (your own playlists)
+```bash
+omarchy-tv iptv add https://example.com/my.m3u --name "My TV" --epg https://example.com/guide.xml
+omarchy-tv iptv list
+omarchy-tv iptv remove "My TV"
+```
+Playlists are M3U, with an optional XMLTV guide (`--epg`). They show up in Cinemarchy (IPTV source; in its command bar you can also type `:iptv <url>`). OmarchyTV bundles no channels: use only playlists you have the right to watch.
+
+#### Send a video from the PC to the TV
+```bash
+omarchy-tv send ~/Videos/film.mkv --sub film.srt      # streams the file over the LAN (one-time URL)
+omarchy-tv send https://example.com/clip.mp4 --queue  # adds a link to Cinemarchy's Up-Next queue
+omarchy-tv send film.mkv --title "Film" --at 12:30
+```
+Subtitles can be a local `.srt`/`.vtt` or a URL. For a right-click action, run `pc-plugin/omarchy-tv/share/install-file-manager.sh` once: it adds **Open With → Send to TV (Cinemarchy)** and **Scripts → Send to TV** in the file manager (`--uninstall` removes them).
+
+#### Grok Bot companion on the TV (experimental)
+- **Android TV:** long-press **Menu** on the remote to select the floating bot, then **OK** opens the chat with keyboard and voice input. In `Settings → Grok Bot & AI` pick `Companion corner` (bottom-right, bottom-left, top-right, top-left), or switch `Floating companion on the home screen` off: the Grok Bot logo then disappears.
+- **LG webOS / Samsung Tizen:** the **Blue** key opens the chat; the on-screen keyboard opens only when you select the text field.
+- If Tom Ballard's ([@tcballard](https://github.com/tcballard)) MIT [Grok Bot Desktop Companion](https://github.com/tcballard/omarchy-plugin-grokbot-desktop) runs on the PC, I route the questions to it through `omarchy-link` (also `omarchy-tv plugins grokbot "<message>"` from the PC). Without it, answers come from Ask (Android) or grok.com in the TV browser (webOS/Tizen).
+
+#### Random theme and wallpaper rotation
+In the Themes list (and in the Wallpaper list) you find **Random theme** and **Random wallpaper / intro**, both on by default. While on, I rotate through the animated intros (`last-horizon` Eyes Wide and `cumulus`) when you come back to Home. Picking a theme or a wallpaper by hand turns rotation off and keeps your choice.
+
+#### Aquarium vs Aquarium Classic
+Both are in the screensaver picker. **Omarchy Aquarium (homage)** (`saverArt = "aquarium"`) is the new default: my five-part homage to Future Crew's *Second Reality* with a 4-channel tracker tune (`M` mutes it). **Aquarium Classic** (`saverArt = "aquarium-classic"`) is the previous Cyber-TUI aquarium with its ST3 tune.
+
+#### WireGuard on Android TV
+```bash
+omarchy-tv wg push wg0.conf --tv 192.168.1.9:5555   # copies the .conf to /sdcard/Download on the TV
+omarchy-tv wg up wg0  --tv 192.168.1.9:5555
+omarchy-tv wg down wg0 --tv 192.168.1.9:5555
+```
+It uses the official WireGuard app (`com.wireguard.android`, not bundled). Import the pushed file once in the app (**+ → Import from file**) and enable **Allow remote control apps** in its Advanced settings. On the TV, `Settings → WireGuard VPN` toggles the tunnel. I never print the private key.
+
+#### Wireless debugging pairing and ADB lock
+```bash
+omarchy-tv adb-pair 192.168.1.9:37000 123456 --connect 192.168.1.9:5555   # Android 11+ pairing code
+omarchy-tv adb-lock --tv 192.168.1.9:5555                                 # close network ADB when done
+```
+`adb-pair` wraps the platform-tools `adb pair` (the pairing port and code are shown in the TV's Wireless debugging screen). `adb-lock` runs `adb usb`, so the TV stops listening on port 5555 until you turn network debugging on again in Developer options.
+
 
 ## Compatible Devices
 - **Works**: Android TV and Google TV devices (Android 7+). Tested on Sony KD-55XE9005 (Android 9), Google TV Streamer (Android 14), Sharp AQUOS, and Noblex/Hisense (Android 11). Needs network debugging / adb.
