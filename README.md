@@ -289,6 +289,10 @@ Every command below comes from `omarchy-tv --help` in this release. I tested the
 |---|---|---|
 | ![Ambilight & Lights menu](docs/media/webos-lights.jpg) | ![Companion moved to the bottom-left corner](docs/media/webos-companion-corner.jpg) | ![Themes list with Random theme and Random wallpaper / intro](docs/media/webos-themes-random.jpg) |
 
+| Tokyo Roadster by [@tcballard](https://github.com/tcballard): Wall Ride | Starlight | Ramp |
+|---|---|---|
+| ![OmarchyTV home with Tokyo Roadster, Wall Ride wallpaper](docs/media/webos-tokyo-roadster-wall-ride.jpg) | ![OmarchyTV home with Tokyo Roadster, Starlight wallpaper](docs/media/webos-tokyo-roadster-starlight.jpg) | ![OmarchyTV home with Tokyo Roadster, Ramp wallpaper](docs/media/webos-tokyo-roadster-ramp.jpg) |
+
 #### Wireless Extended Display (PC → TV, Hyprland, experimental)
 ```bash
 omarchy-tv screen extend                 # 1920x1080@30 by default
