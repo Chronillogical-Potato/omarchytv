@@ -438,6 +438,31 @@ html, body {
   padding: 0 12px;
 }
 
+/* Samsung Tizen: the installed app's own icon; .tile-fallback (generic icon + name) only if it fails to load */
+.app-tile .tile-icon {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.app-tile .tile-fallback {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+}
+
+.app-tile.icon-failed .tile-icon {
+  display: none;
+}
+
+.app-tile.icon-failed .tile-fallback {
+  display: flex;
+}
+
+.app-tile .tile-fallback .tile-text-only {
+  margin-top: 6px;
+}
+
 /* Workspaces 2, 3, 4, 5 full-screen BoxViews */
 .ws-panel {
   position: absolute;
