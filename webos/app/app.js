@@ -1321,16 +1321,30 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
     return m < 1 ? "just now" : m < 60 ? m + " min ago" : Math.round(m / 60) + " h ago";
   }
 
+  // Launch a webOS app. webOSTV.js isn't bundled, so window.webOS.service is usually missing:
+  // fall back to PalmServiceBridge, which every webOS web app has.
+  var lunaCalls = [];
+  function lunaLaunch(id, params) {
+    var parameters = params ? { id: id, params: params } : { id: id };
+    if (window.webOS && window.webOS.service && window.webOS.service.request) {
+      window.webOS.service.request("luna://com.webos.applicationManager", { method: "launch", parameters: parameters });
+      return true;
+    }
+    if (window.PalmServiceBridge) {
+      var b = new PalmServiceBridge();
+      lunaCalls.push(b);
+      b.onservicecallback = function () { lunaCalls.splice(lunaCalls.indexOf(b), 1); };
+      b.call("luna://com.webos.applicationManager/launch", JSON.stringify(parameters));
+      return true;
+    }
+    return false;
+  }
+
   // YouTube deep links. Not verified on a real TV: webOS takes contentTarget, Tizen a v=ID payload.
   function openYoutubeApp(id) {
     var url = "https://www.youtube.com/watch?v=" + id;
     try {
-      if (window.webOS && window.webOS.service && window.webOS.service.request) {
-        window.webOS.service.request("luna://com.webos.applicationManager", {
-          method: "launch", parameters: { id: "youtube.leanback.v4", params: { contentTarget: "https://www.youtube.com/tv?v=" + id } }
-        });
-        return;
-      }
+      if (lunaLaunch("youtube.leanback.v4", { contentTarget: "https://www.youtube.com/tv?v=" + id })) return;
       if (window.tizen && window.tizen.application && window.tizen.ApplicationControl) {
         var ac = new window.tizen.ApplicationControl("http://tizen.org/appcontrol/operation/view", null, null, null,
           [new window.tizen.ApplicationControlData("PAYLOAD", ['{"values":"v=' + id + '"}'])]);
@@ -1617,13 +1631,7 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
   function launchApp(app) {
     if (!app) return;
     try {
-      if (window.webOS && window.webOS.service && window.webOS.service.request) {
-        window.webOS.service.request("luna://com.webos.applicationManager", {
-          method: "launch",
-          parameters: { id: app.appId }
-        });
-        return;
-      }
+      if (app.appId && lunaLaunch(app.appId)) return;
       var tzId = app.tizenId || (window.OMARCHY_TIZEN_IDS || {})[app.id];
       if (window.tizen && window.tizen.application && tzId) {   // Samsung Tizen build (tizen/), see tizen-shim.js
         window.tizen.application.launch(tzId);
