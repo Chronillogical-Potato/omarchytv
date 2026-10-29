@@ -579,6 +579,8 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
     document.getElementById("legend-ws4").textContent = tr("box_ws_pc");
     document.getElementById("legend-ws5").textContent = tr("box_system");
 
+    renderExtrasFocus();
+
     // Waybar buttons
     var btns = document.querySelectorAll("[data-bar-idx]");
     for (var i = 0; i < btns.length; i++) {
@@ -1711,6 +1713,21 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
     ]);
   }
 
+  // Plugin extras reachable with the D-pad (Down from the dock): SpaceX pill, Grok Bot companion.
+  function pluginExtras() {
+    var out = [];
+    if (cfg.pluginGrokbot && document.getElementById("grokbot-companion")) out.push({ id: "grokbot-companion", open: openCompanionChat });
+    if (cfg.pluginSpacexTv && document.getElementById("spacex-pill")) out.push({ id: "spacex-pill", open: openSpacexModal });
+    return out;
+  }
+  function renderExtrasFocus() {
+    ["spacex-pill", "grokbot-companion"].forEach(function (id) { var el = document.getElementById(id); if (el) el.classList.remove("extra-focused", "focused"); });
+    if (state.ws !== 0 || state.zone !== "extras") return;
+    var ex = pluginExtras(), it = ex[Math.min(state.extraIdx || 0, ex.length - 1)];
+    var el = it && document.getElementById(it.id);
+    if (el) el.classList.add("extra-focused", "focused");
+  }
+
   function openSpacexModal() {
     var streams = [
       { title: "🚀 SpaceX launches · next-launch countdown", sub: "spacex.com/launches" },
@@ -1720,7 +1737,7 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
     var items = streams.map(function (s) {
       return { label: s.title, right: s.sub, act: function () {
         closeModal();
-        showToast("Open on your TV browser or phone: " + s.sub);
+        if (!lunaLaunch("com.webos.app.browser", { target: "https://" + s.sub })) showToast("Open on your TV browser or phone: " + s.sub);
       } };
     });
     items.push({ label: "Top-bar countdown pill", right: cfg.pluginSpacexTv ? "on" : "off", act: function () {
@@ -1745,10 +1762,7 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
   function askGrokWeb(q) {
     var url = "https://grok.com/?q=" + encodeURIComponent(q);
     try {
-      if (window.webOS && window.webOS.service && window.webOS.service.request) {
-        window.webOS.service.request("luna://com.webos.applicationManager", { method: "launch", parameters: { id: "com.webos.app.browser", params: { target: url } } });
-        return;
-      }
+      if (lunaLaunch("com.webos.app.browser", { target: url })) return;
       if (window.tizen && window.tizen.ApplicationControl) {
         window.tizen.application.launchAppControl(new window.tizen.ApplicationControl("http://tizen.org/appcontrol/operation/view", url), null, null, null);
         return;
@@ -1945,6 +1959,16 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
       if (k === "ArrowLeft") { state.dockIdx = Math.max(0, state.dockIdx - 1); renderAll(); e.preventDefault(); return; }
       if (k === "ArrowUp") { state.zone = enterWidgets() ? "widgets" : "bar"; renderAll(); e.preventDefault(); return; }
       if (k === "Enter") { pressOk(apps[state.dockIdx]); e.preventDefault(); return; }
+      if (k === "ArrowDown" && !state.movingId && pluginExtras().length) { state.zone = "extras"; state.extraIdx = 0; renderAll(); e.preventDefault(); return; }
+    }
+
+    if (state.ws === 0 && state.zone === "extras") {
+      var ex = pluginExtras();
+      if (!ex.length || k === "ArrowUp") { state.zone = "dock"; renderAll(); e.preventDefault(); return; }
+      if (k === "ArrowRight") { state.extraIdx = Math.min(ex.length - 1, (state.extraIdx || 0) + 1); renderAll(); e.preventDefault(); return; }
+      if (k === "ArrowLeft") { state.extraIdx = Math.max(0, (state.extraIdx || 0) - 1); renderAll(); e.preventDefault(); return; }
+      if (k === "Enter") { ex[Math.min(state.extraIdx || 0, ex.length - 1)].open(); e.preventDefault(); return; }
+      if (k === "ArrowDown") { e.preventDefault(); return; }
     }
 
     if (state.ws === 1 && state.zone === "ws2") {
