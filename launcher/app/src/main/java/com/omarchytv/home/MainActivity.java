@@ -420,6 +420,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
 
     private void setWorkspace(int ws) {
         if (ws < 1 || ws > 5) return;
+        if (!LauncherConfig.get(this).workspaceShown(ws)) ws = 1;   // left out of "workspaces": {"order"}, e.g. a saved reopen
         workspace = ws;
         reopenWs = ws;
         home.setWorkspace(ws);
@@ -2455,12 +2456,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             }
             // v2.10 workspaces: 1-5 jump, CH+/CH− next/previous (only reaches us while the launcher is in front).
             if (kc >= KeyEvent.KEYCODE_1 && kc <= KeyEvent.KEYCODE_5) {
-                if (e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0) setWorkspace(kc - KeyEvent.KEYCODE_0);
+                int n = LauncherConfig.get(this).workspaceAt(kc - KeyEvent.KEYCODE_0);   // the key is the bar position
+                if (e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0 && n > 0) setWorkspace(n);
                 return true;
             }
             if (kc == KeyEvent.KEYCODE_CHANNEL_UP || kc == KeyEvent.KEYCODE_CHANNEL_DOWN || kc == KeyEvent.KEYCODE_PAGE_UP || kc == KeyEvent.KEYCODE_PAGE_DOWN) {
                 boolean up = kc == KeyEvent.KEYCODE_CHANNEL_UP || kc == KeyEvent.KEYCODE_PAGE_DOWN;
-                if (e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0) setWorkspace(up ? workspace % 5 + 1 : (workspace + 3) % 5 + 1);
+                if (e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0) setWorkspace(LauncherConfig.get(this).nextWorkspace(workspace, up ? 1 : -1));
                 return true;
             }
             if (workspace != 1 && kc == KeyEvent.KEYCODE_BACK) {
@@ -3180,7 +3182,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             return;
         }
         if (hdmi.size() > 1) {
-            if (home != null) setWorkspace(2);
+            if (home != null && LauncherConfig.get(this).workspaceShown(2)) setWorkspace(2);
             else showInputs();
             return;
         }

@@ -164,7 +164,7 @@ final class HomeV29 extends FrameLayout {
             w.setGravity(Gravity.CENTER);
             w.setFocusable(true);
             w.setPadding(px(10), 0, px(10), 0);
-            w.setOnClickListener(v -> host.showWorkspace(n));
+            w.setOnClickListener(v -> host.showWorkspace(cfg != null ? cfg.workspaceAt(n) : n));   // n = bar position
             w.setBackground(new Underline());
             ws[i] = w;
             left.addView(w, new LinearLayout.LayoutParams(-2, -1));
@@ -509,10 +509,11 @@ final class HomeV29 extends FrameLayout {
         bar.setBackgroundColor(Theme.withAlpha(t.bg, Math.min(0.95f, op + 0.10f) + nb > 0.98f ? 0.98f : Math.min(0.95f, op + 0.10f) + nb));
         clock.setTextColor(t.fgBright);
         for (int i = 0; i < 5; i++) {
-            boolean on = i + 1 == activeWs;
+            boolean on = c.workspaceAt(i + 1) == activeWs;
             ws[i].setTextColor(on ? t.accent : t.fg);
             ws[i].setTypeface(on ? tfBold : tf);
             ws[i].setPaintFlags(on ? ws[i].getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG : ws[i].getPaintFlags() & ~Paint.UNDERLINE_TEXT_FLAG);
+            ws[i].setVisibility(c.workspaceAt(i + 1) > 0 ? VISIBLE : GONE);
         }
         tint(menuBtn, t.fgBright);
         for (View b : barIcons) tint(b, t.fgBright);
@@ -528,7 +529,7 @@ final class HomeV29 extends FrameLayout {
         if (editPanel == null) post(() -> applyPanelPos(c));
         gridName.setTextColor(t.accent);
         gridHints.setTextColor(t.fg);
-        gridHints.setText(R.string.v210_grid_hints);
+        gridHints.setText(gridHintsText());
         term.setLegend(null, px(18), px(22));
         appWin.setLegend(null, px(20), px(28));
         // fastfetch
@@ -814,6 +815,12 @@ final class HomeV29 extends FrameLayout {
         return activeWs;
     }
 
+    /** The bar number of the active workspace ("workspaces": {"order"} decides its position). */
+    private TextView activeWsButton() {
+        int pos = cfg != null ? cfg.positionOf(activeWs) : activeWs;
+        return ws[Math.max(1, pos) - 1];
+    }
+
     void setWorkspace(int n) {
         if (n < 1 || n > 5) return;
         int prev = activeWs;
@@ -832,7 +839,8 @@ final class HomeV29 extends FrameLayout {
         if (cfg != null) bind(cfg, apps);
         // Horizontal slide, 120 ms (spec: ≤150 ms); no animation on the first show.
         if (prev != n) {
-            float dx = (n > prev ? 1 : -1) * px(80);
+            boolean right = cfg != null ? cfg.positionOf(n) > cfg.positionOf(prev) : n > prev;
+            float dx = (right ? 1 : -1) * px(80);
             for (View v : new View[]{term, widgets, appWin, tvWin, appsWin, pcWin, sysWin}) {
                 if (v.getVisibility() != VISIBLE) continue;
                 v.setTranslationX(dx);
@@ -861,7 +869,7 @@ final class HomeV29 extends FrameLayout {
                 break;
             default: {
                 ViewGroup g = activeWs == 2 ? tvBody : activeWs == 4 ? pcPaneBody : sysBody;
-                if (!focusFirst(g)) ws[activeWs - 1].requestFocus();
+                if (!focusFirst(g)) activeWsButton().requestFocus();
             }
         }
     }
@@ -1340,7 +1348,7 @@ final class HomeV29 extends FrameLayout {
                 int pos = grid.getChildAdapterPosition(grid.findContainingItemView(f));
                 if (pos >= 0 && pos < 7) {
                     wsFocus.put(3, f);
-                    ws[2].requestFocus();
+                    activeWsButton().requestFocus();
                     return true;
                 }
                 if (pos >= 7) {
@@ -1369,7 +1377,7 @@ final class HomeV29 extends FrameLayout {
                 View nx = f.focusSearch(FOCUS_UP);
                 if (nx == null || zone(nx) != 4) {
                     wsFocus.put(activeWs, f);
-                    ws[activeWs - 1].requestFocus();
+                    activeWsButton().requestFocus();
                     return true;
                 }
             }
@@ -1385,7 +1393,7 @@ final class HomeV29 extends FrameLayout {
             case KeyEvent.KEYCODE_DPAD_UP:
                 if (z == 2) {
                     if (!focusFirstVisible(widgets)) ws[0].requestFocus();
-                } else if (z == 1) ws[activeWs - 1].requestFocus();
+                } else if (z == 1) activeWsButton().requestFocus();
                 return true;
             case KeyEvent.KEYCODE_DPAD_DOWN:
                 if (z == 1) {
@@ -1445,7 +1453,7 @@ final class HomeV29 extends FrameLayout {
     private void focusIn(RecyclerView rv, TileAdapter ad, int pos, boolean horizontal) {
         int n = ad.getItemCount();
         if (n == 0) {
-            ws[activeWs - 1].requestFocus();
+            activeWsButton().requestFocus();
             return;
         }
         final int p = Math.max(0, Math.min(n - 1, pos));
@@ -1494,10 +1502,15 @@ final class HomeV29 extends FrameLayout {
         } else focusApp(appPos + tvOffset());
     }
 
+    /** The app grid's key hints; the workspace keys run 1..n, n = the workspaces in the bar. */
+    private String gridHintsText() {
+        return getContext().getString(R.string.v210_grid_hints, cfg != null ? cfg.workspaceOrder.size() : 5);
+    }
+
     void endMove() {
         movingApp = -1;
         updateRowHeader();
-        gridHints.setText(R.string.v210_grid_hints);
+        gridHints.setText(gridHintsText());
     }
 
     private boolean moveKey(KeyEvent e) {

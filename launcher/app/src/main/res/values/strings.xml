@@ -298,7 +298,7 @@
     <string name="v29_set_input">Inputs</string>
     <string name="v210_tv_hints">OK watch TV · ▲ bar · long OK: Walker</string>
     <string name="v210_app_hints">OK open · ▲ bar · long OK: Move / Hide</string>
-    <string name="v210_grid_hints">OK open · long OK: Move / Hide · 1-5 workspaces</string>
+    <string name="v210_grid_hints">OK open · long OK: Move / Hide · 1-%1$d workspaces</string>
     <string name="v210_pc_link">Connect Omarchy Linux</string>
     <string name="v210_pc_link_hint">Pair the PC to see its status, AI credits and deploys here.</string>
     <string name="v210_pc_pair">pair</string>

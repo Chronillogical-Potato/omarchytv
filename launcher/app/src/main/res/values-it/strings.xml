@@ -285,7 +285,7 @@
     <string name="v29_set_input">Ingressi</string>
     <string name="v210_tv_hints">OK guarda la TV · ▲ barra · OK lungo: Walker</string>
     <string name="v210_app_hints">OK apri · ▲ barra · OK lungo: Sposta / Nascondi</string>
-    <string name="v210_grid_hints">OK apri · OK lungo: Sposta / Nascondi · 1-5 workspace</string>
+    <string name="v210_grid_hints">OK apri · OK lungo: Sposta / Nascondi · 1-%1$d workspace</string>
     <string name="v210_pc_link">Collega Omarchy Linux</string>
     <string name="v210_pc_link_hint">Abbina il PC per vedere qui stato, crediti AI e deploy.</string>
     <string name="v210_pc_pair">abbina</string>

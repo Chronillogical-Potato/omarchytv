@@ -285,7 +285,7 @@
     <string name="v29_set_input">Eingänge</string>
     <string name="v210_tv_hints">OK fernsehen · ▲ Leiste · lang OK: Walker</string>
     <string name="v210_app_hints">OK öffnen · ▲ Leiste · lang OK: Verschieben / Ausblenden</string>
-    <string name="v210_grid_hints">OK öffnen · lang OK: Verschieben / Ausblenden · 1-5 Workspaces</string>
+    <string name="v210_grid_hints">OK öffnen · lang OK: Verschieben / Ausblenden · 1-%1$d Workspaces</string>
     <string name="v210_pc_link">Omarchy Linux verbinden</string>
     <string name="v210_pc_link_hint">Koppel den PC, um hier Status, AI-Guthaben und Deploys zu sehen.</string>
     <string name="v210_pc_pair">koppeln</string>
