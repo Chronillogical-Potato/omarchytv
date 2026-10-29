@@ -319,4 +319,27 @@
     <string name="grok_bot_open">Grok Bot (WebApp)</string>
     <string name="grok_bot_pin_all">KI-WebApps auf Home anheften</string>
     <string name="grok_bot_mcp">MCP-Server (/mcp)</string>
+    <string name="menu_remote_keys">Fernbedienungstasten</string>
+    <string name="keys_service">Bedienungshilfe</string>
+    <string name="keys_key">Taste</string>
+    <string name="keys_single">Einfacher Druck</string>
+    <string name="keys_double">Doppelter Druck</string>
+    <string name="keys_triple">Dreifacher Druck</string>
+    <string name="keys_long">Langer Druck</string>
+    <string name="keys_app">App</string>
+    <string name="keys_action">OmarchyTV-Aktion</string>
+    <string name="keys_intent">Intent…</string>
+    <string name="keys_intent_value">Intent</string>
+    <string name="keys_intent_title">Intent-URI</string>
+    <string name="keys_intent_bad">Keine gültige Intent-URI</string>
+    <string name="keys_key_bad">Unbekannter Tastenname</string>
+    <string name="keys_hint">Der Dienst „OmarchyTV Fernbedienungstasten“ muss aktiv sein (OK in der ersten Zeile öffnet die Bedienungshilfen). Tasten ohne Belegung behalten ihr normales Verhalten.</string>
+    <string name="keys_action_walker">Suche (Walker)</string>
+    <string name="keys_action_voice">Sprachsuche</string>
+    <string name="keys_action_home">Start</string>
+    <string name="keys_action_ask">Grok Bot</string>
+    <string name="keys_action_menu">Menü</string>
+    <string name="keys_action_screensaver">Bildschirmschoner</string>
+    <string name="keys_action_next_theme">Nächstes Theme</string>
+    <string name="keys_action_workspace">Workspace %1$s</string>
 </resources>
