@@ -34,7 +34,8 @@ In `remotes.json` the key is the keycode name without `KEYCODE_`: `BUTTON_12`, `
 Not every button can be remapped from an app. Some are consumed by the system before accessibility services see
 them.
 
-1. Enable the service (Settings, Accessibility, "OmarchyTV remote buttons").
+1. Enable the service (Settings, Accessibility, "OmarchyTV remote buttons"). Launcher settings only shows
+   Remote buttons once a connected remote matches a profile, so it appears after you add yours.
 2. Add your entry to `remotes.json` (or test with a debug build), and add a binding for the key in
    `omarchytv.json`, e.g. `"keys": {"BUTTON_12": {"single": {"action": "walker"}}}`.
 3. Press the button. If the binding runs and the vendor behaviour does not, the button works.

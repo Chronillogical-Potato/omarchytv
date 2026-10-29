@@ -228,7 +228,8 @@ otherwise OK opens Live TV (Android has no public "tune to number" intent).
 - **> search** (logo menu, or the mic/Search key if `"voiceKey": "launcher"`; default leaves it to Google Assistant):
   system speech recognizer, then fuzzy match over apps, web apps and channels ("apri Netflix", "metti Rai uno",
   "canale cinque", "open YouTube"). A clear winner opens directly, otherwise a list.
-- **Remote buttons** (Launcher settings → Remote buttons, or `"keys"` in the config): bind a remote key to an app,
+- **Remote buttons** (Launcher settings → Remote buttons, shown only while a remote listed in `assets/remotes.json` is
+  connected; or `"keys"` in the config): bind a remote key to an app,
   an intent or an OmarchyTV action, separately for a single, double, triple and long press. Example (the SHIELD
   Netflix button):
   ```json

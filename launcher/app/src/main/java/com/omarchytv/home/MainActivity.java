@@ -1805,7 +1805,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         // v2.10: the old per-pane toggles (clock, ai, sysinfo, ...) drove the removed pane layer and did nothing on the
         // home; every home panel is switched in Widgets (workspace 5).
         p.add(str(R.string.set_widgets), "›", r -> push(widgetsPage()));
-        p.add(str(R.string.menu_remote_keys), "›", r -> push(remoteKeysPage()));
+        // Only with a remote that has a profile in assets/remotes.json: nothing to set up on other TVs.
+        if (!connectedRemotes().isEmpty()) p.add(str(R.string.menu_remote_keys), "\u203a", r -> push(remoteKeysPage()));
         p.add(str(R.string.set_prompt_name), cfg.promptUser, r -> {
             handler.post(() -> promptDialog(false));
             return false;
