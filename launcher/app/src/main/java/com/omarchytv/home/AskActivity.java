@@ -809,9 +809,9 @@ public class AskActivity extends Activity implements OmarchyLink.Listener {
         }
         LauncherConfig cfg = LauncherConfig.get(this);
         String id = Long.toHexString(new java.security.SecureRandom().nextLong());
-        String err;
+        JSONObject d;
         try {
-            JSONObject d = new JSONObject()
+            d = new JSONObject()
                     .put("id", id)
                     .put("text", text.length() > 2000 ? text.substring(0, 2000) : text)
                     .put("lang", MainActivity.speechLanguage(this));
@@ -822,17 +822,20 @@ public class AskActivity extends Activity implements OmarchyLink.Listener {
                 if (known) d.put("provider", prov);
             }
             if (session != null) d.put("session", session);
-            err = OmarchyLink.ask(d);
         } catch (org.json.JSONException e) {
-            err = "bad_request";
-        }
-        if (err != null) {
-            line("sys", getString("busy".equals(err) ? R.string.ask_busy : R.string.ask_not_connected), t.yellow);
+            line("sys", getString(R.string.ask_not_connected), t.yellow);
             return;
         }
+        // Pending before the send, so a second question can't slip in while the worker writes this one.
         pendingId = id;
         replyStart = -1;
         log.postDelayed(timeout, ANSWER_TIMEOUT_MS);
+        OmarchyLink.ask(d, err -> {
+            if (err == null || isDestroyed() || !id.equals(pendingId)) return;
+            pendingId = null;
+            log.removeCallbacks(timeout);
+            line("sys", getString("busy".equals(err) ? R.string.ask_busy : R.string.ask_not_connected), t.yellow);
+        });
     }
 
     @Override
