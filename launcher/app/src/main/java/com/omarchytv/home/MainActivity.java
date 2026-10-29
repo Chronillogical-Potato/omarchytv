@@ -1473,8 +1473,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
     private AsciiMenu.Page remoteKeysPage() {
         AsciiMenu.Page p = new AsciiMenu.Page(str(R.string.menu_remote_keys));
         String enabled = Settings.Secure.getString(getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
-        String me = new ComponentName(this, KeyMapService.class).flattenToString();
-        boolean on = enabled != null && (":" + enabled + ":").contains(":" + me + ":");
+        ComponentName me = new ComponentName(this, KeyMapService.class);
+        boolean on = false;   // entries can be short (pkg/.Cls) or full (pkg/pkg.Cls): compare as components
+        for (String c : enabled != null ? enabled.split(":") : new String[0]) on |= me.equals(ComponentName.unflattenFromString(c));
         p.add(str(R.string.keys_service), str(on ? R.string.on : R.string.off), r -> {
             open(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
             return false;
