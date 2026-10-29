@@ -181,6 +181,9 @@
     <string name="remote_service">OmarchyTV remote</string>
     <string name="remote_service_desc">Lets a paired Omarchy Linux PC press Back on the TV. It reads nothing on screen.</string>
     <string name="link_remote">Remote control (Back)</string>
+    <string name="home_service">OmarchyTV home button</string>
+    <string name="home_service_desc">Opens OmarchyTV when Home shows the TV\'s own home screen. It only sees which home screen opened and reads nothing on screen.</string>
+    <string name="set_home_override">Home button opens OmarchyTV</string>
     <string name="link_usage">Usage access (current app)</string>
     <string name="link_paired_toast">Paired with %1$s</string>
     <string name="link_online">connected</string>

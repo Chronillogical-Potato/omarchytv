@@ -52,6 +52,7 @@ final class Originale {
 
     /** Stock home + stock screensaver. Throws if the TV's ADB is not reachable (caller shows the fallback). */
     static void toOriginal(Context c) throws IOException {
+        HomeOverride.pass();   // the stock home is about to come up on purpose
         SharedPreferences p = prefs(c);
         Set<String> enabled = new LinkedHashSet<>();
         try (LocalAdb a = adb(c)) {

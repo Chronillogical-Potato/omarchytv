@@ -919,7 +919,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             RemotePanes.refreshIfStale(this, cfg.remotePanesUrl, cfg.remotePanesRefreshSec, home::refresh);
         }
         // Stock launcher back as home after a reboot? Ask once per boot, gently; never change it ourselves.
-        if (!HomeCheck.isDefaultHome(this) && (getIntent().getBooleanExtra(HomeCheck.EXTRA_ASK, false) || HomeCheck.shouldAsk(this))) {
+        // With the Home button override on, Home already lands here: nothing to ask.
+        if (!HomeCheck.isDefaultHome(this) && !HomeOverride.enabled() && (getIntent().getBooleanExtra(HomeCheck.EXTRA_ASK, false) || HomeCheck.shouldAsk(this))) {
             getIntent().removeExtra(HomeCheck.EXTRA_ASK);
             HomeCheck.asked(this);
             handler.postDelayed(this::homePrompt, 600);
@@ -971,8 +972,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
 
     @Override
     public void onBackPressed() {
-        // Home screen: Back goes nowhere. Opened while another launcher is home (reboot check): Back leaves.
-        if (!HomeCheck.isDefaultHome(this)) moveTaskToBack(true);
+        // Home screen: Back goes nowhere. Opened while another launcher is home (reboot check): Back leaves,
+        // unless the Home button override makes OmarchyTV the home screen anyway.
+        if (!HomeCheck.isDefaultHome(this) && !HomeOverride.enabled()) moveTaskToBack(true);
     }
 
     // ---- glass highlight -------------------------------------------------------------------------
@@ -1608,6 +1610,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
                 String m = msg;
                 handler.post(() -> Toast.makeText(this, m, Toast.LENGTH_LONG).show());
             }, "originale").start();
+            return false;
+        });
+        // Google TV keeps Home for its own launcher: this accessibility service opens OmarchyTV over it (HomeOverride).
+        p.add(str(R.string.set_home_override), str(HomeOverride.enabled() ? R.string.on : R.string.off), r -> {
+            open(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
             return false;
         });
         p.add(str(R.string.set_hidden), String.valueOf(cfg.hidden.size()), r -> push(hiddenPage()));

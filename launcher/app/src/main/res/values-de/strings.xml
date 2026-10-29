@@ -169,6 +169,9 @@
     <string name="remote_service">OmarchyTV remote</string>
     <string name="remote_service_desc">Erlaubt einem gekoppelten Omarchy-Linux-PC, am Fernseher Zurück zu drücken. Liest nichts vom Bildschirm.</string>
     <string name="link_remote">Fernbedienung (Zurück)</string>
+    <string name="home_service">OmarchyTV-Home-Taste</string>
+    <string name="home_service_desc">Öffnet OmarchyTV, wenn die Home-Taste den Startbildschirm des Fernsehers zeigt. Sieht nur, welcher Startbildschirm geöffnet wurde, und liest nichts vom Bildschirm.</string>
+    <string name="set_home_override">Home-Taste öffnet OmarchyTV</string>
     <string name="link_usage">Nutzungszugriff (aktuelle App)</string>
     <string name="link_paired_toast">Gekoppelt mit %1$s</string>
     <string name="link_online">verbunden</string>

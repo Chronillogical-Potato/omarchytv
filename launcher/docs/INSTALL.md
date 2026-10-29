@@ -58,6 +58,10 @@ Premi Home e scegli OmarchyTV, oppure:
 `adb shell cmd package set-home-activity --user 0 com.omarchytv.home/.MainActivity`.
 Se la TV torna sempre al launcher originale puoi *disattivarlo* (mai disinstallarlo):
 `adb shell pm disable-user --user 0 com.google.android.tvlauncher` (sui TV Sony può avere un altro nome).
+Su Google TV (Google TV Streamer, alcuni Philips con Android 14) nemmeno questo basta: Home finisce su
+`setupwraith/.RecoveryActivity`, che non va mai disattivato. Lascia il launcher originale attivo e accendi invece
+**Il tasto Home apre OmarchyTV** (menu → Impostazioni launcher → *Il tasto Home apre OmarchyTV*, che apre Accessibilità:
+attiva *Tasto Home OmarchyTV*).
 
 ### 6. Debloat (facoltativo, a tuo rischio)
 - Usa **solo** `adb shell pm disable-user --user 0 <pacchetto>`; è reversibile con `adb shell pm enable <pacchetto>`.
@@ -120,6 +124,14 @@ adb shell cmd package set-home-activity --user 0 com.omarchytv.home/.MainActivit
 receiver puts the stock home back, OmarchyTV's `HomeCheck` notices it once per boot and asks; it never changes the
 default home on its own. If the stock home keeps coming back you may *disable* it (never uninstall):
 `adb shell pm disable-user --user 0 <stock home package from the resolve-activity output>` — see [DEBLOAT](../../docs/DEBLOAT.md).
+**Google TV** (Google TV Streamer, some Philips/TPV Android 14 TVs): `set-home-activity` prints `Success` and nothing
+changes, and disabling the stock launcher makes Home open `setupwraith/.RecoveryActivity` (never disable setupwraith: it
+breaks Wi-Fi). Keep the stock launcher enabled and turn on **Home button opens OmarchyTV** instead (menu → Launcher
+settings → *Home button opens OmarchyTV*, which opens Accessibility: turn on *OmarchyTV home button*). Home briefly
+shows the stock home and OmarchyTV opens over it. It only sees which home screen opened and reads nothing on screen.
+Over adb:
+`adb shell settings put secure enabled_accessibility_services com.omarchytv.home/.HomeOverride` (this replaces the list:
+add `:com.omarchytv.home/.OmarchyRemote` if you use the remote too) and `adb shell settings put secure accessibility_enabled 1`.
 Crash safety: after 3 crashes within 5 minutes, `Watchdog` puts the stock home back (or opens the system home picker).
 
 ### 6. Screensaver (OmarchyDream)
@@ -154,7 +166,7 @@ not uninstall to "fix" it unless you know where the APK came from. From an Omarc
 | `unauthorized` in `adb devices` | Accept the prompt on the TV; if none appears, `adb kill-server`, reconnect; Developer options → Revoke USB debugging authorisations, then retry. |
 | `INSTALL_FAILED_UPDATE_INCOMPATIBLE` | An APK with another signature is installed. Check where it came from; only then uninstall and install the official one. |
 | `INSTALL_FAILED_VERSION_DOWNGRADE` | You are installing an older version: see step 8. |
-| Home button opens the stock launcher | Run step 5 again; check `resolve-activity`. |
+| Home button opens the stock launcher | Run step 5 again; check `resolve-activity`. On Google TV turn on *Home button opens OmarchyTV* (step 5). |
 | Black screen after boot | `adb shell pm enable` whatever home you disabled, or `set-home-activity` to another home. |
 | Screensaver doesn't start | Check `screensaver_components` / `screensaver_enabled`; some TVs override it in their own picture/eco settings. |
 | Animated screensaver effects look plain | Old system WebView (< 72): the bundled fallback is used. Update "Android System WebView" from the Play Store. |

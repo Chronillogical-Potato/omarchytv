@@ -43,6 +43,11 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
+        <!-- Home button override (HomeOverride): which activities are the stock home screens. -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.HOME" />
+        </intent>
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:mimeType="vnd.android.cursor.dir/channel" />
@@ -213,6 +218,20 @@
             <meta-data
                 android:name="android.accessibilityservice"
                 android:resource="@xml/remote_accessibility" />
+        </service>
+
+        <!-- Optional: Home opens OmarchyTV where the TV won't let it be the default home (Google TV). Off until enabled. -->
+        <service
+            android:name=".HomeOverride"
+            android:label="@string/home_service"
+            android:exported="true"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/home_accessibility" />
         </service>
 
         <service
