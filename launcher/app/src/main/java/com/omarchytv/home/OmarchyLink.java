@@ -215,10 +215,20 @@ public final class OmarchyLink implements LinkServer.Host {
         });
     }
 
-    /** AI-pane source switches: the full list of enabled ids, in display order. Null when sent. */
-    static String aiSources(JSONObject data) {
+    /**
+     * AI-pane source switches: the full list of enabled ids, in display order. Written on the Link worker;
+     * {@code done} runs on the UI thread with null when sent, else "not_connected" / "busy".
+     */
+    static void aiSources(JSONObject data, java.util.function.Consumer<String> done) {
         OmarchyLink r = runtime;
-        return r == null || !r.live() ? "not_connected" : r.server.aiSources(data);
+        if (r == null || !r.live()) {
+            done.accept("not_connected");
+            return;
+        }
+        bg.execute(() -> {
+            String e = r.server.aiSources(data);
+            main.post(() -> done.accept(e));
+        });
     }
 
     /** Last agent list from the PC (bounded, plain text), or null when nothing came since start / no link. */

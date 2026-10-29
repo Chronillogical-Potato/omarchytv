@@ -2102,17 +2102,20 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
                     if (on) enabled.put(o.id);
                 }
                 String id = Long.toHexString(new java.security.SecureRandom().nextLong());
+                org.json.JSONObject req;
                 try {
-                    String err = OmarchyLink.aiSources(new org.json.JSONObject().put("id", id).put("enabled", enabled));
-                    if (err != null) {
-                        Toast.makeText(this, "busy".equals(err) ? R.string.ask_busy : R.string.ask_not_connected, Toast.LENGTH_SHORT).show();
-                        return true;
-                    }
+                    req = new org.json.JSONObject().put("id", id).put("enabled", enabled);
                 } catch (org.json.JSONException e) {
                     return true;
                 }
                 pendingSourcesId = id;
                 r.setValue("…");
+                OmarchyLink.aiSources(req, err -> {
+                    if (err == null || !id.equals(pendingSourcesId)) return;
+                    pendingSourcesId = null;
+                    r.setValue(value);
+                    Toast.makeText(this, "busy".equals(err) ? R.string.ask_busy : R.string.ask_not_connected, Toast.LENGTH_SHORT).show();
+                });
                 return true;
             });
         }
