@@ -334,7 +334,6 @@
     <string name="grok_bot_mcp">MCP Server (/mcp)</string>
     <string name="menu_remote_keys">Remote buttons</string>
     <string name="keys_service">Accessibility service</string>
-    <string name="keys_key">Key</string>
     <string name="keys_single">Single press</string>
     <string name="keys_double">Double press</string>
     <string name="keys_triple">Triple press</string>
@@ -345,7 +344,6 @@
     <string name="keys_intent_value">intent</string>
     <string name="keys_intent_title">Intent URI</string>
     <string name="keys_intent_bad">Not a valid intent URI</string>
-    <string name="keys_key_bad">Unknown key name</string>
     <string name="keys_hint">The \"OmarchyTV remote buttons\" service must be on (OK on the first row opens Accessibility settings). Buttons without a binding keep their normal behaviour.</string>
     <string name="keys_action_walker">Search (Walker)</string>
     <string name="keys_action_voice">Voice search</string>
@@ -355,4 +353,6 @@
     <string name="keys_action_screensaver">Screensaver</string>
     <string name="keys_action_next_theme">Next theme</string>
     <string name="keys_action_workspace">Workspace %1$s</string>
+    <string name="keys_none">No supported remote connected. Adding a remote: see launcher/REMOTES.md</string>
+    <string name="keys_default">Unbound: %1$s</string>
 </resources>

@@ -1452,15 +1452,25 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
 
     // ---- Launcher settings > Remote buttons (omarchytv.json "keys", run by KeyMapService) ------------------------------
 
-    /** The key being edited in the Remote buttons page; static so it survives the rebuild after a change. */
-    private static String keyEdit = "BUTTON_12";
+    /** The key (keycode name) being edited; static so the button page can reopen after the rebuild that follows a change. */
+    private static String keyEdit = "";
 
     private static int keyCode(String name) {
         return android.view.KeyEvent.keyCodeFromString("KEYCODE_" + name);
     }
 
+    /** Profiles (assets/remotes.json) of the remotes connected right now. */
+    private List<RemoteProfiles.Profile> connectedRemotes() {
+        List<RemoteProfiles.Profile> all = RemoteProfiles.load(this), out = new ArrayList<>();
+        for (int id : android.view.InputDevice.getDeviceIds()) {
+            android.view.InputDevice d = android.view.InputDevice.getDevice(id);
+            RemoteProfiles.Profile p = d == null ? null : RemoteProfiles.forDevice(all, d.getVendorId(), d.getProductId());
+            if (p != null && !out.contains(p)) out.add(p);
+        }
+        return out;
+    }
+
     private AsciiMenu.Page remoteKeysPage() {
-        LauncherConfig.KeyBinding[] b = LauncherConfig.get(this).keys.get(keyCode(keyEdit));
         AsciiMenu.Page p = new AsciiMenu.Page(str(R.string.menu_remote_keys));
         String enabled = Settings.Secure.getString(getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
         String me = new ComponentName(this, KeyMapService.class).flattenToString();
@@ -1469,18 +1479,40 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             open(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
             return false;
         });
-        String lKey = str(R.string.keys_key);
-        p.add(lKey, keyEdit + ("BUTTON_12".equals(keyEdit) ? " \u00b7 SHIELD Netflix" : ""), r -> {
-            handler.post(this::keyNameDialog);
-            return false;
-        });
+        List<RemoteProfiles.Profile> remotes = connectedRemotes();
+        for (RemoteProfiles.Profile rp : remotes) {
+            for (RemoteProfiles.Button btn : rp.buttons) {
+                p.add(rp.name + " \u00b7 " + btn.name, "\u203a", r -> {
+                    keyEdit = btn.key;
+                    return push(keyButtonPage(rp, btn));
+                });
+            }
+        }
+        if (remotes.isEmpty()) p.hint(str(R.string.keys_none));
+        p.hint(str(R.string.keys_hint));
+        return p;
+    }
+
+    /** The four press types of one remote button. */
+    private AsciiMenu.Page keyButtonPage(RemoteProfiles.Profile rp, RemoteProfiles.Button btn) {
+        LauncherConfig.KeyBinding[] b = LauncherConfig.get(this).keys.get(keyCode(btn.key));
+        AsciiMenu.Page p = new AsciiMenu.Page(rp.name + " \u00b7 " + btn.name);
         int[] labels = {R.string.keys_single, R.string.keys_double, R.string.keys_triple, R.string.keys_long};
         for (int i = 0; i < labels.length; i++) {
             final int press = i;
             p.add(str(labels[i]), keySummary(b == null ? null : b[i]), r -> push(keyBindingPage(press)));
         }
-        p.hint(str(R.string.keys_hint));
+        if (!btn.defaultBehaviour.isEmpty()) p.hint(getString(R.string.keys_default, btn.defaultBehaviour));
         return p;
+    }
+
+    /** The button page of {@link #keyEdit} on a connected remote, else the list. */
+    private AsciiMenu.Page remoteKeyPage() {
+        for (RemoteProfiles.Profile rp : connectedRemotes()) {
+            RemoteProfiles.Button btn = rp.button(keyEdit);
+            if (btn != null) return keyButtonPage(rp, btn);
+        }
+        return remoteKeysPage();
     }
 
     private String keySummary(LauncherConfig.KeyBinding kb) {
@@ -1559,7 +1591,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
     private boolean saveKeyBinding(int press, String type, String value) {
         int[] labels = {R.string.keys_single, R.string.keys_double, R.string.keys_triple, R.string.keys_long};
         String name = keyEdit, pressName = LauncherConfig.KEY_PRESSES[press];
-        applyLive("remote-keys", str(labels[press]), j -> {
+        applyLive("remote-key", str(labels[press]), j -> {
             org.json.JSONObject keys = j.optJSONObject("keys");
             if (keys == null) j.put("keys", keys = new org.json.JSONObject());
             org.json.JSONObject k = keys.optJSONObject(name);
@@ -1570,32 +1602,6 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             if (keys.length() == 0) j.remove("keys");
         });
         return false;
-    }
-
-    /** Type another key name (a KeyEvent keycode without KEYCODE_, e.g. PROG_RED). */
-    private void keyNameDialog() {
-        android.widget.EditText e = new android.widget.EditText(this);
-        e.setSingleLine(true);
-        e.setText(keyEdit);
-        e.setSelection(e.getText().length());
-        e.setHint("BUTTON_12");
-        e.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
-                | android.text.InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS);
-        new android.app.AlertDialog.Builder(this)
-                .setTitle(R.string.keys_key)
-                .setView(e)
-                .setPositiveButton(android.R.string.ok, (d, w) -> {
-                    String v = e.getText().toString().trim().toUpperCase(java.util.Locale.ROOT);
-                    if (v.startsWith("KEYCODE_")) v = v.substring(8);
-                    if (keyCode(v) <= 0) {
-                        Toast.makeText(this, R.string.keys_key_bad, Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    keyEdit = v;
-                    showMenu("remote-keys", str(R.string.keys_key));
-                })
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
     }
 
     /** Type an intent URI (Intent.toUri(URI_INTENT_SCHEME)); checked with Intent.parseUri. */
@@ -1675,6 +1681,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             case "assistant": return assistantPage();
             case "grok-bot": return grokBotPage();
             case "remote-keys": return remoteKeysPage();
+            case "remote-key": return remoteKeyPage();
             default: return null;
         }
     }
