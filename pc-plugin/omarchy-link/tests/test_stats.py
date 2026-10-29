@@ -1,4 +1,4 @@
-"""omarchy · pc widget: CPU and RAM readers (Linux /proc, macOS Mach ticks + vm_stat)."""
+"""omarchy · pc widget: CPU, RAM and now playing (Linux /proc + playerctl, macOS Mach ticks + vm_stat + osascript)."""
 import subprocess
 import sys
 import unittest
@@ -59,6 +59,40 @@ class Stats(unittest.TestCase):
         cpu, ram = stats.cpu_percent(), stats.ram_percent()
         self.assertTrue(cpu is None or 0 <= cpu <= 100, cpu)
         self.assertTrue(0 < ram <= 100, ram)
+
+    def players(self, running, states):
+        """subprocess.run stand-in: pgrep finds the apps in `running`; osascript answers from `states`."""
+        calls = []
+
+        def run(argv, **kw):
+            calls.append(argv)
+            if argv[0] == "pgrep":
+                return subprocess.CompletedProcess(argv, 0 if argv[-1] in running else 1)
+            app = argv[2].split('"')[1]
+            return subprocess.CompletedProcess(argv, 0, states[app] + "\n", "")
+        return run, calls
+
+    def test_macos_now_playing(self):
+        run, calls = self.players({"Spotify", "Music"}, {"Spotify": "paused\tJobim\tWave", "Music": "playing\tGal\tBaby"})
+        with mock.patch.object(sys, "platform", "darwin"), mock.patch.object(stats.subprocess, "run", run):
+            self.assertEqual(stats.now_playing(), {"artist": "Gal", "title": "Baby"})  # paused Spotify is skipped
+        run, calls = self.players({"Spotify", "Music"}, {"Spotify": "playing\tJobim\tWave", "Music": "playing\tGal\tBaby"})
+        with mock.patch.object(sys, "platform", "darwin"), mock.patch.object(stats.subprocess, "run", run):
+            self.assertEqual(stats.now_playing(), {"artist": "Jobim", "title": "Wave"})  # Spotify first
+
+    def test_macos_now_playing_never_launches_an_app(self):
+        run, calls = self.players(set(), {})
+        with mock.patch.object(sys, "platform", "darwin"), mock.patch.object(stats.subprocess, "run", run):
+            self.assertIsNone(stats.now_playing())
+        self.assertEqual([c[0] for c in calls], ["pgrep", "pgrep"])  # no osascript for apps that aren't running
+
+    def test_linux_now_playing_playerctl(self):
+        out = lambda argv, **kw: subprocess.CompletedProcess(argv, 0, "Playing\tGal\tBaby\n", "")
+        with mock.patch.object(sys, "platform", "linux"), mock.patch.object(stats.shutil, "which", lambda c: "/usr/bin/" + c), \
+                mock.patch.object(stats.subprocess, "run", out):
+            self.assertEqual(stats.now_playing(), {"artist": "Gal", "title": "Baby"})
+        with mock.patch.object(sys, "platform", "linux"), mock.patch.object(stats.shutil, "which", lambda c: None):
+            self.assertIsNone(stats.now_playing())
 
 
 if __name__ == "__main__":

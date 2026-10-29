@@ -1,7 +1,8 @@
 """v2.9 home widgets: "omarchy · pc" (CPU, RAM, now playing), "deploys · pc" (opt-in) and screensaver.txt.
 
 Cheap reads only: /proc/stat delta, /proc/meminfo, `playerctl metadata` (if installed); on macOS the Mach CPU
-tick counters and `vm_stat` instead of /proc. Deploys only when the user configured a source in config.json:
+tick counters and `vm_stat` instead of /proc, and Spotify or Music through `osascript` instead of playerctl.
+Deploys only when the user configured a source in config.json:
   "deploys": {"command": ["my-deploys", "--json"]}   # argv, no shell; prints [{"name","status"}]
   "deploys": {"file": "~/.cache/deploys.json"}       # same JSON
 status: green|yellow|red (or ok|building|failed). Nothing configured = no deploys widget on the TV.
@@ -91,17 +92,34 @@ def _vm_stat_ram() -> int | None:
 
 
 def now_playing() -> dict | None:
-    if not shutil.which("playerctl"):
-        return None
+    for argv in _player_commands():
+        try:
+            r = subprocess.run(argv, capture_output=True, text=True, timeout=2)
+        except (OSError, subprocess.SubprocessError):
+            continue
+        parts = r.stdout.strip().split("\t")
+        if r.returncode == 0 and len(parts) >= 3 and parts[0].lower() == "playing" and parts[2]:
+            return {"artist": parts[1][:64], "title": parts[2][:96]}
+    return None
+
+
+def _player_commands() -> list[list[str]]:
+    """Each prints "status<TAB>artist<TAB>title". macOS: Spotify, then Music, asked only while already running
+    (telling an app something launches it, and a missing one makes osascript ask where it is)."""
+    if sys.platform == "darwin":
+        tell = ('tell application "%s" to (player state as text) & tab & artist of current track'
+                ' & tab & name of current track')
+        return [["osascript", "-e", tell % app] for app in ("Spotify", "Music") if _running(app)]
+    if shutil.which("playerctl"):
+        return [["playerctl", "metadata", "--format", "{{status}}\t{{artist}}\t{{title}}"]]
+    return []
+
+
+def _running(app: str) -> bool:
     try:
-        r = subprocess.run(["playerctl", "metadata", "--format", "{{status}}\t{{artist}}\t{{title}}"],
-                           capture_output=True, text=True, timeout=2)
+        return subprocess.run(["pgrep", "-xq", app], timeout=2).returncode == 0
     except (OSError, subprocess.SubprocessError):
-        return None
-    parts = r.stdout.strip().split("\t")
-    if r.returncode != 0 or len(parts) < 3 or parts[0] != "Playing" or not parts[2]:
-        return None
-    return {"artist": parts[1][:64], "title": parts[2][:96]}
+        return False
 
 
 def deploys(cfg: dict) -> list | None:
