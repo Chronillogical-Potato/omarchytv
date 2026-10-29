@@ -54,6 +54,12 @@ public class ScreensaverPreviewActivity extends Activity {
     @Override
     public boolean dispatchKeyEvent(KeyEvent e) {
         if (e.getAction() == KeyEvent.ACTION_DOWN && !isFinishing()) {
+            int kc = e.getKeyCode();
+            if ((kc == KeyEvent.KEYCODE_M || kc == KeyEvent.KEYCODE_MUTE || kc == KeyEvent.KEYCODE_VOLUME_MUTE)
+                    && saver != null && saver.isAquariumActive()) {
+                saver.toggleSound();
+                return true;
+            }
             finish();
             overridePendingTransition(0, 0);
         }

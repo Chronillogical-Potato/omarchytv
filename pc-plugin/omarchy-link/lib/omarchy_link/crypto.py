@@ -8,6 +8,7 @@ See docs/PROTOCOL.md sections 4 and 5; docs/vectors.json has test vectors.
 from __future__ import annotations
 
 import base64
+import os
 import hashlib
 import hmac
 import secrets
@@ -222,3 +223,30 @@ def open_message(key: bytes, text: str) -> bytes:
     if not hmac.compare_digest(unb64u(mac), hmac256(key, raw)):
         raise ValueError("bad message mac")
     return raw
+
+
+# ---- optional payload encryption (2.13): AES-256-GCM, negotiated per request with "X-OTV-Enc: A256GCM" ----
+ENC_HEADER = "X-OTV-Enc"
+ENC_ALG = "A256GCM"
+ENC_CAP = "enc-a256gcm"
+try:  # python-cryptography is optional; without it the link stays on signed plaintext (2.12 behaviour)
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM as _AESGCM
+    HAVE_AES = True
+except ImportError:  # pragma: no cover
+    _AESGCM = None
+    HAVE_AES = False
+
+
+def enc_key(token: bytes) -> bytes:
+    return hkdf(token, b"OTV1 enc salt", b"OTV1 enc", 32)
+
+
+def seal(token: bytes, aad: str, plain: bytes) -> bytes:
+    iv = os.urandom(12)
+    return iv + _AESGCM(enc_key(token)).encrypt(iv, plain, aad.encode())
+
+
+def unseal(token: bytes, aad: str, sealed: bytes) -> bytes:
+    if len(sealed) < 28:
+        raise ValueError("short ciphertext")
+    return _AESGCM(enc_key(token)).decrypt(sealed[:12], sealed[12:], aad.encode())

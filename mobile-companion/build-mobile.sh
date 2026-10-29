@@ -172,8 +172,8 @@ echo "[2/6] Linking resources & packaging assets with aapt2..."
   --java "${BUILD_DIR}/gen" \
   --min-sdk-version 26 \
   --target-sdk-version 34 \
-  --version-code 21200 \
-  --version-name "2.12.0-beta" \
+  --version-code 21300 \
+  --version-name "2.13.0-beta" \
   -o "${BUILD_DIR}/apk/unaligned.apk"
 
 echo "[3/6] Compiling Java sources with JDK 17..."
@@ -197,8 +197,8 @@ echo "[5/6] Adding classes.dex and aligning with zipalign..."
 (cd "${BUILD_DIR}/dex" && "${JAVA_HOME}/bin/jar" uf "${BUILD_DIR}/apk/unaligned.apk" classes.dex)
 "${BUILD_TOOLS}/zipalign" -f -p 4 "${BUILD_DIR}/apk/unaligned.apk" "${BUILD_DIR}/apk/aligned.apk"
 
-OUT_BETA="${REPO_ROOT}/omarchytv-mobile-2.12.0-beta.apk"
-OUT_STD="${REPO_ROOT}/omarchytv-mobile-2.12.0.apk"
+OUT_BETA="${REPO_ROOT}/omarchytv-mobile-2.13.0-beta.apk"
+OUT_STD="${REPO_ROOT}/omarchytv-mobile-2.13.0.apk"
 
 echo "[6/6] Signing release APK with OmarchyTV release key..."
 "${BUILD_TOOLS}/apksigner" sign \

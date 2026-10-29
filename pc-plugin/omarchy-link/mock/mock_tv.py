@@ -207,6 +207,19 @@ class MockTV:
             time.sleep(0.05)
         return [(m["type"], m["data"]) for m in out]
 
+    def grokbot_ask(self, text: str, bot: str | None = None, timeout: float = 20) -> dict:
+        """What the TV's Grok Bot tile does: send "grokbot_ask", wait for grokbot_answer/grokbot_error."""
+        rid = secrets.token_hex(8)
+        start = len(self.seen)
+        self.broadcast("grokbot_ask", {"id": rid, "text": text, **({"bot": bot} if bot else {})})
+        end = time.time() + timeout
+        while time.time() < end:
+            for m in list(self.seen[start:]):
+                if (m.get("data") or {}).get("id") == rid and m.get("type") in ("grokbot_answer", "grokbot_error"):
+                    return m
+            time.sleep(0.05)
+        return {"type": "timeout"}
+
     def set_ai_sources(self, enabled: list, timeout: float = 15) -> dict:
         """What the TV's AI-pane switches do: send "ai_sources", wait for the PC's reply."""
         rid = secrets.token_hex(8)
@@ -399,6 +412,7 @@ class Handler(BaseHTTPRequestHandler):
             ("PUT", "/v1/agents"): self._agents_put, ("GET", "/v1/agents"): self._agents_get,
             ("POST", "/v1/cast"): self._cast, ("PUT", "/v1/cast/file"): self._cast_file,
             ("POST", "/v1/cast/control"): self._cast_control,
+            ("PUT", "/v1/plugins/grokbot"): self._grokbot_put,
         }.get((method, path))
         if not handler:
             return self._json(404, {"error": "not_found"}, sign)
@@ -555,6 +569,14 @@ class Handler(BaseHTTPRequestHandler):
 
     def _agents_get(self, pc, a, body):
         return 200, self.tv.config().get("link", {}).get("agents") or {"agents": [], "at": None}
+
+    # ---------------------------------------------------------- Grok Bot companion mirror (experimental)
+    def _grokbot_put(self, pc, g, body):
+        bot = g.get("bot")
+        if bot is not None and (not isinstance(bot, dict) or not str(bot.get("name", "")).strip()):
+            return 400, {"error": "bad_bot"}
+        self.tv.update_config(lambda j: j.setdefault("plugins", {}).update(grokbotBot=bot))
+        return 200, {"ok": True}
 
     # ---------------------------------------------------------- cast
     def _cast_file(self, pc, payload, body):

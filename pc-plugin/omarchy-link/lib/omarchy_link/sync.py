@@ -38,7 +38,9 @@ def sync_theme(client, cfg: dict, force: bool = False, log=lambda m: None) -> di
         if prompt:
             fp = f"{fp}|prompt={prompt.get('user', '')}@{prompt.get('host', '')}"
         last = config.read_json(config.SYNC_FILE, {})
-        if not force and last.get("fingerprint") == fp and last.get("tv") == client.tv["id"]:
+        tv_id = client.tv["id"]
+        by_tv = dict(last.get("byTv") or {})
+        if not force and (by_tv.get(tv_id) == fp or (last.get("fingerprint") == fp and last.get("tv") == tv_id)):
             return None
         sha = None
         if cfg.get("wallpaperSync", True):
@@ -53,8 +55,9 @@ def sync_theme(client, cfg: dict, force: bool = False, log=lambda m: None) -> di
         if prompt:
             payload["prompt"] = prompt
         client.put_theme(payload)
+        by_tv[tv_id] = fp
         config.write_json_private(config.SYNC_FILE, {
-            "fingerprint": fp, "tv": client.tv["id"], "theme": payload["name"],
-            "wallpaper": sha, "at": int(time.time())})
+            "fingerprint": fp, "tv": tv_id, "theme": payload["name"],
+            "wallpaper": sha, "at": int(time.time()), "byTv": by_tv})
         log(f"theme {payload['name']} sent")
         return payload

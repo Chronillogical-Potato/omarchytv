@@ -1,6 +1,6 @@
 window.OMARCHY_DATA = {
-  "version": "2.11.0-testing",
-  "basedOnAndroidVersion": "2.11.0",
+  "version": "2.13.0-beta",
+  "basedOnAndroidVersion": "2.13.0-beta",
   "themes": {
     "catppuccin": {
       "accent": "#89b4fa",
@@ -49,6 +49,33 @@ window.OMARCHY_DATA = {
       "red": "#d20f39",
       "selection": "#ccd0da",
       "yellow": "#df8e1d"
+    },
+    "cumulus": {
+      "accent": "#77baf3",
+      "background": "#193e58",
+      "blue": "#86c2ff",
+      "bright_cyan": "#aadee9",
+      "bright_foreground": "#faf3e6",
+      "bright_magenta": "#ffc8e6",
+      "bright_yellow": "#f6d78c",
+      "cyan": "#83c5d3",
+      "dark_background": "#14374f",
+      "dark_foreground": "#c9c2b6",
+      "darker_background": "#0f2d42",
+      "foreground": "#eee2cc",
+      "green": "#a9c972",
+      "hyprland_active_border": "#6ba7d8",
+      "hyprland_inactive_border": "#316184",
+      "light_foreground": "#f3e8d5",
+      "lighter_background": "#254b67",
+      "magenta": "#f7a0d3",
+      "mode": "dark",
+      "muted": "#85a1b8",
+      "orange": "#fba35e",
+      "red": "#ff8e7c",
+      "selection": "#1a6492",
+      "selection_foreground": "#f3e8d5",
+      "yellow": "#ebcf70"
     },
     "ethereal": {
       "accent": "#7d82d9",
@@ -175,10 +202,14 @@ window.OMARCHY_DATA = {
       "accent": "#61d6ff",
       "background": "#08090a",
       "blue": "#74a8c7",
+      "bright_blue": "#94bcd2",
       "bright_cyan": "#8de4ff",
       "bright_foreground": "#ffffff",
+      "bright_green": "#a5e4ae",
       "bright_magenta": "#cebdda",
+      "bright_red": "#f08a8a",
       "bright_yellow": "#ecd69a",
+      "brown": "#a58a76",
       "cyan": "#61d6ff",
       "dark_background": "#08090a",
       "dark_foreground": "#606468",
@@ -199,10 +230,14 @@ window.OMARCHY_DATA = {
       "accent": "#8bcbb1",
       "background": "#142620",
       "blue": "#96b7d0",
+      "bright_blue": "#b0cde3",
       "bright_cyan": "#a2dcda",
       "bright_foreground": "#f0faf4",
+      "bright_green": "#a7dfc5",
       "bright_magenta": "#cfbce0",
+      "bright_red": "#e6a6aa",
       "bright_yellow": "#dce1ac",
+      "brown": "#7e8970",
       "cyan": "#86c7c5",
       "dark_background": "#0f1e19",
       "dark_foreground": "#91ad9f",
@@ -557,6 +592,34 @@ window.OMARCHY_DATA = {
       "selection": "#292e42",
       "yellow": "#e0af68"
     },
+    "tokyo-roadster": {
+      "accent": "#7aa2f7",
+      "background": "#1a1b26",
+      "blue": "#7aa2f7",
+      "bright_blue": "#7da6ff",
+      "bright_cyan": "#0db9d7",
+      "bright_foreground": "#c0caf5",
+      "bright_green": "#b9f27c",
+      "bright_magenta": "#bb9af7",
+      "bright_red": "#ff7a93",
+      "bright_yellow": "#ff9e64",
+      "brown": "#75493d",
+      "cyan": "#449dab",
+      "dark_background": "#13141c",
+      "dark_foreground": "#565f89",
+      "darker_background": "#0e0e14",
+      "foreground": "#a9b1d6",
+      "green": "#9ece6a",
+      "light_foreground": "#b4bee6",
+      "lighter_background": "#24283b",
+      "magenta": "#ad8ee6",
+      "mode": "dark",
+      "muted": "#414868",
+      "orange": "#eb927b",
+      "red": "#f7768e",
+      "selection": "#292e42",
+      "yellow": "#e0af68"
+    },
     "vantablack": {
       "accent": "#8d8d8d",
       "background": "#000000",
@@ -608,10 +671,14 @@ window.OMARCHY_DATA = {
       "accent": "#e5ce78",
       "background": "#26151f",
       "blue": "#a1afd3",
+      "bright_blue": "#bcc9e5",
       "bright_cyan": "#acd3d0",
       "bright_foreground": "#fff5f5",
+      "bright_green": "#bfd2ad",
       "bright_magenta": "#dfb9dc",
+      "bright_red": "#ee92a3",
       "bright_yellow": "#f2dfa0",
+      "brown": "#926775",
       "cyan": "#91bdbb",
       "dark_background": "#1e1018",
       "dark_foreground": "#b18a9c",
@@ -635,6 +702,13 @@ window.OMARCHY_DATA = {
     ],
     "catppuccin-latte": [
       "wallpapers/catppuccin-latte/02-omarchy.webp"
+    ],
+    "cumulus": [
+      "wallpapers/cumulus/01-cloud-town-path.webp",
+      "wallpapers/cumulus/02-cottage.webp",
+      "wallpapers/cumulus/03-airship.webp",
+      "wallpapers/cumulus/04-lighthouse.webp",
+      "wallpapers/cumulus/05-omarchy.webp"
     ],
     "ethereal": [
       "wallpapers/ethereal/03-omarchy.webp"
@@ -667,6 +741,7 @@ window.OMARCHY_DATA = {
       "wallpapers/kanagawa/02-omarchy.webp"
     ],
     "last-horizon": [
+      "wallpapers/last-horizon/01-eyes-wide.webp",
       "wallpapers/last-horizon/01-omarchy.webp"
     ],
     "lumon": [
@@ -706,6 +781,19 @@ window.OMARCHY_DATA = {
       "wallpapers/tokyo-night/01-liftoff-sunset.webp",
       "wallpapers/tokyo-night/09-omarchy.webp"
     ],
+    "tokyo-roadster": [
+      "wallpapers/tokyo-roadster/01-tokyo-wall-ride.webp",
+      "wallpapers/tokyo-roadster/02-tokyo-lineup.webp",
+      "wallpapers/tokyo-roadster/03-tokyo-hover.webp",
+      "wallpapers/tokyo-roadster/04-tokyo-ramp.webp",
+      "wallpapers/tokyo-roadster/05-tokyo-inverted.webp",
+      "wallpapers/tokyo-roadster/06-tokyo-rear.webp",
+      "wallpapers/tokyo-roadster/07-tokyo-diffuser.webp",
+      "wallpapers/tokyo-roadster/08-tokyo-studio.webp",
+      "wallpapers/tokyo-roadster/09-tokyo-poster.webp",
+      "wallpapers/tokyo-roadster/10-tokyo-starlight.webp",
+      "wallpapers/tokyo-roadster/11-omarchy.webp"
+    ],
     "vantablack": [
       "wallpapers/vantablack/05-omarchy.webp"
     ],
@@ -720,5 +808,14 @@ window.OMARCHY_DATA = {
     ]
   },
   "logo": "                 \u2584\u2584\u2584\n \u2584\u2588\u2588\u2588\u2588\u2588\u2584    \u2584\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2584    \u2584\u2588\u2588\u2588\u2588\u2588\u2588\u2588   \u2584\u2588\u2588\u2588\u2588\u2588\u2588\u2588   \u2584\u2588\u2588\u2588\u2588\u2588\u2588\u2588   \u2584\u2588   \u2588\u2584    \u2584\u2588   \u2588\u2584     \u2584\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2584   \u2584\u2588   \u2588\u2584\n\u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588    \u2580\u2580\u2580\u2588\u2588\u2588\u2580\u2580\u2580  \u2588\u2588\u2588   \u2588\u2588\u2588\n\u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2580   \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588       \u2588\u2588\u2588     \u2588\u2588\u2588   \u2588\u2588\u2588\n\u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588   \u2588\u2588\u2588 \u2584\u2588\u2588\u2588\u2584\u2584\u2584\u2588\u2588\u2588 \u2584\u2588\u2588\u2588\u2584\u2584\u2584\u2588\u2588\u2580  \u2588\u2588\u2588       \u2584\u2588\u2588\u2588\u2584\u2584\u2584\u2588\u2588\u2588\u2584 \u2588\u2588\u2588\u2584\u2584\u2584\u2588\u2588\u2588       \u2588\u2588\u2588     \u2588\u2588\u2588   \u2588\u2588\u2588\n\u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588   \u2588\u2588\u2588 \u2580\u2588\u2588\u2588\u2580\u2580\u2580\u2588\u2588\u2588 \u2580\u2588\u2588\u2588\u2580\u2580\u2580\u2580    \u2588\u2588\u2588      \u2580\u2580\u2588\u2588\u2588\u2580\u2580\u2580\u2588\u2588\u2588  \u2580\u2580\u2580\u2580\u2580\u2580\u2588\u2588\u2588       \u2588\u2588\u2588     \u2588\u2588\u2588   \u2588\u2588\u2588\n\u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588 \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2584   \u2588\u2588\u2588   \u2588\u2588\u2588  \u2584\u2588\u2588   \u2588\u2588\u2588       \u2588\u2588\u2588     \u2580\u2588\u2588\u2584 \u2584\u2588\u2588\u2580\n\u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588       \u2588\u2588\u2588      \u2580\u2588\u2588\u2584\u2588\u2588\u2580\n \u2580\u2588\u2588\u2588\u2588\u2588\u2580    \u2580\u2588   \u2588\u2588\u2588   \u2588\u2580   \u2588\u2588\u2588   \u2588\u2580   \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2580   \u2588\u2588\u2588   \u2588\u2580    \u2580\u2588\u2588\u2588\u2588\u2588\u2580        \u2580\u2588\u2580        \u2580\u2588\u2580\n                                       \u2588\u2588\u2588   \u2588\u2580",
-  "notice": "OmarchyTV\nCopyright (c) 2026 Marco Porro (x.com/MarcoPorro · www.marcoporro.it, MIT)\n\nThis product includes third-party software, fonts and artwork:\n- Omarchy logo, icon, theme palettes and wordmark backgrounds - (c) David Heinemeier Hansson, MIT\n- \"Liftoff Sunset\" wallpaper - Tom Ballard (https://x.com/tcballard), https://github.com/tcballard/omarchy-theme-tokyo-liftoff;\n  original photograph SpaceX (public domain per author); included with the author's permission (X, Oct 22, 2026)\n- Free My TV (LocalAdb port) - (c) 2026 Free My TV contributors, MIT\n- tte.js - Flavio Copes, MIT; TerminalTextEffects - ChrisBuilds, MIT; ttfx - 37signals/omacom, MIT\n- Cascadia Code / CaskaydiaMono - (c) Microsoft Corporation, SIL OFL 1.1 (RFN \"Cascadia Code\"); Nerd Fonts, MIT\n- AndroidX / Media3 ExoPlayer - The Android Open Source Project, Apache License 2.0\n- Inspired by tv-vibehack by Gathin (MIT)\nFull details and licence texts: THIRD-PARTY.md and launcher/app/src/main/assets/licenses/.\n\"Omarchy\" is the Omarchy project's branding; this is an unofficial fan project.\nAll other trademarks (Netflix, Google, Sony, X, ...) belong to their owners; no endorsement implied.\n\n"
+  "notice": "OmarchyTV\nCopyright (c) 2026 Marco Porro (x.com/MarcoPorro \u00b7 www.marcoporro.it, MIT)\n\nThis product includes third-party software, fonts and artwork:\n- Omarchy logo, icon, theme palettes and wordmark backgrounds - (c) David Heinemeier Hansson, MIT\n- \"Liftoff Sunset\" wallpaper - Tom Ballard (https://x.com/tcballard), https://github.com/tcballard/omarchy-theme-tokyo-liftoff;\n  original photograph SpaceX (public domain per author); included with the author's permission (X, Oct 22, 2026)\n- Free My TV (LocalAdb port) - (c) 2026 Free My TV contributors, MIT\n- tte.js - Flavio Copes, MIT; TerminalTextEffects - ChrisBuilds, MIT; ttfx - 37signals/omacom, MIT\n- Cascadia Code / CaskaydiaMono - (c) Microsoft Corporation, SIL OFL 1.1 (RFN \"Cascadia Code\"); Nerd Fonts, MIT\n- AndroidX / Media3 ExoPlayer - The Android Open Source Project, Apache License 2.0\n- Inspired by tv-vibehack by Gathin (MIT)\nFull details and licence texts: THIRD-PARTY.md and launcher/app/src/main/assets/licenses/.\n\"Omarchy\" is the Omarchy project's branding; this is an unofficial fan project.\nAll other trademarks (Netflix, Google, Sony, X, ...) belong to their owners; no endorsement implied.\n\n",
+  "wallpaperIntros": {
+    "wallpapers/cumulus/01-cloud-town-path.webp": "wallpapers/cumulus/01-cloud-town-path.mp4",
+    "wallpapers/cumulus/02-cottage.webp": "wallpapers/cumulus/02-cottage.mp4",
+    "wallpapers/cumulus/03-airship.webp": "wallpapers/cumulus/03-airship.mp4",
+    "wallpapers/cumulus/04-lighthouse.webp": "wallpapers/cumulus/04-lighthouse.mp4",
+    "wallpapers/last-horizon/01-eyes-wide.webp": "wallpapers/last-horizon/01-eyes-wide.mp4"
+  },
+  "cinemarchyLogo": "                                              \u2584\u2584\u2584\n \u2584\u2588\u2588\u2588\u2588\u2588\u2588\u2588  \u2584\u2588\u2588\u2588\u2584  \u2584\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2584   \u2584\u2588\u2588\u2588\u2588\u2588\u2588\u2588   \u2584\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2584    \u2584\u2588\u2588\u2588\u2588\u2588\u2588\u2588   \u2584\u2588\u2588\u2588\u2588\u2588\u2588\u2588   \u2584\u2588\u2588\u2588\u2588\u2588\u2588\u2588   \u2584\u2588   \u2588\u2584    \u2584\u2588   \u2588\u2584\n\u2588\u2588\u2588   \u2588\u2588\u2588   \u2588\u2588\u2588   \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588\n\u2588\u2588\u2588   \u2588\u2580    \u2588\u2588\u2588   \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2580   \u2588\u2588\u2588   \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2580   \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588\n\u2588\u2588\u2588         \u2588\u2588\u2588   \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588\u2584\u2584\u2584\u2588\u2588\u2584  \u2588\u2588\u2588   \u2588\u2588\u2588   \u2588\u2588\u2588 \u2584\u2588\u2588\u2588\u2584\u2584\u2584\u2588\u2588\u2588 \u2584\u2588\u2588\u2588\u2584\u2584\u2584\u2588\u2588\u2580  \u2588\u2588\u2588       \u2584\u2588\u2588\u2588\u2584\u2584\u2584\u2588\u2588\u2588\u2584 \u2588\u2588\u2588\u2584\u2584\u2584\u2588\u2588\u2588\n\u2588\u2588\u2588         \u2588\u2588\u2588   \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588\u2580\u2580\u2580\u2580\u2580   \u2588\u2588\u2588   \u2588\u2588\u2588   \u2588\u2588\u2588 \u2580\u2588\u2588\u2588\u2580\u2580\u2580\u2588\u2588\u2588 \u2580\u2588\u2588\u2588\u2580\u2580\u2580\u2580    \u2588\u2588\u2588      \u2580\u2580\u2588\u2588\u2588\u2580\u2580\u2580\u2588\u2588\u2588  \u2580\u2580\u2580\u2580\u2580\u2580\u2588\u2588\u2588\n\u2588\u2588\u2588   \u2588\u2584    \u2588\u2588\u2588   \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2584   \u2588\u2588\u2588   \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588 \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2584   \u2588\u2588\u2588   \u2588\u2588\u2588  \u2584\u2588\u2588   \u2588\u2588\u2588\n\u2588\u2588\u2588   \u2588\u2588\u2588   \u2588\u2588\u2588   \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588   \u2588\u2588\u2588\n\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2580   \u2580\u2588\u2588\u2588\u2580  \u2588\u2588\u2588   \u2588\u2580   \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2580    \u2580\u2588   \u2588\u2588\u2588   \u2588\u2580   \u2588\u2588\u2588   \u2588\u2580   \u2588\u2588\u2588   \u2588\u2588\u2588  \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2580   \u2588\u2588\u2588   \u2588\u2580    \u2580\u2588\u2588\u2588\u2588\u2588\u2580\n                                                                    \u2588\u2588\u2588   \u2588\u2580",
+  "cinemarchySplit": 40
 };

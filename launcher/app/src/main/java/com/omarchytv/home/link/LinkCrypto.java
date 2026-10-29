@@ -271,4 +271,36 @@ public final class LinkCrypto {
             return null;
         }
     }
+
+    // ---- optional payload encryption (2.13): AES-256-GCM, negotiated with "X-OTV-Enc: A256GCM" ----
+    public static final String ENC_HEADER = "X-OTV-Enc";
+    public static final String ENC_ALG = "A256GCM";
+
+    static byte[] encKey(byte[] token) {
+        return hkdf(token, utf8("OTV1 enc salt"), utf8("OTV1 enc"), 32);
+    }
+
+    /** iv(12) || ciphertext || tag(16). aad binds the payload to one request nonce and direction. */
+    public static byte[] seal(byte[] token, String aad, byte[] plain) throws java.security.GeneralSecurityException {
+        byte[] iv = new byte[12];
+        new java.security.SecureRandom().nextBytes(iv);
+        javax.crypto.Cipher c = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding");
+        c.init(javax.crypto.Cipher.ENCRYPT_MODE, new javax.crypto.spec.SecretKeySpec(encKey(token), "AES"),
+                new javax.crypto.spec.GCMParameterSpec(128, iv));
+        c.updateAAD(utf8(aad));
+        byte[] ct = c.doFinal(plain);
+        byte[] out = new byte[12 + ct.length];
+        System.arraycopy(iv, 0, out, 0, 12);
+        System.arraycopy(ct, 0, out, 12, ct.length);
+        return out;
+    }
+
+    public static byte[] open(byte[] token, String aad, byte[] sealed) throws java.security.GeneralSecurityException {
+        if (sealed.length < 28) throw new java.security.GeneralSecurityException("short ciphertext");
+        javax.crypto.Cipher c = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding");
+        c.init(javax.crypto.Cipher.DECRYPT_MODE, new javax.crypto.spec.SecretKeySpec(encKey(token), "AES"),
+                new javax.crypto.spec.GCMParameterSpec(128, sealed, 0, 12));
+        c.updateAAD(utf8(aad));
+        return c.doFinal(sealed, 12, sealed.length - 12);
+    }
 }

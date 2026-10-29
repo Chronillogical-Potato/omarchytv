@@ -3,7 +3,14 @@
 
   omarchy-tv [menu]                     Omarchy menu (omarchy-menu-select; Walker on older Omarchy; gum / numbered list over SSH)
   omarchy-tv status | pair | remote KEY | cast [TARGET]
-  omarchy-tv screen start [--audio] | screen stop     live "Schermo PC" (opt-in, H.264 MPEG-TS over the link)
+  omarchy-tv play <PATH|URL> | pause | resume | stop | seek <SEC> | queue | ls | handoff | snippets | iptv | cinemarchy
+  omarchy-tv send <FILE|URL> [--sub FILE.srt|.vtt|URL] [--queue] [--title T] [--at MM:SS]
+  omarchy-tv iptv list | add <M3U_URL> [--name NAME] [--epg XMLTV_URL] | remove <URL_OR_NAME>
+  omarchy-tv wg push <wg0.conf> | up NAME | down NAME [--tv IP:5555]   WireGuard on the TV (official app)
+  omarchy-tv adb-pair HOST:PAIRPORT CODE [--connect HOST:PORT]   Android 11+ Wireless debugging pairing (wraps adb pair)
+  omarchy-tv adb-lock --tv IP:5555 [--yes]   close network ADB on the TV when done
+  omarchy-tv plugins list | items ID | play ID N   sandboxed media-feed plugins (SpaceX TV built in)
+  omarchy-tv screen start [--audio] | screen extend [1920x1080@30] [--audio] | screen stop     live "Schermo PC" (opt-in, H.264 MPEG-TS over the link)
   omarchy-tv themes list | push [NAME|--all] | select NAME [BG] | delete NAME
   omarchy-tv icons list | push [PACKAGE|--all] | delete PACKAGE   your own banners, ~/.config/omarchy-tv/banners/<package>.png
   omarchy-tv update <APK|IPK> [--tv IP:5555|DEVICE] [--yes] [--dry-run]
@@ -128,15 +135,176 @@ def cmd_icons(args):
 
 def cmd_screen(args):
     """Live screen: delegates to omarchy-link cast --screen (gpu-screen-recorder / wf-recorder, hw encode if any)."""
-    action = args[0] if args else (ui.choose(t("screen.prompt"), ["start", "start --audio", "stop"]) or "")
+    action = args[0] if args else (ui.choose(t("screen.prompt"), ["start", "start --audio", "extend", "stop"]) or "")
     if action.startswith("start"):
         env = dict(os.environ)
         if "--audio" in args or "--audio" in action:
             env["OMARCHY_LINK_SCREEN_AUDIO"] = "1"
         return ui.run(["omarchy-link", "cast", "--screen"], env=env)
+    if action == "extend":  # 2.13: TV as a second Hyprland display
+        from omarchy_tv import extend
+        mode = next((a for a in args[1:] if not a.startswith("-")), None)
+        return extend.start(mode, audio="--audio" in args, say=ui.say)
     if action == "stop":
-        return ui.run(["omarchy-link", "cast", "--stop"])
+        rc = ui.run(["omarchy-link", "cast", "--stop"])
+        from omarchy_tv import extend
+        extend.stop(say=ui.say)
+        return rc
     return 0
+
+
+
+def _query_mpv_ipc():
+    """Inspect a running local mpv IPC socket (/tmp/mpv-socket or ~/.cache/omarchy-tv/mpv.sock) and pause it."""
+    import json, socket as _sock
+    for sock_path in (os.environ.get("OMARCHY_MPV_SOCKET"), "/tmp/mpv-socket", "/tmp/mpvsocket",
+                      os.path.expanduser("~/.cache/omarchy-tv/mpv.sock")):
+        if not sock_path or not os.path.exists(sock_path):
+            continue
+        try:
+            with _sock.socket(_sock.AF_UNIX, _sock.SOCK_STREAM) as s:
+                s.settimeout(0.8)
+                s.connect(sock_path)
+                def ask_prop(prop, req_id):
+                    s.sendall((json.dumps({"command": ["get_property", prop], "request_id": req_id}) + "\n").encode())
+                    for line in s.makefile():
+                        obj = json.loads(line)
+                        if obj.get("request_id") == req_id:
+                            return obj.get("data")
+                    return None
+                path = ask_prop("path", 1)
+                pos = ask_prop("time-pos", 2) or 0.0
+                title = ask_prop("media-title", 3) or (os.path.basename(path) if path else "mpv stream")
+                s.sendall((json.dumps({"command": ["set_property", "pause", True]}) + "\n").encode())
+                if path:
+                    return str(path), float(pos), str(title)
+        except Exception:
+            continue
+    return None, 0.0, None
+
+
+
+def cmd_snippets(args):
+    """Print chapter-synced Omarchy Tutorial Mode CLI snippets."""
+    if "-h" in args or "--help" in args:
+        print("Usage: omarchy-tv snippets [--push FILE]\n"
+              "  List chapter-synced Tutorial Mode CLI snippets (or push custom video snippets to the TV).")
+        return 0
+    snippets = [
+        ("01:15", "Super + Space", "Open Walker launcher"),
+        ("03:40", "Super + Alt + Space", "Open Omarchy system menu"),
+        ("06:10", "omarchy-theme-set tokyo-night", "Switch system & TV theme live"),
+        ("09:25", "omarchy-tv handoff", "Handoff active PC mpv playback -> TV"),
+        ("11:50", "omarchy-tv handoff --back", "Pull TV playback -> local PC mpv"),
+    ]
+    for ts, cmd, desc in snippets:
+        print(f"{ts}  {cmd:<32} # {desc}")
+    return 0
+
+def cmd_iptv(args):
+    """Manage user-supplied M3U/M3U8 IPTV playlists and optional XMLTV EPG on the paired TV."""
+    sub = args[0] if args else "list"
+    if sub in ("-h", "--help", "help"):
+        print("Usage: omarchy-tv iptv list | add <M3U_URL> [--name NAME] [--epg XMLTV_URL] | remove <URL_OR_NAME>\n"
+              "  Only user-supplied playlists you have the right to watch; OmarchyTV bundles no channels.")
+        return 0
+    c = client()
+    cur = c.request("GET", "/v1/cinemarchy/iptv")
+    pls = list(cur.get("playlists") or [])
+    epg = cur.get("epg") or ""
+    if sub in ("list", "ls"):
+        if not pls:
+            ui.say("No IPTV playlists configured on the TV. Add one with: omarchy-tv iptv add https://.../playlist.m3u8")
+        for i, p in enumerate(pls, 1):
+            ui.say(f"  [{i}] {p.get('name','Playlist')}: {p.get('url','')}")
+        if epg:
+            ui.say(f"  EPG: {epg}")
+        return 0
+    if sub == "add":
+        rest = args[1:]
+        opt_vals = {rest[i + 1] for i, a in enumerate(rest[:-1]) if a in ("--name", "--epg")}
+        url = next((a for a in rest if a.startswith(("http://", "https://")) and a not in opt_vals), "")
+        name = rest[rest.index("--name") + 1] if "--name" in rest and rest.index("--name") + 1 < len(rest) else ""
+        if "--epg" in rest and rest.index("--epg") + 1 < len(rest):
+            epg = rest[rest.index("--epg") + 1]
+        if not url and "--epg" not in rest:
+            ui.say("Usage: omarchy-tv iptv add <https://.../playlist.m3u8> [--name NAME] [--epg XMLTV_URL]")
+            return 1
+        if url:
+            pls = [p for p in pls if p.get("url") != url]
+            pls.append({"name": name or url.split("/")[2], "url": url})
+        c.request("PUT", "/v1/cinemarchy/iptv", {"playlists": pls, "epg": epg})
+        ui.say(f"📺 Saved IPTV config on TV ({len(pls)} playlist(s)).")
+        return 0
+    if sub in ("remove", "rm", "del", "delete"):
+        target = args[1] if len(args) > 1 else ""
+        before = len(pls)
+        pls = [p for p in pls if p.get("url") != target and p.get("name") != target]
+        c.request("PUT", "/v1/cinemarchy/iptv", {"playlists": pls, "epg": epg})
+        ui.say(f"Removed {before - len(pls)} playlist(s).")
+        return 0
+    ui.say("Usage: omarchy-tv iptv list | add <M3U_URL> [--name NAME] [--epg XMLTV_URL] | remove <URL_OR_NAME>")
+    return 1
+
+
+def cmd_handoff(args):
+    """Seamless mpv <-> Cinemarchy TV handoff (preserves exact playback position in seconds)."""
+    import subprocess
+    if "--back" in args or "--to-pc" in args:
+        c = client()
+        st = c.request("GET", "/v1/status")
+        r = c.request("POST", "/v1/cinemarchy/handoff-to-pc", {"title": "TV Handoff", "position": 0})
+        ho = r.get("handoff") or {}
+        url = ho.get("url") or (args[0] if args and not args[0].startswith("-") else "")
+        pos = ho.get("position", 0)
+        if url:
+            subprocess.Popen(["mpv", f"--start=+{pos}", url])
+            ui.say(f"▶ Resumed on PC mpv @ {pos:.1f}s: {url}")
+        return 0
+    target = None
+    pos = 0.0
+    title = None
+    i = 0
+    while i < len(args):
+        if args[i] in ("--at", "--pos", "--position") and i + 1 < len(args):
+            raw = args[i + 1]
+            if ":" in raw:
+                parts = [float(x) for x in raw.split(":")]
+                pos = parts[0] * 60 + parts[1] if len(parts) == 2 else parts[0] * 3600 + parts[1] * 60 + parts[2]
+            else:
+                pos = float(raw)
+            i += 2
+        elif args[i] == "--title" and i + 1 < len(args):
+            title = args[i + 1]
+            i += 2
+        elif not args[i].startswith("-") and target is None:
+            target = args[i]
+            i += 1
+        else:
+            i += 1
+    if not target:
+        target, ipc_pos, ipc_title = _query_mpv_ipc()
+        if ipc_pos and not pos:
+            pos = ipc_pos
+        if ipc_title and not title:
+            title = ipc_title
+    if not target:
+        ui.say("Usage: omarchy-tv handoff [<FILE|URL>] [--at MM:SS] (or run with mpv IPC at /tmp/mpv-socket)")
+        return 1
+    if target.startswith(("http://", "https://")):
+        c = client()
+        c.request("POST", "/v1/cinemarchy/handoff", {
+            "url": target,
+            "title": title or target,
+            "position": pos,
+            "from": "mpv · Omarchy PC"
+        })
+        ui.say(f"🎬 Handed off to Cinemarchy TV @ {pos:.1f}s: {title or target}")
+        return 0
+    cast_args = ["omarchy-link", "cast", target]
+    if pos > 0:
+        cast_args += ["--position", str(int(pos))]
+    return ui.run(cast_args)
 
 
 def cmd_webos_serve(args):
@@ -157,6 +325,44 @@ def main(argv):
             return 0
     if cmd in ("pair", "status", "cast"):
         return ui.run(["omarchy-link", cmd] + rest)
+    if cmd == "play":
+        return ui.run(["omarchy-link", "cast"] + rest)
+    if cmd in ("pause", "resume"):
+        return ui.run(["omarchy-link", "key", "play_pause"])
+    if cmd == "stop":
+        return ui.run(["omarchy-link", "cast", "--stop"])
+    if cmd == "seek":
+        sec = int(rest[0]) if rest else 0
+        c = client()
+        c.request("POST", "/v1/media", {"action": "seek", "position": sec})
+        return 0
+    if cmd == "handoff":
+        return cmd_handoff(rest)
+    if cmd == "snippets":
+        return cmd_snippets(rest)
+    if cmd == "iptv":
+        return cmd_iptv(rest)
+    if cmd == "plugins":
+        from omarchy_tv import plugins
+        return plugins.run(rest, client, say=ui.say)
+    if cmd == "adb-pair":
+        from omarchy_tv import adb_pair
+        return adb_pair.run(rest, say=ui.say)
+    if cmd == "adb-lock":
+        from omarchy_tv import adb_lock
+        return adb_lock.run(rest, say=ui.say, confirm=ui.confirm)
+    if cmd in ("wg", "wireguard"):
+        from omarchy_tv import wireguard
+        return wireguard.run(rest, say=ui.say)
+    if cmd == "send":
+        from omarchy_tv import send
+        return send.run(rest, client)
+    if cmd in ("queue", "ls", "cinemarchy"):
+        c = client()
+        r = c.request("GET", "/v1/cinemarchy/library")
+        for it in r.get("items", []):
+            ui.say(f"🎬 {it.get('title','')}  ({it.get('subtitle','')})")
+        return 0
     if cmd == "remote":
         return ui.run(["omarchy-link", "key", rest[0] if rest else (ui.choose(t("remote.prompt"), ["home", "back", "up", "down", "left", "right", "ok", "play_pause"]) or "home")])
     if cmd == "themes":

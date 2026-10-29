@@ -140,8 +140,18 @@ public final class Agents {
             int dot = t.indexOf('.');
             String frac = dot > 0 ? t.substring(dot + 1) : "";
             if (dot > 0) t = t.substring(0, dot);
-            java.time.LocalDateTime d = java.time.LocalDateTime.parse(t);
-            long ms = d.toInstant(java.time.ZoneOffset.UTC).toEpochMilli();
+            long ms;
+            if (android.os.Build.VERSION.SDK_INT >= 26) {
+                ms = java.time.LocalDateTime.parse(t).toInstant(java.time.ZoneOffset.UTC).toEpochMilli();
+            } else {   // java.time is missing on Android 7.x (minSdk 24, issue #56)
+                java.text.SimpleDateFormat f = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", java.util.Locale.US);
+                f.setLenient(false);
+                f.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+                java.util.Date d;
+                try { d = f.parse(t); } catch (java.text.ParseException pe) { return -1; }
+                if (d == null) return -1;
+                ms = d.getTime();
+            }
             if (!frac.isEmpty()) ms += Long.parseLong((frac + "000").substring(0, 3));
             return ms;
         } catch (RuntimeException e) {

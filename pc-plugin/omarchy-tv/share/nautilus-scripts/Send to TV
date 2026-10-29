@@ -1,0 +1,5 @@
+#!/bin/sh
+# Right-click > Scripts > Send to TV (Nautilus/Nemo/Caja). Streams each selected file to Cinemarchy.
+for f in "$@"; do
+  omarchy-tv send "$f" || notify-send "OmarchyTV" "Could not send $f" 2>/dev/null
+done

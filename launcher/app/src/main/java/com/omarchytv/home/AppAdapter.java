@@ -355,6 +355,7 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
     }
 
     private void launch(Entry e) {
+        AmbilightController.restoreFollowVideo(ctx);
         if (e.web != null) {
             if ("grok-bot".equals(e.web.id)) {
                 AskActivity.open(ctx);
@@ -537,7 +538,7 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
 
     /** Live Omarchy TUI 16:9 banner for the Grok Bot tile on the Home shelf, rendered dynamically in Theme.cur() colors. */
     static Drawable grokBotBanner(Context ctx) {
-        final android.graphics.Typeface tf = ctx.getResources().getFont(R.font.caskaydia);
+        final android.graphics.Typeface tf = CastUi.font(ctx);
         final android.graphics.Typeface tfBold = android.graphics.Typeface.create(tf, android.graphics.Typeface.BOLD);
         return new Drawable() {
             private final android.graphics.Paint p = new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);

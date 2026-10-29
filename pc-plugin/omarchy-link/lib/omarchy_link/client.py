@@ -108,6 +108,8 @@ class Client:
         self.host, self.port = tv["address"], int(tv.get("port", 47800))
         self.token = base64.b64decode(tv["token"])
         self.skew = 0
+        # None = not known yet; set from /v1/status capabilities. OMARCHY_LINK_ENCRYPT=0 forces plaintext.
+        self.encrypt = None if os.environ.get("OMARCHY_LINK_ENCRYPT", "1") != "0" else False
         netcheck.check_host(self.host, strict_subnet)
 
     # ------------------------------------------------------------- REST
@@ -115,8 +117,14 @@ class Client:
                 content_type: str = "application/json", timeout: float = 8.0, _retry: bool = True):
         body = raw if raw is not None else (json.dumps(payload).encode() if payload is not None else b"")
         ts = int(time.time()) + self.skew
-        auth, nonce = crypto.sign_request(self.token, self.pc_id, method, path, body, ts)
+        enc = bool(self.encrypt) and crypto.HAVE_AES
+        nonce = crypto.b64u(os.urandom(16))
+        if enc and body:   # the HMAC signs the ciphertext; the AAD binds it to this request's nonce
+            body = crypto.seal(self.token, "OTV1-E\n" + nonce, body)
+        auth, nonce = crypto.sign_request(self.token, self.pc_id, method, path, body, ts, nonce)
         headers = {"Authorization": auth, "User-Agent": USER_AGENT}
+        if enc:
+            headers[crypto.ENC_HEADER] = crypto.ENC_ALG
         if body:
             headers["Content-Type"] = content_type
         c = _conn(self.host, self.port, timeout)
@@ -126,20 +134,32 @@ class Client:
             data = r.read(JSON_MAX)
             sig = r.getheader("X-OTV-Sig", "")
             server_time = r.getheader("X-OTV-Time", "")
+            resp_enc = r.getheader(crypto.ENC_HEADER, "")
         except (OSError, http.client.HTTPException) as e:   # refused, reset, or a garbled/half-open reply
             raise LinkError(f"TV unreachable: {e}") from e
         finally:
             c.close()
+        sealed = data
+        if resp_enc == crypto.ENC_ALG and data:
+            if not enc:
+                raise LinkError("unexpected encrypted response", r.status, "bad_enc")
+            try:
+                data = crypto.unseal(self.token, "OTV1-E-R\n" + nonce, data)
+            except Exception as e:
+                raise LinkError("response decryption failed", r.status, "bad_enc") from e
         try:
             obj = json.loads(data) if data else {}
         except ValueError:
             obj = {}
+        if (self.encrypt is None and method == "GET" and path == "/v1/status" and r.status == 200
+                and sig and hmac.compare_digest(sig, crypto.sign_response(self.token, nonce, r.status, sealed))):
+            self.encrypt = crypto.ENC_CAP in (obj.get("capabilities") or [])
         if r.status == 401 and obj.get("error") == "clock_skew" and server_time.isdigit() and _retry:
             self.skew = int(server_time) - int(time.time())
             return self.request(method, path, payload, raw, content_type, timeout, False)
         if r.status in (200, 204) or obj.get("error") not in ("unauthorized", "clock_skew", "replay"):
             # every answer to a signed request must be signed by the TV, errors included
-            expected = crypto.sign_response(self.token, nonce, r.status, data)
+            expected = crypto.sign_response(self.token, nonce, r.status, sealed)
             if not sig or not hmac.compare_digest(sig, expected):
                 raise LinkError("response not signed by the paired TV", r.status, "bad_response_sig")
         if r.status not in (200, 204):
@@ -175,6 +195,10 @@ class Client:
 
     def put_screensaver(self, text: str):
         return self.request("PUT", "/v1/screensaver", {"text": text})
+
+    def put_grokbot(self, bot: dict | None):
+        """The Grok Bot Desktop Companion's current bot for the TV tile (None = not installed)."""
+        return self.request("PUT", "/v1/plugins/grokbot", {"bot": bot, "from": "pc"})
 
     def put_ai(self, ai: dict):
         return self.request("PUT", "/v1/ai", ai)

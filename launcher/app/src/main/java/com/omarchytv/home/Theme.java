@@ -46,7 +46,7 @@ final class Theme {
     }
 
     static Theme resolve(Context c, JSONObject themeCfg) {
-        String name = themeCfg != null ? themeCfg.optString("name", "tokyo-night").trim() : "tokyo-night";
+        String name = themeCfg != null ? themeCfg.optString("name", "last-horizon").trim() : "last-horizon";
         JSONObject stock = palette(c, name);
         if (stock == null) stock = palette(c, "tokyo-night");
         JSONObject pushed = themeCfg != null ? themeCfg.optJSONObject("colors") : null;

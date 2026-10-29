@@ -260,6 +260,35 @@ public final class OmarchyLink implements LinkServer.Host {
         });
     }
 
+    /** True when a PC is connected over the sealed link (the Grok Bot bridge needs one). */
+    static boolean hasPc() {
+        OmarchyLink r = runtime;
+        return r != null && r.live() && r.server.connectedClients() > 0;
+    }
+
+    /**
+     * Experimental Grok Bot companion bridge: grokbot_ask {id, text[, bot]} to the PC's omarchy-link, which
+     * forwards it to @tcballard's companion. TV-side refusals come back as a local grokbot_error.
+     */
+    static void grokbotAsk(String id, String text, String bot) {
+        OmarchyLink r = runtime;
+        if (!hasPc()) {
+            localGrokbotError(id, "not_connected");
+            return;
+        }
+        bg.execute(() -> {
+            String e = r.server.grokbotAsk(id, text, bot);
+            if (e != null) localGrokbotError(id, e);
+        });
+    }
+
+    private static void localGrokbotError(String id, String code) {
+        try {
+            emit("grokbot_error", new JSONObject().put("id", id).put("error", code).put("local", true));
+        } catch (org.json.JSONException ignored) {
+        }
+    }
+
     private static void localAskError(String id, String agentId, String code) {
         try {
             emit("agent_ask_error", new JSONObject().put("id", id).put("agentId", agentId).put("error", code).put("local", true));
@@ -783,6 +812,34 @@ public final class OmarchyLink implements LinkServer.Host {
     }
 
     /** Player / viewer state for the PC (any thread). Socket I/O goes to the Link worker. No PC: returns at once. */
+    /** Sends a TV -> PC mpv handoff event with current URL and playback position in seconds. */
+    static void handoffToPc(String title, String url, double position) {
+        OmarchyLink r = runtime;
+        if (r == null || !r.live()) return;
+        bg.execute(() -> {
+            try {
+                r.server.cinemarchyHandoffToPc(new JSONObject()
+                        .put("title", title != null ? title : "")
+                        .put("url", url != null ? url : "")
+                        .put("position", position));
+            } catch (Exception ignored) {
+            }
+        });
+    }
+
+    /** v2.13: asks paired PCs to pause/resume their mpv. Returns false when no PC is connected. */
+    static boolean mpvControl(String action) {
+        OmarchyLink r = runtime;
+        if (r == null || !r.live()) return false;
+        bg.execute(() -> {
+            try {
+                r.server.cinemarchyMpv(action);
+            } catch (Exception ignored) {
+            }
+        });
+        return true;
+    }
+
     static void castState(String id, String state, double position, double duration, String error) {
         OmarchyLink r = runtime;
         if (r == null || !r.live()) return;

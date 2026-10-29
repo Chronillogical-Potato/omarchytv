@@ -1,0 +1,36 @@
+# ~/.config/omarchy-tv/cinemarchy.toml
+# Example configuration for Cinemarchy (OmarchyTV v2.13.0-beta Media & TV Hub)
+
+[library]
+# Local media folders exposed to the paired TV on the LAN (read-only HTTP range streaming)
+roots = [
+  "~/Videos",
+  "~/Movies",
+  "~/TV",
+]
+scan_extensions = [".mp4", ".mkv", ".webm", ".m4v", ".mov", ".mp3", ".flac"]
+
+[playback]
+# Pause screensaver delay on the TV (seconds) before TTE / Omarchy Aquarium overlay appears
+pause_saver_delay_sec = 10
+# Screensaver mode during pause: "logo" (CINEMARCHY / OMARCHY TV) or "aquarium"
+pause_saver_mode = "logo"
+# Resume playback where you left off across PC <-> TV handoff
+remember_position = true
+
+[snippets]
+# Short video clips / ambient loops shown in Tab [4] Video Snippets
+roots = [
+  "~/Videos/Snippets",
+  "~/.local/share/omarchy/snippets",
+]
+
+[iptv]
+# User-supplied M3U / M3U8 playlists only (OmarchyTV bundles no channels or streams).
+# Only add playlists for streams you have the legal right to watch.
+# Push from the PC with:  omarchy-tv iptv add <m3u-url> --name "My TV" --epg <xmltv-url>
+playlists = [
+  # { name = "Home Tuner (TVHeadend / HDHomeRun)", url = "http://192.168.1.50:9981/playlist/channels.m3u" },
+]
+# Optional XMLTV EPG (.xml or .xml.gz) for Now / Next programme info in Cinemarchy
+epg = ""

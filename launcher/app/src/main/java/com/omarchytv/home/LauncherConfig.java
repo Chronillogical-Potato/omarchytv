@@ -352,6 +352,26 @@ final class LauncherConfig {
         }
     }
 
+    /** ISO-8601 with Z or +hh:mm offset, optional fraction, for API 24-25 (no java.time). 0 if unparseable. */
+    static long isoCompat(String s) {
+        try {
+            String t = s.trim();
+            int ms = 0;
+            int dot = t.indexOf('.', 19);
+            if (dot > 0) {
+                int end = dot + 1;
+                while (end < t.length() && Character.isDigit(t.charAt(end))) end++;
+                ms = Integer.parseInt((t.substring(dot + 1, end) + "000").substring(0, 3));
+                t = t.substring(0, dot) + t.substring(end);
+            }
+            java.text.SimpleDateFormat f = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", java.util.Locale.US);
+            java.util.Date d = f.parse(t);
+            return d == null ? 0L : d.getTime() + ms;
+        } catch (Exception e) {
+            return 0L;
+        }
+    }
+
     /** Epoch seconds, epoch ms, or an ISO-8601 string ("2026-10-19T00:10:00Z", with offset too). 0 if unknown. */
     static long parseTime(Object o) {
         try {
@@ -362,7 +382,8 @@ final class LauncherConfig {
             if (o instanceof String && !((String) o).isEmpty()) {
                 String s = ((String) o).trim();
                 if (s.matches("\\d+")) return parseTime(Long.parseLong(s));
-                return java.time.OffsetDateTime.parse(s).toInstant().toEpochMilli();
+                if (android.os.Build.VERSION.SDK_INT >= 26) return java.time.OffsetDateTime.parse(s).toInstant().toEpochMilli();
+                return isoCompat(s);   // java.time is missing on Android 7.x (minSdk 24, issue #56)
             }
         } catch (Exception ignored) {
         }
@@ -374,6 +395,44 @@ final class LauncherConfig {
     final String wallpaper;          // "omarchy", "procedural", or an absolute image path
     /** Opt-in PC active wallpaper sync (default false: use bundled MIT theme wallpaper / Liftoff Sunset fallback). */
     final boolean syncPcWallpaper;
+    /** v2.13: play animated MP4 intro (e.g. cumulus, last-horizon) before settling on still wallpaper. */
+    final boolean wallpaperIntro;
+    /** v2.13: rotate among animated themes on Home resume/boot (default true; locked false on manual pick). */
+    final boolean randomTheme;
+    /** v2.13: rotate among animated wallpapers/intros on Home resume/boot (default true; locked false on manual pick). */
+    final boolean randomWallpaper;
+    /** v2.13 Plugins Engine: SpaceX TV (com.sighmon.spacex-tv) & Grok Bot Companion (io.github.tcballard.grokbot-desktop). */
+    final boolean pluginSpacexTv;
+    final boolean pluginGrokbot;
+    final String grokbotMessage;
+    /** Experimental: the bot @tcballard's Grok Bot Desktop Companion shows on the PC, pushed by omarchy-link
+     *  ("" = not mirrored). Shape/colour names from his bots.json; fill 0 = use the theme accent. */
+    final String grokbotBotName, grokbotBotShape, grokbotBotMode, grokbotBotVersion;
+    final int grokbotBotFill;
+    /** v2.13 floating Grok Bot companion on the home screen: on/off, corner, extra offset (dp). */
+    final boolean companionOverlay;
+    final String companionCorner;
+    final int companionOffsetX, companionOffsetY;
+    static final String[] ANIMATED_THEMES = {"last-horizon", "cumulus"};
+    static final String[][] ANIMATED_INTROS = {
+            {"last-horizon", "0", "wallpapers/last-horizon/01-eyes-wide.webp"},
+            {"cumulus", "0", "wallpapers/cumulus/01-cloud-town-path.webp"},
+            {"cumulus", "1", "wallpapers/cumulus/02-cottage.webp"},
+            {"cumulus", "2", "wallpapers/cumulus/03-airship.webp"},
+            {"cumulus", "3", "wallpapers/cumulus/04-lighthouse.webp"}
+    };
+    /** v2.13: OLED anti-burn-in pixel shift / periodic subtle drift. */
+    final boolean antiBurnIn;
+    /** v2.13: Ambient lighting / Ambilight mode: "off" (default), "theme", "hybrid", "video". */
+    final String ambilightMode;
+    /** v2.13: Optional WLED / Hyperion.NG bridge host on LAN. */
+    final String ambilightHost;
+    /** v2.13: Ambilight / hub brightness 0..100 (default 70). */
+    final int ambilightBrightness;
+    /** v2.13: Philips JointSpace host ("127.0.0.1" = this TV, or a LAN IP). */
+    final String ambilightTvIp;
+    /** v2.13: Screensaver mode ("logo" default or "aquarium"). */
+    final String screensaverMode;
     /** v2.10: which of the current theme's official backgrounds (assets/wallpapers/<theme>/), like Omarchy next-background. */
     final int wallpaperBg;
     /** The resolved Omarchy theme (see Theme). */
@@ -383,6 +442,8 @@ final class LauncherConfig {
     final String logo;               // "omarchy-tv" (default), "omarchy" or "original" (see Art)
     final String screensaverArt;     // defaults to logo
     final boolean screensaverClock;
+    /** v2.13: procedural ST3 synth audio for Aquarium screensaver (default true). */
+    final boolean saverSound;
     /** v2.9: screensaver.txt pushed by the PC (link.screensaver, PUT /v1/screensaver); "" = OMARCHY TV logo. */
     final String screensaverText;
     /** Logo width as a share of the screen: "small" 45%, "medium" 56%, "large" 68% (default). */
@@ -429,12 +490,12 @@ final class LauncherConfig {
 
     private static LauncherConfig cached;
 
-    private LauncherConfig(Context c, JSONObject j, long modified) {
-        dock = strings(j, "dock", Arrays.asList(c.getResources().getStringArray(R.array.dock_apps)));
-        hidden = strings(j, "hidden", Arrays.asList(c.getResources().getStringArray(R.array.hidden_apps)));
+    LauncherConfig(Context c, JSONObject j, long modified) {
+        dock = strings(j, "dock", c != null ? Arrays.asList(c.getResources().getStringArray(R.array.dock_apps)) : Collections.<String>emptyList());
+        hidden = strings(j, "hidden", c != null ? Arrays.asList(c.getResources().getStringArray(R.array.hidden_apps)) : Collections.<String>emptyList());
         order = strings(j, "order", Collections.<String>emptyList());
         language = j != null ? j.optString("language", "auto").trim() : "auto";
-        panes = strings(j, "panes", Arrays.asList(c.getResources().getStringArray(R.array.default_panes)));
+        panes = strings(j, "panes", c != null ? Arrays.asList(c.getResources().getStringArray(R.array.default_panes)) : Collections.<String>emptyList());
         List<AiEntry> aiList = new ArrayList<>();
         JSONArray aa = j != null ? j.optJSONArray("ai") : null;
         if (aa != null) {
@@ -580,24 +641,66 @@ final class LauncherConfig {
         weatherLon = wx != null ? wx.optDouble("lon", Double.NaN) : Double.NaN;
         weatherPlace = wx != null ? wx.optString("place", "") : "";
         tempF = j != null && "F".equalsIgnoreCase(j.optString("tempUnit", "C").trim());
-        wallpaper = j != null ? j.optString("wallpaper", c.getString(R.string.wallpaper)).trim() : c.getString(R.string.wallpaper).trim();
+        String defWp = c != null ? c.getString(R.string.wallpaper).trim() : "omarchy";
+        wallpaper = j != null ? j.optString("wallpaper", defWp).trim() : defWp;
         syncPcWallpaper = j != null && j.optBoolean("syncPcWallpaper", false);
+        wallpaperIntro = j == null || j.optBoolean("wallpaper_intro", j.optBoolean("wallpaperIntro", true));
+        randomTheme = j == null || j.optBoolean("random_theme", j.optBoolean("randomTheme", true));
+        randomWallpaper = j == null || j.optBoolean("random_wallpaper", j.optBoolean("randomWallpaper", true));
+        JSONObject plObj = j != null ? j.optJSONObject("plugins") : null;
+        pluginSpacexTv = plObj == null || plObj.optBoolean("spacexTv", true);
+        pluginGrokbot = plObj == null || plObj.optBoolean("grokbot", true);
+        grokbotMessage = plObj != null ? plObj.optString("grokbotMessage", "") : "";
+        JSONObject gbBot = plObj != null ? plObj.optJSONObject("grokbotBot") : null;
+        grokbotBotName = gbBot != null ? gbBot.optString("shortName", gbBot.optString("name", "")) : "";
+        grokbotBotShape = gbBot != null ? gbBot.optString("shape", "bean") : "bean";
+        grokbotBotMode = gbBot != null ? gbBot.optString("mode", "offline") : "offline";
+        grokbotBotVersion = gbBot != null && !gbBot.isNull("version") ? gbBot.optString("version", "") : "";
+        int gbFill = 0;
+        try {
+            String fs = gbBot != null ? gbBot.optString("fill", "") : "";
+            if (fs.matches("#[0-9A-Fa-f]{6}")) gbFill = 0xFF000000 | Integer.parseInt(fs.substring(1), 16);
+        } catch (NumberFormatException ignored) {
+        }
+        grokbotBotFill = gbFill;
+        companionOverlay = pluginGrokbot && (plObj == null || plObj.optBoolean("companionOverlay", true));
+        companionCorner = CompanionPlacement.corner(plObj != null ? plObj.optString("companionCorner", "bottom-right") : "bottom-right");
+        companionOffsetX = CompanionPlacement.offset(plObj != null ? plObj.optInt("companionOffsetX", 0) : 0);
+        companionOffsetY = CompanionPlacement.offset(plObj != null ? plObj.optInt("companionOffsetY", 0) : 0);
+        antiBurnIn = j == null || j.optBoolean("anti_burn_in", j.optBoolean("antiBurnIn", true));
+        String ambMode = j != null ? j.optString("ambilight_mode", j.optString("ambilightMode", "off")).trim() : "off";
+        if (!"theme".equals(ambMode) && !"hybrid".equals(ambMode) && !"video".equals(ambMode) && !"cinema".equals(ambMode)) ambMode = "off";
+        ambilightMode = ambMode;
+        ambilightHost = j != null ? j.optString("ambilight_host", j.optString("ambilightHost", "")).trim() : "";
+        ambilightBrightness = j != null ? Math.max(0, Math.min(100, j.optInt("ambilight_brightness", 70))) : 70;
+        String tvIp = j != null ? j.optString("ambilight_tv_ip", "127.0.0.1").trim() : "127.0.0.1";
+        ambilightTvIp = tvIp.matches("[0-9A-Za-z.:-]{1,64}") ? tvIp : "127.0.0.1";
         wallpaperBg = j != null ? Math.max(0, j.optInt("wallpaper_bg", 0)) : 0;
         JSONObject theme = j != null ? j.optJSONObject("theme") : null;
-        // All colours come from the Omarchy theme (pushed colours > bundled stock palette > Tokyo Night).
+        if (theme == null && j != null && j.opt("theme") instanceof String) {
+            try { theme = new JSONObject().put("name", j.optString("theme", "last-horizon")); } catch (Exception ignored) {}
+        }
+        // All colours come from the Omarchy theme (pushed colours > bundled stock palette > Last Horizon default).
         this.theme = Theme.resolve(c, theme);
         accent = this.theme.accent;
         accent2 = this.theme.accent2;
         JSONObject ss = j != null ? j.optJSONObject("screensaver") : null;
-        logo = j != null ? j.optString("logo", c.getString(R.string.logo)).trim() : c.getString(R.string.logo).trim();
-        screensaverArt = ss != null ? ss.optString("art", logo).trim() : logo;
-        screensaverClock = ss != null ? ss.optBoolean("clock", c.getResources().getBoolean(R.bool.screensaver_clock))
-                : c.getResources().getBoolean(R.bool.screensaver_clock);
+        String defLogo = c != null ? c.getString(R.string.logo).trim() : "omarchy-tv";
+        logo = j != null ? j.optString("logo", defLogo).trim() : defLogo;
+        String defaultSsArt = (ss != null && ss.has("mode") && !"aquarium".equals(ss.optString("mode"))) ? logo : "aquarium";
+        screensaverArt = ss != null ? ss.optString("art", defaultSsArt).trim() : "aquarium";
+        boolean aqArt = "aquarium".equals(screensaverArt) || "aquarium-classic".equals(screensaverArt);
+        String ssMode = ss != null ? ss.optString("mode", aqArt ? "aquarium" : "logo").trim() : "aquarium";
+        if (aqArt) ssMode = "aquarium";
+        screensaverMode = ssMode;
+        boolean defSsClock = c != null && c.getResources().getBoolean(R.bool.screensaver_clock);
+        screensaverClock = ss != null ? ss.optBoolean("clock", defSsClock) : defSsClock;
+        saverSound = ss == null || ss.optBoolean("sound", j != null ? j.optBoolean("saverSound", true) : true);
         uiSize = j != null ? j.optString("uiSize", "medium").trim() : "medium";
         JSONObject geo = j != null ? j.optJSONObject("geometry") : null;
         fontScale = clamp(geo != null ? (float) geo.optDouble("fontScale", 1.0) : 1f, 0.8f, 1.4f);
         tileScale = clamp(geo != null ? (float) geo.optDouble("tileScale", 1.0) : 1f, 0.8f, 1.1f);
-        int defCols = Math.max(4, Math.min(7, c.getResources().getInteger(R.integer.columns)));
+        int defCols = c != null ? Math.max(4, Math.min(7, c.getResources().getInteger(R.integer.columns))) : 5;
         String size = geo != null ? geo.optString("appSize", "").trim() : "";
         int idx = Arrays.asList(APP_SIZES).indexOf(size);
         appSize = idx >= 0 ? size : APP_SIZES[defCols - 4];
@@ -663,6 +766,94 @@ final class LauncherConfig {
             if (h != null && h.startsWith(prefix)) return true;
         }
         return false;
+    }
+
+    /**
+     * Rotates theme and/or animated wallpaper/intro in {@code j} according to {@code random_theme} and
+     * {@code random_wallpaper} flags. Returns true if {@code j} was modified.
+     */
+    static boolean applyRandomRotation(JSONObject j, java.util.Random rng) {
+        if (j == null || rng == null) return false;
+        boolean rt = j.optBoolean("random_theme", j.optBoolean("randomTheme", true));
+        boolean rw = j.optBoolean("random_wallpaper", j.optBoolean("randomWallpaper", true));
+        if (!rt && !rw) return false;
+        try {
+            JSONObject curThemeObj = j.optJSONObject("theme");
+            String curTheme = curThemeObj != null ? curThemeObj.optString("name", "last-horizon") : j.optString("theme", "last-horizon");
+            int curBg = j.optInt("wallpaper_bg", 0);
+            String curWp = j.optString("wallpaper", "omarchy");
+            if (rt && rw) {
+                int curIdx = -1;
+                for (int i = 0; i < ANIMATED_INTROS.length; i++) {
+                    if (ANIMATED_INTROS[i][0].equals(curTheme) && Integer.parseInt(ANIMATED_INTROS[i][1]) == curBg) {
+                        curIdx = i;
+                        break;
+                    }
+                }
+                int pick = rng.nextInt(ANIMATED_INTROS.length);
+                if (ANIMATED_INTROS.length > 1 && pick == curIdx) {
+                    pick = (pick + 1 + rng.nextInt(ANIMATED_INTROS.length - 1)) % ANIMATED_INTROS.length;
+                }
+                String[] entry = ANIMATED_INTROS[pick];
+                JSONObject t = curThemeObj != null ? new JSONObject(curThemeObj.toString()) : new JSONObject();
+                t.put("name", entry[0]);
+                t.put("source", "tv");
+                j.put("theme", t);
+                j.put("wallpaper", "omarchy");
+                j.put("wallpaper_bg", Integer.parseInt(entry[1]));
+                return true;
+            } else if (rt) {
+                String nextTheme = ANIMATED_THEMES[rng.nextInt(ANIMATED_THEMES.length)];
+                if (ANIMATED_THEMES.length > 1 && nextTheme.equals(curTheme)) {
+                    for (String cand : ANIMATED_THEMES) {
+                        if (!cand.equals(curTheme)) { nextTheme = cand; break; }
+                    }
+                }
+                JSONObject t = curThemeObj != null ? new JSONObject(curThemeObj.toString()) : new JSONObject();
+                t.put("name", nextTheme);
+                t.put("source", "tv");
+                j.put("theme", t);
+                return true;
+            } else {
+                int curIdx = -1;
+                for (int i = 0; i < ANIMATED_INTROS.length; i++) {
+                    if (ANIMATED_INTROS[i][2].equals(curWp)
+                            || ("omarchy".equals(curWp) && ANIMATED_INTROS[i][0].equals(curTheme) && Integer.parseInt(ANIMATED_INTROS[i][1]) == curBg)) {
+                        curIdx = i;
+                        break;
+                    }
+                }
+                int pick = rng.nextInt(ANIMATED_INTROS.length);
+                if (ANIMATED_INTROS.length > 1 && pick == curIdx) {
+                    pick = (pick + 1 + rng.nextInt(ANIMATED_INTROS.length - 1)) % ANIMATED_INTROS.length;
+                }
+                String[] entry = ANIMATED_INTROS[pick];
+                if (entry[0].equals(curTheme)) {
+                    j.put("wallpaper", "omarchy");
+                    j.put("wallpaper_bg", Integer.parseInt(entry[1]));
+                } else {
+                    j.put("wallpaper", entry[2]);
+                    j.put("wallpaper_bg", Integer.parseInt(entry[1]));
+                }
+                return true;
+            }
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    static void lockTheme(JSONObject j, String themeName) throws org.json.JSONException {
+        JSONObject t = new JSONObject();
+        t.put("name", themeName);
+        t.put("source", "tv");
+        j.put("theme", t);
+        j.put("random_theme", false);
+    }
+
+    static void lockWallpaper(JSONObject j, String wallpaper, int bgIdx) throws org.json.JSONException {
+        j.put("wallpaper", wallpaper);
+        j.put("wallpaper_bg", bgIdx);
+        j.put("random_wallpaper", false);
     }
 
     static float sizeFraction(String size) {

@@ -5,11 +5,14 @@
 html,body{margin:0;height:100%;background:#000;overflow:hidden;cursor:none;user-select:none}
 body{display:flex;flex-direction:column;align-items:center;justify-content:center}
 pre{margin:0;font-family:mono,monospace;line-height:1.15;color:#7aa2f7;white-space:pre}
-#ssclock{margin-top:28px;font-family:mono,monospace;font-size:28px;color:#a9b1d6;letter-spacing:1px;display:none}
-</style></head><body><pre id="art"></pre><div id="ssclock"></div>
+#aqcanvas{position:fixed;top:0;left:0;width:100vw;height:100vh;display:none}
+#ssclock{margin-top:28px;font-family:mono,monospace;font-size:28px;color:#a9b1d6;letter-spacing:1px;display:none;z-index:10}
+#ssstatus{margin-top:14px;font-family:mono,monospace;font-size:22px;color:#7aa2f7;letter-spacing:0.6px;display:none;z-index:10}
+</style></head><body><canvas id="aqcanvas"></canvas><pre id="art"></pre><div id="ssstatus"></div><div id="ssclock"></div>
+<script src="homage.js"></script>
 <script>
-// omarchy-screensaver on LG webOS: loop `ttfx --random-effect` over screensaver-tv.txt, black, centred, ~65% width.
-// Same 37 effects as OmarchyTV 2.11.0 Android (official tte.js ES modules -> fallback tte-bundle.js).
+// omarchy-screensaver on LG webOS: loop `ttfx --random-effect` over screensaver-tv.txt, or render the
+// multi-layer Omarchy Cyber-TUI Aquarium when mode === 'aquarium'.
 var S=window.OmarchySaver||(window.parent&&window.parent.OmarchySaver)||null;
 function log(m){try{S&&S.log?S.log(String(m)):console.log(m)}catch(x){}}
 window.onerror=function(msg,src,line,col,err){log('JS error: '+msg+' @'+src+':'+line+':'+col);return false};
@@ -19,7 +22,19 @@ if(!Object.fromEntries)Object.fromEntries=function(it){var o={};Array.from(it).f
 if(!window.queueMicrotask)window.queueMicrotask=function(f){Promise.resolve().then(f)};
 if(!window.ResizeObserver)window.ResizeObserver=function(){this.observe=function(){};this.disconnect=function(){}};
 
+var aqSoundOn = true;
+var toggleAqSound = null;
 function dismiss(e){
+  if(e && e.type === 'keydown'){
+    var k = (e.key || '').toLowerCase();
+    var kc = e.keyCode || 0;
+    if((k === 'm' || kc === 77 || kc === 192) && typeof toggleAqSound === 'function'){
+      toggleAqSound();
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+  }
   if(S&&S.dismiss){S.dismiss();if(e){e.preventDefault();e.stopPropagation();}}
 }
 window.addEventListener('keydown',dismiss,true);
@@ -27,12 +42,19 @@ window.addEventListener('mousedown',dismiss,true);
 
 (function(){
   var text=(S&&S.text&&S.text())||"";
+  var mode=(S&&S.saverMode&&S.saverMode())||"logo";
   var pre=document.getElementById('art');
   var clk=document.getElementById('ssclock');
+  var sts=document.getElementById('ssstatus');
+  var aqc=document.getElementById('aqcanvas');
   var base=(S&&S.color&&S.color())||'#7aa2f7';
   pre.style.color=base;
   if(S&&S.clockColor)clk.style.color=S.clockColor();
+
   function tickClock(){
+    var stTxt=(S&&S.statusOverride&&S.statusOverride())||"";
+    if(stTxt){sts.style.display='block';sts.textContent=stTxt;sts.style.color=base;}
+    else sts.style.display='none';
     if(S&&S.showClock&&S.showClock()){
       clk.style.display='block';
       var d=new Date();
@@ -42,7 +64,24 @@ window.addEventListener('mousedown',dismiss,true);
     }
   }
   tickClock();
-  setInterval(tickClock,5000);
+  setInterval(tickClock,2000);
+
+  if(mode==='aquarium'){
+    pre.style.display='none';
+    aqc.style.display='block';
+    var variant=(S&&S.saverVariant&&S.saverVariant())||'homage';
+    var homageOk=false;
+    if(variant!=='classic'&&window.OmarchyHomage){
+      try{
+        var hz=window.OmarchyHomage.run(aqc,S,{soundOn:aqSoundOn});
+        toggleAqSound=function(){aqSoundOn=hz.toggleSound();};
+        homageOk=true;
+      }catch(err){log('homage aquarium failed, falling back to classic: '+err.message);}
+    }
+    if(!homageOk)runAquarium(aqc);
+    return;
+  }
+
   var excl=((S&&S.exclude&&S.exclude())||'').split(',').map(function(s){return s.trim()}).filter(Boolean);
   var frac=(S&&S.widthFraction&&S.widthFraction())||0.65;
   function clean(){return text.replace(/\s+$/,'')}
@@ -56,10 +95,10 @@ window.addEventListener('mousedown',dismiss,true);
   }
   addEventListener('resize',function(){fit()});
   function whenSized(cb){ if(fit())cb(); else requestAnimationFrame(function(){whenSized(cb)}); }
-  function run(TTE,mode){
+  function run(TTE,mName){
     var names=TTE.effectNames().filter(function(n){return excl.indexOf(n)<0});
     if(!names.length)names=TTE.effectNames();
-    log('tte effects available: '+TTE.effectNames().length+' (mode '+mode+', active '+names.length+')');
+    log('tte effects available: '+TTE.effectNames().length+' (mode '+mName+', active '+names.length+')');
     var last=null,fx=null,first=true;
     pre.textContent=clean();
     whenSized(function(){next()});
@@ -76,7 +115,7 @@ window.addEventListener('mousedown',dismiss,true);
       }catch(err){log('effect '+e+' failed: '+err.message);setTimeout(next,200);return}
       function count(ts){ if(!t0)t0=ts; frames++; if(fx&&fx.running)requestAnimationFrame(count); }
       requestAnimationFrame(count);
-      if(first){first=false;try{S&&S.drawn&&S.drawn(mode,TTE.effectNames().length,e)}catch(x){}}
+      if(first){first=false;try{S&&S.drawn&&S.drawn(mName,TTE.effectNames().length,e)}catch(x){}}
       fx.play().then(function(){
         setTimeout(next,1500);
       },function(){setTimeout(next,0)});
@@ -92,8 +131,6 @@ window.addEventListener('mousedown',dismiss,true);
     sc.onerror=function(){asciiFallback('tte-bundle.js failed to load')};
     document.head.appendChild(sc);
   }
-  // Engines too old for tte-bundle.js (webOS 3.x / Chrome 38), like the Android AsciiSaverView fallback:
-  // a decrypt-style reveal of the logo, a 5 s hold, and a new random spot every cycle against burn-in.
   function asciiFallback(why){
     log('tte.js unavailable ('+why+'): ASCII fallback');
     var art=clean(),glyphs='\u2591\u2592\u2593\u2588\u2584\u2580\u25a0\u25a1\u25aa\u25ab01',body=document.body;
@@ -120,6 +157,361 @@ window.addEventListener('mousedown',dismiss,true);
       run({TextEffect:m.TextEffect,effectNames:m.effectNames},'official');
     },function(err){loadBundle(err&&err.message||err)});
   }
+
+  function runAquarium(cv){
+    var ctx=cv.getContext('2d');
+    var startMs=Date.now();
+    var vuAmps=[0.45,0.55,0.40,0.30];
+    var actx=null,synthTimer=null;
+
+    function startWebSynth(){
+      if(synthTimer)return;
+      try{
+        var AC=window.AudioContext||window.webkitAudioContext;
+        if(!AC)return;
+        if(!actx)actx=new AC();
+        if(actx.state==='suspended')actx.resume();
+      }catch(x){return;}
+      var step16=0;
+      var bassNotes=[65.41,77.78,87.31,98.00,116.54,98.00,87.31,77.78];
+      var arpChords=[
+        [261.63,311.13,392.00,466.16,587.33],
+        [207.65,261.63,311.13,392.00,466.16],
+        [174.61,207.65,261.63,311.13,392.00],
+        [196.00,246.94,293.66,349.23,392.00]
+      ];
+      var padNotes=[130.81,155.56,174.61,196.00];
+      synthTimer=setInterval(function(){
+        if(!aqSoundOn||!actx)return;
+        try{
+          var now=actx.currentTime;
+          var bar=Math.floor(step16/16)%4;
+          // CH1: PWM/Saw Bass on even 16ths
+          if(step16%2===0){
+            var o1=actx.createOscillator(),g1=actx.createGain();
+            o1.type='sawtooth';
+            o1.frequency.setValueAtTime(bassNotes[Math.floor(step16/2)%bassNotes.length],now);
+            g1.gain.setValueAtTime(0.055,now);
+            g1.gain.exponentialRampToValueAtTime(0.002,now+0.22);
+            o1.connect(g1);g1.connect(actx.destination);
+            o1.start(now);o1.stop(now+0.23);
+            vuAmps[0]=0.85;
+          }else{
+            vuAmps[0]=Math.max(0.2,vuAmps[0]*0.65);
+          }
+          // CH2: Crystalline ST3 Arpeggio
+          var chord=arpChords[bar];
+          var o2=actx.createOscillator(),g2=actx.createGain();
+          o2.type='triangle';
+          o2.frequency.setValueAtTime(chord[step16%chord.length],now);
+          g2.gain.setValueAtTime(0.04,now);
+          g2.gain.exponentialRampToValueAtTime(0.001,now+0.11);
+          o2.connect(g2);g2.connect(actx.destination);
+          o2.start(now);o2.stop(now+0.12);
+          vuAmps[1]=0.55+(step16%3)*0.18;
+          // CH3: Dreamy underwater pad on bar start
+          if(step16%8===0){
+            var o3=actx.createOscillator(),g3=actx.createGain();
+            o3.type='sine';
+            o3.frequency.setValueAtTime(padNotes[bar],now);
+            g3.gain.setValueAtTime(0.002,now);
+            g3.gain.linearRampToValueAtTime(0.035,now+0.3);
+            g3.gain.exponentialRampToValueAtTime(0.001,now+0.95);
+            o3.connect(g3);g3.connect(actx.destination);
+            o3.start(now);o3.stop(now+0.98);
+            vuAmps[2]=0.82;
+          }else{
+            vuAmps[2]=Math.max(0.3,vuAmps[2]*0.88);
+          }
+          // CH4: Bio-sonar ping every 32 steps (4s) + echo
+          if(step16%32===0||step16%32===3){
+            var isEcho=(step16%32===3);
+            var o4=actx.createOscillator(),g4=actx.createGain();
+            o4.type='sine';
+            o4.frequency.setValueAtTime(1318.5,now);
+            g4.gain.setValueAtTime(isEcho?0.022:0.05,now);
+            g4.gain.exponentialRampToValueAtTime(0.0008,now+0.32);
+            o4.connect(g4);g4.connect(actx.destination);
+            o4.start(now);o4.stop(now+0.34);
+            vuAmps[3]=isEcho?0.55:0.95;
+          }else{
+            vuAmps[3]=Math.max(0.15,vuAmps[3]*0.75);
+          }
+          step16++;
+        }catch(x){}
+      },125);
+    }
+
+    function stopWebSynth(){
+      if(synthTimer){clearInterval(synthTimer);synthTimer=null;}
+    }
+
+    toggleAqSound=function(){
+      aqSoundOn=!aqSoundOn;
+      if(aqSoundOn)startWebSynth();
+      else stopWebSynth();
+    };
+    if(aqSoundOn)startWebSynth();
+
+    function pal(){
+      var p=(S&&S.palette&&S.palette())||{};
+      return {
+        name:p.name||'tokyo-night',
+        bg:p.bg||'#1a1b26',
+        fg:p.fg||'#a9b1d6',
+        fgBright:p.fgBright||'#c0caf5',
+        fgDim:p.fgDim||'#565f89',
+        accent:p.accent||'#7aa2f7',
+        accent2:p.accent2||'#bb9af7',
+        cyan:p.cyan||'#7dcfff',
+        green:p.green||'#9ece6a',
+        magenta:p.magenta||'#bb9af7',
+        yellow:p.yellow||'#e0af68',
+        red:p.red||'#f7768e'
+      };
+    }
+
+    var WHALE_L=[
+      "       .---.   .·°ºO                                 ",
+      "   ___/     \\___                                     ",
+      "  /   '-----'   \\____________________________________",
+      " /  ●   ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄       /  \\",
+      "|      █████████████████████████████████████=====(    |",
+      " \\      ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀       \\__/",
+      "  \\___,-----,___/¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯"
+    ];
+    var SHARK_R=[
+      "              /|                ",
+      "     _______ / |       |\\       ",
+      "   /  ●   OMARCHY      | \\  /|  ",
+      "  <   ═══════════════  |  \\/ |  ",
+      "   \\________   ________|  /\\ |  ",
+      "            \\ |        | /  \\|  ",
+      "             \\|        |/       "
+    ];
+    var SUB_R=[
+      "         _[||]_          ",
+      "    .---'======'---.     ",
+      "   | [OMARCHY-ROV] ●|===▶",
+      "    '---.______.---'     ",
+      "       /  /  \\  \\        "
+    ];
+    var ANGLER_L=[
+      "     .---.               ",
+      "    /     \\  ___         ",
+      "   *       `/   \\___/|   ",
+      "          /  ●  /    |   ",
+      "         <  ▲▲▲      |   ",
+      "          \\_____\\___\\|   "
+    ];
+    var JELLY_FRAMES=[
+      [
+        "   .─▀▀▀─.   ",
+        "  (  ● ●  )  ",
+        "   `─┬─┬─'   ",
+        "    / │ \\    ",
+        "   ~  ~  ~   "
+      ],
+      [
+        "  .──▀▀▀──.  ",
+        " (   ● ●   ) ",
+        "  `──┬─┬──'  ",
+        "    │ │ │    ",
+        "    ~ ~ ~    "
+      ]
+    ];
+    var SUNKEN_TERM=[
+      "  ┌───────────────────────────────┐  ",
+      "  │ █▀█ █▀▄▀█ ▄▀█ █▀█ █▀▀ █ █ █ █ │  ",
+      "  │ █▄█ █ ▀ █ █▀█ █▀▄ █▄▄ █▀█  █  │  ",
+      "  └──────┴─────────────────┴──────┘  "
+    ];
+    var SCROLL_TEXT="   ★ OMARCHY TV · SECOND REALITY ABYSS 1993//2026 · CODE & PIXELS BY MARCO PORRO · GREETZ TO FUTURE CREW & DHH · 60FPS REALTIME ANSI ENGINE ★   ";
+    var GLENZ_V=[[0,1.25,0],[0,-1.25,0],[1.15,0,0],[-1.15,0,0],[0,0,1.15],[0,0,-1.15]];
+    var GLENZ_E=[[0,2],[0,3],[0,4],[0,5],[1,2],[1,3],[1,4],[1,5],[2,4],[4,3],[3,5],[5,2]];
+
+    function drawSprite(lines,x,y,cw,ch,mainCol,hiCol){
+      for(var r=0;r<lines.length;r++){
+        var ln=lines[r];
+        ctx.fillStyle=(ln.indexOf('●')>=0||ln.indexOf('*')>=0||ln.indexOf('OMARCHY')>=0)?hiCol:mainCol;
+        ctx.fillText(ln,x,y+r*ch*0.88);
+      }
+    }
+
+    function loop(){
+      var w=innerWidth||1920,h=innerHeight||1080;
+      if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h;}
+      var t=pal();
+      var sec=(Date.now()-startMs)/1000;
+      ctx.setTransform(1,0,0,1,0,0);
+      ctx.fillStyle=t.bg;
+      ctx.fillRect(0,0,w,h);
+      // anti burn-in: slow whole-scene pixel shift (a few px per minute)
+      ctx.setTransform(1,0,0,1,Math.round(Math.sin(sec/53)*7+Math.sin(sec/211)*5),Math.round(Math.cos(sec/67)*5));
+      var hudCyc=(sec+3)%45,hudA=hudCyc<10?1:(hudCyc<12?1-(hudCyc-10)/2:(hudCyc>43?(hudCyc-43)/2:0));
+      var gridCols=112,gridRows=36;
+      var cw=w/gridCols,ch=h/gridRows;
+      var fs=Math.min(cw*1.65,ch*0.88);
+      ctx.font='bold '+Math.round(fs)+'px mono, monospace';
+
+      // 1. Top TUI Status Header + ST3 4-Channel VU Meter + Sound Toggle
+      ctx.globalAlpha=Math.max(0.0,hudA);
+      ctx.fillStyle=t.fgBright;
+      ctx.fillText('[ omarchy://abyss-node · depth 420m · bio-sonar: ONLINE · link: 10Gbps · theme:'+t.name+' ]',cw*1.5,ch*1.0);
+      var vuGlyphs='▁▂▃▄▅▆▇';
+      var st3='[ ST3·PM/FC ';
+      for(var ci=0;ci<4;ci++){
+        var vLen=aqSoundOn?Math.min(7,1+Math.round((vuAmps[ci]*0.65+Math.abs(Math.sin(sec*(4.2+ci*1.3)+ci))*0.45)*6)):1;
+        st3+='C'+(ci+1)+':'+vuGlyphs.substring(0,vLen)+' ';
+      }
+      st3+=aqSoundOn?'· 125 BPM · ♪ ST3 AUDIO: ON (M) ]':'· 125 BPM · ♪ ST3 AUDIO: MUTED (M) ]';
+      ctx.fillStyle=aqSoundOn?t.green:t.fgDim;
+      ctx.fillText(st3,cw*1.5,ch*2.0); // own second row: never overlaps the header
+      ctx.globalAlpha=1.0;
+
+      // 2. VGA Copperbars + 2D Interference Plasma Waves
+      var coppers=[t.accent,t.accent2,t.cyan,t.magenta,t.green,t.yellow];
+      for(var cr=0;cr<5;cr++){
+        var ry=ch*(2.45+cr*0.16+Math.sin(sec*3.2+cr*0.7)*0.12);
+        ctx.strokeStyle=coppers[(cr+Math.floor(sec*4))%coppers.length];
+        ctx.globalAlpha=0.55;
+        ctx.lineWidth=Math.max(2,ch*0.11);
+        ctx.beginPath();ctx.moveTo(0,ry);ctx.lineTo(w,ry);ctx.stroke();
+      }
+      ctx.globalAlpha=1.0;
+      var pGlyphs=['░','▒','▓','█','▓','▒'];
+      for(var pr=0;pr<2;pr++){
+        var pl='';
+        for(var pc=0;pc<gridCols;pc++){
+          var v=Math.sin(pc*0.14+sec*2.4)+Math.cos(pr*0.9-sec*1.8)+Math.sin((pc+pr*6)*0.09+sec*3.1);
+          pl+=pGlyphs[Math.abs(Math.round((v+3)*2.2))%pGlyphs.length];
+        }
+        ctx.fillStyle=pr===0?t.cyan:t.accent2;
+        ctx.fillText(pl,0,ch*(3.55+pr*0.82));
+      }
+
+      // 3. Second Reality Sine-Wave Scroller
+      var sOff=Math.floor(sec*14)%SCROLL_TEXT.length;
+      var cPhase=(sec*14)-Math.floor(sec*14);
+      for(var sc=0;sc<66;sc++){
+        var chChr=SCROLL_TEXT.charAt((sOff+sc)%SCROLL_TEXT.length);
+        if(chChr===' ')continue;
+        var sx=(22+sc-cPhase)*cw;
+        var sy=(6.05+Math.sin(sec*3.8+sc*0.22)*0.4)*ch;
+        ctx.fillStyle=sc%3===0?t.yellow:(sc%2===0?t.cyan:t.fgBright);
+        ctx.fillText(chChr,sx,sy);
+      }
+
+      // 4. Bathymetry Depth Gauge Ticks
+      ctx.fillStyle=t.fgDim;
+      for(var dg=1;dg<=4;dg++){
+        var dy=(5.5+dg*5.2)*ch;
+        ctx.fillText((dg*100)+'m ──',cw*0.6,dy);
+        ctx.fillText('── '+(dg*100)+'m',cw*(gridCols-7.8),dy);
+      }
+
+      // 5. Sweeping Bio-Sonar Radar Scanline
+      var sonarX=((sec*18)%(gridCols+20)-10)*cw;
+      ctx.strokeStyle=t.green;ctx.globalAlpha=0.22;ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(sonarX,ch*7.0);ctx.lineTo(sonarX,ch*31.5);ctx.stroke();
+      ctx.globalAlpha=1.0;
+
+      ctx.save();ctx.beginPath();ctx.rect(-20,ch*6.6,cw*(gridCols-9),h);ctx.clip();
+      // 6. 60fps Schools of Fish
+      var fR=['<°)))><','<°)))>{','<°)))>('],fL=['><(((°>','}<(((°>',')<(((°>'];
+      var tf=Math.floor(sec*9)%3;
+      for(var sf=0;sf<9;sf++){
+        var dirR=(sf%2===0),spd=3.4+(sf%3)*1.15;
+        var fx=dirR?(((sec*spd+sf*17)%(gridCols+16))-8)*cw:((gridCols-((sec*spd+sf*19)%(gridCols+16)))+4)*cw;
+        var fy=(7.9+(sf*2.3)%15.0+Math.sin(sec*2.6+sf*1.3)*0.65)*ch;
+        ctx.fillStyle=sf%3===0?t.cyan:(sf%2===0?t.fgDim:t.accent);
+        var fg=dirR?fR[(tf+sf)%3]:fL[(tf+sf)%3];
+        ctx.fillText(fg+'  '+fg,fx,fy);
+      }
+
+      // 7. Leviathan Half-Block Whale
+      var wx=(gridCols-((sec*4.6)%(gridCols+64)))*cw;
+      var wy=(7.6+Math.sin(sec*1.1)*0.85)*ch;
+      drawSprite(WHALE_L,wx,wy,cw,ch,t.accent2,t.cyan);
+      if(Math.abs((wx+20*cw)-sonarX)<18*cw){
+        ctx.fillStyle=t.green;
+        ctx.fillText('[id:leviathan · 3.2kt · sonar-lock]',wx+8*cw,wy-0.35*ch);
+      }
+
+      // 8. Rotating 3D Glenz Polyhedron
+      var ax=sec*1.15,ay=sec*1.65;
+      var cosX=Math.cos(ax),sinX=Math.sin(ax),cosY=Math.cos(ay),sinY=Math.sin(ay);
+      var px=[],py=[],gcx=55.5*cw,gcy=19.2*ch,gsc=ch*3.6;
+      for(var gi=0;gi<GLENZ_V.length;gi++){
+        var vx=GLENZ_V[gi][0],vy=GLENZ_V[gi][1],vz=GLENZ_V[gi][2];
+        var x1=vx*cosY-vz*sinY,z1=vx*sinY+vz*cosY;
+        var y2=vy*cosX-z1*sinX,z2=vy*sinX+z1*cosX;
+        var psp=3.2/(3.2+z2*0.45);
+        px.push(gcx+x1*gsc*psp);py.push(gcy+y2*gsc*psp);
+      }
+      ctx.lineWidth=2.2;
+      for(var ge=0;ge<GLENZ_E.length;ge++){
+        var ea=GLENZ_E[ge][0],eb=GLENZ_E[ge][1];
+        ctx.strokeStyle=ge%2===0?t.cyan:t.magenta;
+        ctx.beginPath();ctx.moveTo(px[ea],py[ea]);ctx.lineTo(px[eb],py[eb]);ctx.stroke();
+      }
+
+      // 9. Bioluminescent Jellyfish + Shark + Angler + ROV Sub
+      var jf=Math.floor(sec*2.8)%2;
+      for(var j=0;j<3;j++){
+        var jx=(16+j*34+Math.sin(sec*0.9+j*2.1)*4.5)*cw;
+        var jy=(11.5+j*2.9+Math.cos(sec*1.8+j)*1.65)*ch;
+        drawSprite(JELLY_FRAMES[jf],jx,jy,cw,ch,j%2===0?t.magenta:t.cyan,t.accent);
+      }
+      var shx=(((sec*8.8)%(gridCols+44))-34)*cw;
+      var shy=(14.2+Math.sin(sec*1.6)*0.95)*ch;
+      drawSprite(SHARK_R,shx,shy,cw,ch,t.accent,t.fgBright);
+
+      var angX=(gridCols-((sec*5.8+40)%(gridCols+36)))*cw;
+      var angY=(20.8+Math.cos(sec*1.4)*0.75)*ch;
+      drawSprite(ANGLER_L,angX,angY,cw,ch,t.magenta,t.yellow);
+
+      var subX=(((sec*6.5+52)%(gridCols+48))-28)*cw;
+      var subY=(22.2+Math.sin(sec*1.2)*0.45)*ch;
+      drawSprite(SUB_R,subX,subY,cw,ch,t.yellow,t.cyan);
+      ctx.fillStyle=t.yellow;
+      ctx.fillText('░░▒▒▓▓██ [id:omarchy-rov-01 · scanning]',subX+25*cw,subY+2*ch);
+
+      ctx.restore();
+      // 10. 3D Perspective Checkerboard Vector Floor + Sunken Core + Fiber Trunk
+      var horY=27.6*ch,botY=35.6*ch;
+      ctx.strokeStyle=t.accent;ctx.globalAlpha=0.32;ctx.lineWidth=1.4;
+      for(var rz=0;rz<=5;rz++){
+        var ry2=horY+Math.pow(rz/5,1.45)*(botY-horY);
+        ctx.beginPath();ctx.moveTo(0,ry2);ctx.lineTo(w,ry2);ctx.stroke();
+      }
+      var sg=(sec*1.8)%1;
+      for(var gx=-10;gx<=22;gx++){
+        ctx.beginPath();
+        ctx.moveTo((gridCols*0.5+(gx-6+sg)*4.5)*cw,horY);
+        ctx.lineTo((gridCols*0.5+(gx-6+sg)*14.5)*cw,botY);
+        ctx.stroke();
+      }
+      ctx.globalAlpha=1.0;
+
+      drawSprite(SUNKEN_TERM,(41+Math.sin(sec/97)*22)*cw,26.8*ch,cw,ch,t.accent,t.green);
+      var fiber='[═══╬═══ omarchy-link://fiber-trunk ═══';
+      var pp=Math.floor(sec*16)%28;
+      for(var fc=0;fc<28;fc++) fiber+=(fc===pp||fc===(pp+14)%28)?'⚡':'═';
+      fiber+='╬═══ 10Gbps ═══]';
+      ctx.fillStyle=t.cyan;
+      ctx.fillText(fiber,(14+Math.sin(sec/71)*12)*cw,33.4*ch);
+
+      var crabCol=62+Math.sin(sec*1.1)*14;
+      ctx.fillStyle=t.red;
+      ctx.fillText(Math.floor(sec*6)%2===0?'(\/)(°,,°)(\/)':'( /)(°,,°)(\ )',crabCol*cw,34.4*ch);
+
+      ctx.setTransform(1,0,0,1,0,0);
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+  }
+
   if(!text){fetch('screensaver-tv.txt').then(function(r){return r.text()}).then(function(t){text=t;boot()}).catch(function(){text='OMARCHY TV';boot()})}
   else boot();
 })();

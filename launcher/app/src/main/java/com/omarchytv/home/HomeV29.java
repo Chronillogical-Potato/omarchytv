@@ -111,6 +111,10 @@ final class HomeV29 extends FrameLayout {
     private final BoxView[] remoteBox = new BoxView[3];
     private final LinearLayout[] remoteBody = new LinearLayout[3];
     /** "barWeather": icon + temperature in the bar, left of the status icons. */
+    private final TextView barSpacex;
+    private final BoxView grokbotBox;
+    private final TextView grokbotEyes, grokbotText;
+    private final GrokbotMark grokbotMark;
     private final LinearLayout barWx;
     private final ImageView barWxIcon;
     private final TextView barWxTemp;
@@ -145,7 +149,7 @@ final class HomeV29 extends FrameLayout {
         android.util.DisplayMetrics dm = new android.util.DisplayMetrics();
         a.getWindowManager().getDefaultDisplay().getRealMetrics(dm);
         s = Math.min(dm.heightPixels / 1080f, dm.widthPixels / 1920f);
-        tf = a.getResources().getFont(R.font.caskaydia);
+        tf = CastUi.font(a);
         tfBold = Typeface.create(tf, Typeface.BOLD);
         setClipChildren(false);
 
@@ -174,6 +178,15 @@ final class HomeV29 extends FrameLayout {
         LinearLayout right = hbox();
         right.setPadding(0, 0, px(32) - px(13), 0);
         bar.addView(right, new LayoutParams(-2, -1, Gravity.END));
+        barSpacex = text("🚀 SpaceX TV", 18, true);
+        barSpacex.setFocusable(true);
+        barSpacex.setClickable(true);
+        barSpacex.setPadding(px(12), px(4), px(12), px(4));
+        barSpacex.setBackground(new Underline());
+        barSpacex.setOnClickListener(v -> host.sys("spacex-tv"));
+        LinearLayout.LayoutParams sxl = new LinearLayout.LayoutParams(-2, -1);
+        sxl.rightMargin = px(16);
+        right.addView(barSpacex, sxl);
         barWx = hbox();
         barWxIcon = new ImageView(a);
         barWx.addView(barWxIcon, new LinearLayout.LayoutParams(px(24), px(24)));
@@ -186,20 +199,21 @@ final class HomeV29 extends FrameLayout {
         right.addView(barWx, bwl);
         barWx.setVisibility(GONE);
         // v2.10: no gear (the menu is the Omarchy logo on the left).
-        int[] icons = {R.drawable.ln_wifi, R.drawable.ln_bt, R.drawable.ln_vol, R.drawable.ln_input, R.drawable.ln_monitor};
+        int[] icons = {R.drawable.ln_cinemarchy, R.drawable.ln_wifi, R.drawable.ln_bt, R.drawable.ln_vol, R.drawable.ln_input, R.drawable.ln_monitor};
         for (int ic : icons) {
             View b = iconButton(ic, 24 + 26, 24);
             right.addView(b);
             barIcons.add(b);
         }
-        barIcons.get(0).setOnClickListener(v -> host.wifiClick());
-        barIcons.get(1).setOnClickListener(v -> host.openBluetooth());
-        barIcons.get(2).setOnClickListener(v -> {
+        barIcons.get(0).setOnClickListener(v -> host.sys("cinemarchy"));
+        barIcons.get(1).setOnClickListener(v -> host.wifiClick());
+        barIcons.get(2).setOnClickListener(v -> host.openBluetooth());
+        barIcons.get(3).setOnClickListener(v -> {
             android.media.AudioManager am = act.getSystemService(android.media.AudioManager.class);
             if (am != null) am.adjustStreamVolume(android.media.AudioManager.STREAM_MUSIC, android.media.AudioManager.ADJUST_SAME, android.media.AudioManager.FLAG_SHOW_UI);
         });
-        barIcons.get(3).setOnClickListener(host::showInputs);
-        barIcons.get(4).setOnClickListener(host::screenPc);
+        barIcons.get(4).setOnClickListener(host::showInputs);
+        barIcons.get(5).setOnClickListener(host::screenPc);
         tip = text("", 19, false);
         tip.setVisibility(GONE);
         tip.setPadding(px(14), px(8), px(14), px(8));
@@ -314,6 +328,31 @@ final class HomeV29 extends FrameLayout {
         LinearLayout.LayoutParams rl = new LinearLayout.LayoutParams(-1, -2);
         rl.topMargin = px(16);
         appWin.addView(row, rl);
+
+        // ---- v2.13 Grok Bot Desktop Companion (io.github.tcballard.grokbot-desktop, MIT) ----
+        grokbotBox = new BoxView(a, s, tf);
+        grokbotBox.setLegend("grokbot", px(10), px(14));
+        grokbotBox.setFocusable(true);
+        grokbotBox.setClickable(true);
+        grokbotBox.focusBorder = true;
+        LinearLayout gbRow = hbox();
+        gbRow.setGravity(Gravity.CENTER_VERTICAL);
+        grokbotMark = new GrokbotMark(a);
+        grokbotMark.setVisibility(GONE);
+        grokbotEyes = text("[ ◉ ◉ ]", 20, true);
+        grokbotText = text(" companion · ask", 18, false);
+        grokbotText.setSingleLine(true);
+        grokbotText.setEllipsize(TextUtils.TruncateAt.END);
+        grokbotText.setMaxWidth(px(620));
+        gbRow.addView(grokbotMark, new LinearLayout.LayoutParams(px(34), px(34)));
+        gbRow.addView(grokbotEyes);
+        gbRow.addView(grokbotText);
+        grokbotBox.addView(gbRow);
+        grokbotBox.setOnClickListener(v -> host.sys("grokbot-companion"));
+        LayoutParams gbl = new LayoutParams(-2, -2, Gravity.END | Gravity.BOTTOM);
+        gbl.rightMargin = px(36);
+        gbl.bottomMargin = px(296);
+        addView(grokbotBox, gbl);
 
         // ---- v2.10 workspaces 2-5: same v2.9 windows (square boxes, titles in the border) ----
         tvWin = window("tv");
@@ -520,7 +559,19 @@ final class HomeV29 extends FrameLayout {
         for (View b : barIcons) tint(b, t.fgBright);
         tip.setBackgroundColor(Theme.withAlpha(t.bg, 0.98f));
         tip.setTextColor(t.fgBright);
-        for (BoxView b : new BoxView[]{term, wxBox, pcBox, aiBoxRef, depBox, appWin, tvWin, appsWin, pcWin, sysWin}) b.setColors(winBg, t.muted, t.accent, t.cyan);
+        for (BoxView b : new BoxView[]{term, wxBox, pcBox, aiBoxRef, depBox, appWin, tvWin, appsWin, pcWin, sysWin, grokbotBox}) b.setColors(winBg, t.muted, t.accent, t.cyan);
+        barSpacex.setTextColor(t.accent2);
+        barSpacex.setVisibility(c.pluginSpacexTv ? VISIBLE : GONE);
+        grokbotEyes.setTextColor(t.accent);
+        grokbotText.setTextColor(t.fgBright);
+        boolean mirrored = c.grokbotBotName != null && !c.grokbotBotName.isEmpty();
+        grokbotMark.setVisibility(VISIBLE);   // v2.13: Grok Bot's ball when nothing is mirrored
+        grokbotEyes.setVisibility(GONE);
+        grokbotMark.set(mirrored ? c.grokbotBotShape : "orb", mirrored && c.grokbotBotFill != 0 ? c.grokbotBotFill : GrokbotMark.GROKBOT_ORANGE);
+        String gbMsg = c.grokbotMessage != null && !c.grokbotMessage.isEmpty() ? c.grokbotMessage : null;
+        grokbotText.setText(mirrored ? "  " + c.grokbotBotName + (gbMsg != null ? ": " + gbMsg : " · ask")
+                : gbMsg != null ? " " + gbMsg : " companion · ask");
+        grokbotBox.setVisibility(activeWs == 1 && c.pluginGrokbot ? VISIBLE : GONE);
         for (BoxView b : remoteBox) b.setColors(winBg, t.muted, t.accent, t.cyan);
         // v2.10: every home widget can be switched off (Settings → Widgets); the clock lives only in the bar.
         wxBox.setVisibility(c.wWeather ? VISIBLE : GONE);
@@ -792,11 +843,11 @@ final class HomeV29 extends FrameLayout {
             tip.setVisibility(GONE);
             return;
         }
-        String[] labels = {host.wifiName(), "bluetooth", act.getString(R.string.v29_volume), act.getString(R.string.inputs),
+        String[] labels = {"cinemarchy", host.wifiName(), "bluetooth", act.getString(R.string.v29_volume), act.getString(R.string.inputs),
                 act.getString(R.string.v29_screen_pc)};
-        if (k == 2) {
+        if (k == 3) {
             android.media.AudioManager am = act.getSystemService(android.media.AudioManager.class);
-            if (am != null) labels[2] += " " + Math.round(100f * am.getStreamVolume(3) / Math.max(1, am.getStreamMaxVolume(3))) + "%";
+            if (am != null) labels[3] += " " + Math.round(100f * am.getStreamVolume(3) / Math.max(1, am.getStreamMaxVolume(3))) + "%";
         }
         tip.setText(labels[k]);
         tip.setVisibility(VISIBLE);
@@ -833,6 +884,7 @@ final class HomeV29 extends FrameLayout {
         term.setVisibility(home && (cfg == null || cfg.wTerm) ? VISIBLE : GONE);
         widgets.setVisibility(home ? VISIBLE : GONE);
         appWin.setVisibility(home ? VISIBLE : GONE);
+        grokbotBox.setVisibility(home && (cfg == null || cfg.pluginGrokbot) ? VISIBLE : GONE);
         tvWin.setVisibility(n == 2 ? VISIBLE : GONE);
         appsWin.setVisibility(n == 3 ? VISIBLE : GONE);
         pcWin.setVisibility(n == 4 ? VISIBLE : GONE);
@@ -904,6 +956,11 @@ final class HomeV29 extends FrameLayout {
         cursorSpan = new ForegroundColorSpan(on ? t.fg : Color.TRANSPARENT);
         promptText.setSpan(cursorSpan, st, en, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         termPrompt.setText(promptText, TextView.BufferType.SPANNABLE);
+        if (grokbotBox.getVisibility() == VISIBLE) {
+            grokbotEyes.setText(on ? "[ ◉ ◉ ]" : "[ ▬ ▬ ]");
+            grokbotEyes.setTextColor(on ? t.accent : t.accent2);
+            grokbotMark.blink(on || SystemClock.uptimeMillis() % 4000 > 600);
+        }
     }
 
     private void buildWorkspace() {
@@ -1002,10 +1059,14 @@ final class HomeV29 extends FrameLayout {
             al.bottomMargin = px(16);
             TextView b = button(act.getString(R.string.v210_pc_pair), () -> host.pairPc());
             TextView bGrok = button(act.getString(R.string.grok_bot_hub), () -> host.sys("grok-bot"));
+            TextView bCine = button("Cinemarchy", () -> host.sys("cinemarchy"));
             LinearLayout.LayoutParams gl = new LinearLayout.LayoutParams(-2, -2);
             gl.leftMargin = px(18);
+            LinearLayout.LayoutParams cl = new LinearLayout.LayoutParams(-2, -2);
+            cl.leftMargin = px(18);
             actions.addView(b);
             actions.addView(bGrok, gl);
+            actions.addView(bCine, cl);
             pcPaneBody.addView(actions, al);
             if (keep) b.requestFocus();
             return;
@@ -1036,13 +1097,17 @@ final class HomeV29 extends FrameLayout {
         LinearLayout.LayoutParams al = new LinearLayout.LayoutParams(-2, -2);
         al.topMargin = px(20);
         TextView bGrok = button(act.getString(R.string.grok_bot_hub), () -> host.sys("grok-bot"));
+        TextView bCine = button("Cinemarchy", () -> host.sys("cinemarchy"));
         TextView bAsk = button(act.getString(R.string.ask_entry), () -> host.sys("ask"));
         TextView bAgents = button("> agents", () -> host.sys("agents"));
+        LinearLayout.LayoutParams sl0 = new LinearLayout.LayoutParams(-2, -2);
+        sl0.leftMargin = px(16);
         LinearLayout.LayoutParams sl1 = new LinearLayout.LayoutParams(-2, -2);
         sl1.leftMargin = px(16);
         LinearLayout.LayoutParams sl2 = new LinearLayout.LayoutParams(-2, -2);
         sl2.leftMargin = px(16);
         actions.addView(bGrok);
+        actions.addView(bCine, sl0);
         actions.addView(bAsk, sl1);
         actions.addView(bAgents, sl2);
         pcPaneBody.addView(actions, al);
@@ -1080,6 +1145,7 @@ final class HomeV29 extends FrameLayout {
         sysRow(R.string.v210_ss_after, idle, "idle");
         sysRow(R.string.v210_logo_anim, cfg.logoAnim ? on : off, "logoAnim");
         sysRow(R.string.v210_text_tiles, cfg.textTiles ? on : off, "textTiles");
+        sysRow(R.string.cinemarchy_hub, null, "cinemarchy");
         sysRow(R.string.grok_bot_hub, null, "grok-bot");
         sysRow(R.string.set_hidden, String.valueOf(cfg.hidden.size()), "hidden");
         sysRow(R.string.v210_sys_all, null, "menu");
@@ -1313,6 +1379,10 @@ final class HomeV29 extends FrameLayout {
         if (movingApp >= 0) return moveKey(e);
         if (editPanel != null) return panelKey(e);
         if (e.getAction() != KeyEvent.ACTION_DOWN) return false;
+        if (k == KeyEvent.KEYCODE_C) {
+            host.sys("cinemarchy");
+            return true;
+        }
         View f = act.getCurrentFocus();
         int z = zone(f);
         boolean arrow = k == KeyEvent.KEYCODE_DPAD_UP || k == KeyEvent.KEYCODE_DPAD_DOWN || k == KeyEvent.KEYCODE_DPAD_LEFT || k == KeyEvent.KEYCODE_DPAD_RIGHT;

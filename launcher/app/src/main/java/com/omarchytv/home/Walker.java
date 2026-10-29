@@ -67,7 +67,7 @@ final class Walker extends FrameLayout {
         this.s = s;
         this.host = host;
         all = items;
-        tf = a.getResources().getFont(R.font.caskaydia);
+        tf = CastUi.font(a);
         tfBold = Typeface.create(tf, Typeface.BOLD);
         setBackgroundColor(0x80000000);
         setClickable(true);

@@ -16,3 +16,20 @@ keystore/
 *.tar.gz
 dist/*.apk
 dist/*.tar.gz
+# generated build outputs / copied assets
+__pycache__/
+mobile-companion/.gradle/
+mobile-companion/build/
+mobile-companion/app/src/main/assets/webtv/icon.png
+tizen/out/
+webos/app/wallpapers/
+webos/app/fonts/
+webos/app/licenses/
+webos/app/icon.png
+webos/app/largeIcon.png
+webos/app/splash.png
+webos/app/saver/tte-bundle.js
+webos/app/saver/tte-js/
+webos/app/saver/screensaver-tv.txt
+*.ipk
+*.wgt

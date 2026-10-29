@@ -147,10 +147,35 @@ class Pairing:
     def paired(self) -> bool:
         return bool(self.tv and self.tv.get("token"))
 
+    @property
+    def tvs(self) -> list[dict]:
+        """Every paired TV, primary first (2.13 multi-device theme sync). Extras live under "tvs"."""
+        out, seen = [], set()
+        for t in [self.tv] + list(self.data.get("tvs") or []):
+            if t and t.get("token") and t.get("id") not in seen:
+                seen.add(t.get("id")); out.append(t)
+        return out
+
     def set_tv(self, tv: dict) -> None:
+        old = self.data.get("tv")
+        extras = [t for t in (self.data.get("tvs") or []) if t.get("id") != tv.get("id")]
+        if old and old.get("token") and old.get("id") != tv.get("id"):
+            extras = [t for t in extras if t.get("id") != old.get("id")] + [old]  # keep the previous TV paired
+        if extras:
+            self.data["tvs"] = extras
+        else:
+            self.data.pop("tvs", None)
         self.data["tv"] = tv
         self.save()
 
     def forget(self) -> None:
+        """Forget the primary TV; the next extra TV (if any) becomes primary."""
         self.data.pop("tv", None)
+        extras = list(self.data.get("tvs") or [])
+        if extras:
+            self.data["tv"] = extras.pop(0)
+            if extras:
+                self.data["tvs"] = extras
+            else:
+                self.data.pop("tvs", None)
         self.save()

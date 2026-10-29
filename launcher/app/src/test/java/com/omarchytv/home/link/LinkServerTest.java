@@ -3,6 +3,7 @@ package com.omarchytv.home.link;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.json.JSONObject;
@@ -517,5 +518,100 @@ public class LinkServerTest {
         assertEquals(200, call.status);
         assertFalse(call.json().getJSONObject("result").getBoolean("isError"));
         assertEquals("jade-horse", host.readConfig().getJSONObject("theme").getString("name"));
+    }
+
+    @Test
+    public void pluginsSandboxedEndpoints() throws Exception {
+        pair("123456");
+        server.limits = false;
+        assertTrue(server.status().getJSONArray("capabilities").toString().contains("plugins"));
+
+        Resp get0 = signed("GET", "/v1/plugins", "");
+        assertEquals(200, get0.status);
+        assertTrue(get0.json().getBoolean("spacexTv"));
+        assertTrue(get0.json().getBoolean("grokbot"));
+
+        JSONObject putBody = new JSONObject()
+                .put("spacexTv", false)
+                .put("grokbot", true)
+                .put("plugins", new org.json.JSONArray()
+                        .put(new JSONObject().put("id", "com.sighmon.spacex-tv").put("name", "SpaceX TV").put("author", "sighmon").put("license", "MIT").put("enabled", false))
+                        .put(new JSONObject().put("id", "io.github.tcballard.grokbot-desktop").put("name", "Grok Bot Desktop Companion").put("author", "tcballard").put("license", "MIT").put("enabled", true)));
+        Resp putR = signed("PUT", "/v1/plugins", putBody.toString());
+        assertEquals(200, putR.status);
+        assertFalse(putR.json().getBoolean("spacexTv"));
+
+        Resp gbPost = signed("POST", "/v1/plugins/grokbot", new JSONObject().put("message", "Deploy finished on omarchy-pc").toString());
+        assertEquals(200, gbPost.status);
+        assertEquals("Deploy finished on omarchy-pc", gbPost.json().getString("message"));
+
+        Resp gbGet = signed("GET", "/v1/plugins/grokbot", "");
+        assertEquals(200, gbGet.status);
+        assertEquals("Deploy finished on omarchy-pc", gbGet.json().getString("message"));
+    }
+
+    @Test
+    public void grokbotCompanionMirrorIsSanitizedAndKept() throws Exception {
+        pair("123456");
+        server.limits = false;
+        JSONObject bot = new JSONObject().put("name", "OmaBot\u0007").put("shortName", "OmaBot").put("shape", "bean")
+                .put("color", "green").put("fill", "#5bc67a").put("mode", "relay").put("evil", "<script>");
+        Resp r = signed("PUT", "/v1/plugins/grokbot", new JSONObject().put("bot", bot).put("from", "pc").toString());
+        assertEquals(200, r.status);
+        JSONObject got = signed("GET", "/v1/plugins/grokbot", "").json().getJSONObject("bot");
+        assertEquals("OmaBot", got.getString("shortName"));
+        assertEquals("#5BC67A", got.getString("fill"));
+        assertFalse(got.has("evil"));
+        // unknown shape/colour/mode fall back; a bad fill becomes null
+        JSONObject odd = LinkServer.sanitizeGrokbotBot(new JSONObject().put("name", "Zed").put("shape", "../x")
+                .put("color", "plaid").put("fill", "red").put("mode", "root"));
+        assertEquals("bean", odd.getString("shape"));
+        assertEquals("orange", odd.getString("color"));
+        assertTrue(odd.isNull("fill"));
+        assertEquals("offline", odd.getString("mode"));
+        assertNull(LinkServer.sanitizeGrokbotBot(new JSONObject().put("shape", "bean")));
+        assertEquals(400, signed("PUT", "/v1/plugins/grokbot", new JSONObject().put("bot", new JSONObject().put("name", " ")).toString()).status);
+        // the plugin switches keep the mirrored bot
+        signed("PUT", "/v1/plugins", new JSONObject().put("spacexTv", true).put("grokbot", true).toString());
+        assertEquals("OmaBot", signed("GET", "/v1/plugins/grokbot", "").json().getJSONObject("bot").getString("name"));
+        // bot:null = companion gone on the PC
+        assertEquals(200, signed("PUT", "/v1/plugins/grokbot", new JSONObject().put("bot", JSONObject.NULL).toString()).status);
+        assertTrue(signed("GET", "/v1/plugins/grokbot", "").json().isNull("bot"));
+    }
+
+    @Test
+    public void grokbotAskRefusesLocallyAndRepliesArePlain() throws Exception {
+        assertEquals("bad_request", server.grokbotAsk("r1", "  ", null));
+        StringBuilder big = new StringBuilder();
+        for (int i = 0; i < 241; i++) big.append('x');
+        assertEquals("bad_request", server.grokbotAsk("r1", big.toString(), null));
+        assertEquals("not_connected", server.grokbotAsk("r1", "hi", "OmaBot"));
+        JSONObject a = LinkServer.grokbotReply("grokbot_answer", new JSONObject().put("id", "r1").put("bot", "Bob")
+                .put("text", "line\u001b[31m red").put("mode", "weird"));
+        assertEquals("relay", a.getString("mode"));
+        assertFalse(a.getString("text").contains("\u001b"));
+        JSONObject e = LinkServer.grokbotReply("grokbot_error", new JSONObject().put("id", "r1").put("error", "unknown_bot"));
+        assertEquals("unknown_bot", e.getString("error"));
+    }
+
+    @Test
+    public void cinemarchyQueueKeepsSubtitles() throws Exception {
+        pair("123456");
+        server.limits = false;
+        Resp r1 = signed("POST", "/v1/cinemarchy/queue", new JSONObject().put("url", "https://example.org/a.mp4")
+                .put("title", "A").put("subtitle", "https://example.org/a.vtt").toString());
+        assertEquals(200, r1.status);
+        Resp r2 = signed("POST", "/v1/cinemarchy/queue", new JSONObject().put("url", "https://example.org/b.mp4")
+                .put("title", "B").put("subtitleData", "1\n00:00:01,000 --> 00:00:02,000\nciao\n").put("subtitleFormat", "srt").toString());
+        assertEquals(200, r2.status);
+        Resp bad = signed("POST", "/v1/cinemarchy/queue", new JSONObject().put("url", "https://example.org/c.mp4")
+                .put("subtitleData", "x").put("subtitleFormat", "exe").toString());
+        assertEquals(400, bad.status);
+        org.json.JSONArray q = host.readConfig().getJSONObject("cinemarchy").getJSONArray("queue");
+        assertEquals("https://example.org/a.vtt", q.getJSONObject(0).getString("subs"));
+        String local = q.getJSONObject(1).getString("subs");
+        assertTrue(local.startsWith("file://") && local.endsWith(".srt"));
+        assertTrue(new String(java.nio.file.Files.readAllBytes(new java.io.File(local.substring(7)).toPath()),
+                java.nio.charset.StandardCharsets.UTF_8).contains("ciao"));
     }
 }

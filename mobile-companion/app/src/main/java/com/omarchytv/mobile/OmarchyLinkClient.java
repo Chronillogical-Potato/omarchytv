@@ -166,7 +166,7 @@ public final class OmarchyLinkClient {
                     long dt = Math.max(1L, System.currentTimeMillis() - t0);
                     JSONObject j = res.bodyJson();
                     String name = j.optString("name", j.optString("tvName", "OmarchyTV"));
-                    String ver = j.optString("version", j.optString("versionName", "2.12.0-beta"));
+                    String ver = j.optString("version", j.optString("versionName", "2.13.0-beta"));
                     int vc = j.optInt("versionCode", 19);
                     String theme = j.optString("theme", "tokyo-night");
                     JSONObject themeObj = j.optJSONObject("theme");
@@ -421,7 +421,7 @@ public final class OmarchyLinkClient {
         }
         long dt = Math.max(1L, System.currentTimeMillis() - t0);
         String tvName = "Android TV (" + ip + ")";
-        String ver = p8999 || p47800 ? "2.12.0-beta" : "ADB Ready";
+        String ver = p8999 || p47800 ? "2.13.0-beta" : "ADB Ready";
         String theme = "tokyo-night";
 
         if (p8999 || p47800) {

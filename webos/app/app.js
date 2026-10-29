@@ -1,12 +1,14 @@
+/* Cinemarchy has its own version, independent of the OmarchyTV app version. */
+var CINEMARCHY_VERSION = "0.1.0-alpha";
 (function () {
   "use strict";
 
-  var DATA = window.OMARCHY_DATA || { version: "2.11.0-testing", themes: {}, wallpapers: {}, logo: "OMARCHY TV", notice: "" };
+  var DATA = window.OMARCHY_DATA || { version: "2.13.0-beta", themes: {}, wallpapers: {}, logo: "OMARCHY TV", notice: "" };
   var START_TIME = Date.now() - (42 * 60 * 1000); // default 42m uptime look
 
   var STRINGS = {
     en: {
-      tip_wifi: "Wi-Fi & network", tip_bt: "Bluetooth", tip_vol: "Audio", tip_inputs: "Inputs (TV / HDMI)", tip_saver: "Start screensaver",
+      tip_cinemarchy: "Cinemarchy (Media & TV)", tip_wifi: "Wi-Fi & network", tip_bt: "Bluetooth", tip_vol: "Audio", tip_inputs: "Inputs (TV / HDMI)", tip_saver: "Start screensaver",
       sys_clock: "Clock",
       box_weather: "weather", box_pc: "omarchy · pc", box_ai: "ai credits · pc", box_tv: "tv", box_app: "app", box_ws_pc: "pc", box_system: "system",
       term_theme: "theme ", term_net: "net ", term_up: "up ",
@@ -25,7 +27,7 @@
       sys_logo_anim: "Animated logo", sys_text_tiles: "Text tiles (terminal style)", sys_all: "All OmarchyTV settings", sys_about: "About & licences",
       tile_move: "Move", tile_hide: "Hide", tile_cancel: "Cancel", move_hint: "◀▶▲▼ move · OK save · Back cancel",
       app_hidden: "Hidden. Show it again in All settings › Hidden apps", hidden_apps: "Hidden apps", hidden_none: "No hidden apps",
-      hidden_sub: "OK shows the app again", reset_order: "Reset app order", order_reset: "App order reset",
+      hidden_sub: "OK shows the app again", hidden_show: "show", hidden_show_all: "Show all hidden apps", hidden_all_shown: "All apps visible again", random_theme: "Random theme", random_wallpaper: "Random wallpaper / intro", sys_plugins: "Plugins (SpaceX TV & Grok Bot)", reset_order: "Reset app order", order_reset: "App order reset",
       wx_title: "Weather", wx_auto: "Automatic (from IP)", wx_search: "Search city…", wx_unit: "Temperature unit",
       root_boot: "Open when the TV starts", root_home: "Home button opens OmarchyTV", root_needed: "rooted TV only",
       root_keep: "Keep loaded in the background", root_keep_na: "not on this TV",
@@ -34,7 +36,7 @@
       wmo: { 0: "clear", 1: "mostly clear", 2: "partly cloudy", 3: "overcast", 45: "fog", 51: "drizzle", 61: "rain", 71: "snow", 80: "showers", 95: "thunderstorm" }
     },
     it: {
-      tip_wifi: "Wi-Fi e rete", tip_bt: "Bluetooth", tip_vol: "Audio", tip_inputs: "Ingressi (TV / HDMI)", tip_saver: "Avvia salvaschermo",
+      tip_cinemarchy: "Cinemarchy (Media e TV)", tip_wifi: "Wi-Fi e rete", tip_bt: "Bluetooth", tip_vol: "Audio", tip_inputs: "Ingressi (TV / HDMI)", tip_saver: "Avvia salvaschermo",
       sys_clock: "Orologio",
       box_weather: "meteo", box_pc: "omarchy · pc", box_ai: "crediti ia · pc", box_tv: "tv", box_app: "app", box_ws_pc: "pc", box_system: "sistema",
       term_theme: "tema ", term_net: "rete ", term_up: "up ",
@@ -53,7 +55,7 @@
       sys_logo_anim: "Logo animato", sys_text_tiles: "Tile solo testo (stile terminale)", sys_all: "Tutte le impostazioni OmarchyTV", sys_about: "Info e licenze",
       tile_move: "Sposta", tile_hide: "Nascondi", tile_cancel: "Annulla", move_hint: "◀▶▲▼ sposta · OK salva · Indietro annulla",
       app_hidden: "Nascosta. Mostrala di nuovo in Tutte le impostazioni › App nascoste", hidden_apps: "App nascoste", hidden_none: "Nessuna app nascosta",
-      hidden_sub: "OK mostra di nuovo l'app", reset_order: "Ripristina ordine app", order_reset: "Ordine app ripristinato",
+      hidden_sub: "OK mostra di nuovo l'app", hidden_show: "mostra", hidden_show_all: "Mostra tutte le app nascoste", hidden_all_shown: "Tutte le app sono di nuovo visibili", random_theme: "Tema casuale", random_wallpaper: "Sfondo / intro casuale", sys_plugins: "Plugin (SpaceX TV e Grok Bot)", reset_order: "Ripristina ordine app", order_reset: "Ordine app ripristinato",
       wx_title: "Meteo", wx_auto: "Automatica (da IP)", wx_search: "Cerca città…", wx_unit: "Unità temperatura",
       root_boot: "Apri all'avvio della TV", root_home: "Il tasto Home apre OmarchyTV", root_needed: "solo TV con root",
       root_keep: "Tieni caricata in background", root_keep_na: "non su questa TV",
@@ -62,7 +64,7 @@
       wmo: { 0: "sereno", 1: "poco nuvoloso", 2: "parz. nuvoloso", 3: "coperto", 45: "nebbia", 51: "pioviggine", 61: "pioggia", 71: "neve", 80: "rovesci", 95: "temporale" }
     },
     de: {
-      tip_wifi: "WLAN & Netzwerk", tip_bt: "Bluetooth", tip_vol: "Audio", tip_inputs: "Eingänge (TV / HDMI)", tip_saver: "Bildschirmschoner starten",
+      tip_cinemarchy: "Cinemarchy (Medien & TV)", tip_wifi: "WLAN & Netzwerk", tip_bt: "Bluetooth", tip_vol: "Audio", tip_inputs: "Eingänge (TV / HDMI)", tip_saver: "Bildschirmschoner starten",
       sys_clock: "Uhr",
       box_weather: "wetter", box_pc: "omarchy · pc", box_ai: "ki-guthaben · pc", box_tv: "tv", box_app: "app", box_ws_pc: "pc", box_system: "system",
       term_theme: "thema ", term_net: "netz ", term_up: "up ",
@@ -81,7 +83,7 @@
       sys_logo_anim: "Animiertes Logo", sys_text_tiles: "Text-Kacheln (Terminal-Stil)", sys_all: "Alle OmarchyTV-Einstellungen", sys_about: "Info & Lizenzen",
       tile_move: "Verschieben", tile_hide: "Ausblenden", tile_cancel: "Abbrechen", move_hint: "◀▶▲▼ verschieben · OK speichern · Zurück abbrechen",
       app_hidden: "Ausgeblendet. Wieder einblenden unter Alle Einstellungen › Ausgeblendete Apps", hidden_apps: "Ausgeblendete Apps", hidden_none: "Keine ausgeblendeten Apps",
-      hidden_sub: "OK blendet die App wieder ein", reset_order: "App-Reihenfolge zurücksetzen", order_reset: "App-Reihenfolge zurückgesetzt",
+      hidden_sub: "OK blendet die App wieder ein", hidden_show: "einblenden", hidden_show_all: "Alle ausgeblendeten Apps einblenden", hidden_all_shown: "Alle Apps wieder sichtbar", random_theme: "Zufälliges Thema", random_wallpaper: "Zufälliges Hintergrundbild / Intro", sys_plugins: "Plugins (SpaceX TV & Grok Bot)", reset_order: "App-Reihenfolge zurücksetzen", order_reset: "App-Reihenfolge zurückgesetzt",
       wx_title: "Wetter", wx_auto: "Automatisch (über IP)", wx_search: "Stadt suchen…", wx_unit: "Temperatureinheit",
       root_boot: "Beim Einschalten öffnen", root_home: "Home-Taste öffnet OmarchyTV", root_needed: "nur gerootete TVs",
       root_keep: "Im Hintergrund geladen lassen", root_keep_na: "nicht auf diesem TV",
@@ -92,7 +94,12 @@
   };
 
   var DEFAULT_CFG = {
-    theme: "tokyo-night",
+    theme: "last-horizon",
+    randomTheme: true,
+    randomWallpaper: true,
+    pluginSpacexTv: true,
+    pluginGrokbot: true,
+    grokbotMessage: "", 
     lang: "",
     opacity: 0.75,
     wallpaperDim: 0,
@@ -107,8 +114,13 @@
     textTiles: false,
     tvEnabled: true,
     saverIdleMin: 2.5,
+    saverMode: "aquarium",
+    saverArt: "aquarium",
+    saverSound: true,
     saverLogoScale: 0.65,
     saverShowClock: false,
+    wallpaperIntro: true,
+    antiBurnIn: true,
     offIdleMin: 0,
     offMode: "screen",
     promptUser: "user",
@@ -205,21 +217,23 @@
     var t = DATA.themes[cfg.theme] || DATA.themes["tokyo-night"] || {};
     var n = t.normal || {};
     var b = t.bright || {};
-    var bg = t.bg || "#1a1b26";
-    var fg = t.fg || "#a9b1d6";
+    var bg = t.background || t.bg || "#1a1b26";
+    var fg = t.foreground || t.fg || "#a9b1d6";
     return {
+      name: cfg.theme || "tokyo-night",
       bg: bg,
-      bgAlt: n.black || "#24283b",
+      bgAlt: t.lighter_background || n.black || "#24283b",
       fg: fg,
-      fgBright: b.white || fg,
-      fgDim: b.black || "#565f89",
-      muted: b.black || "#414868",
-      accent: t.accent || n.blue || "#7aa2f7",
-      accent2: n.magenta || "#bb9af7",
-      green: n.green || "#9ece6a",
-      yellow: n.yellow || "#e0af68",
-      red: n.red || "#f7768e",
-      cyan: n.cyan || "#7dcfff"
+      fgBright: t.bright_foreground || b.white || fg,
+      fgDim: t.dark_foreground || b.black || "#565f89",
+      muted: t.muted || b.black || "#414868",
+      accent: t.accent || t.blue || n.blue || "#7aa2f7",
+      accent2: t.bright_magenta || t.magenta || n.magenta || "#bb9af7",
+      magenta: t.magenta || n.magenta || "#bb9af7",
+      green: t.green || n.green || "#9ece6a",
+      yellow: t.yellow || n.yellow || "#e0af68",
+      red: t.red || n.red || "#f7768e",
+      cyan: t.cyan || n.cyan || "#7dcfff"
     };
   }
 
@@ -243,18 +257,35 @@
     r.setProperty("--popup-bg", hexToRgba(t.bg, 0.95));
 
     var wl = document.getElementById("wallpaper-layer");
+    var wv = document.getElementById("wallpaper-video");
     var wlist = DATA.wallpapers[cfg.theme] || [];
     var picked = cfg.wallpaper && cfg.wallpaper !== "plain" && allWallpapers().indexOf(cfg.wallpaper) >= 0 ? cfg.wallpaper : "";
+    var activeWp = "";
     if (picked) {
+      activeWp = picked;
       wl.style.backgroundImage = "url('" + picked + "')";
     } else if (cfg.proceduralBg || cfg.wallpaper === "plain" || !wlist.length) {
       wl.style.backgroundImage = "radial-gradient(circle at 75% 20%, " + hexToRgba(t.accent, 0.22) + " 0%, " + t.bg + " 70%)";
     } else {
-      var wp = wlist[cfg.wallpaperIdx % wlist.length];
-      wl.style.backgroundImage = "url('" + wp + "')";
+      activeWp = wlist[cfg.wallpaperIdx % wlist.length];
+      wl.style.backgroundImage = "url('" + activeWp + "')";
+    }
+    if (wv) {
+      var intro = cfg.wallpaperIntro && activeWp && DATA.wallpaperIntros && DATA.wallpaperIntros[activeWp];
+      if (intro) {
+        wv.src = intro;
+        wv.style.display = "block";
+        wv.onended = function () { wv.style.display = "none"; };
+        wv.onerror = function () { wv.style.display = "none"; };
+        try { wv.play().catch(function () { wv.style.display = "none"; }); } catch (e) { wv.style.display = "none"; }
+      } else {
+        try { wv.pause(); } catch (e) {}
+        wv.style.display = "none";
+      }
     }
     var dim = document.getElementById("wallpaper-dim");
     dim.style.background = "rgba(0,0,0," + (cfg.wallpaperDim || 0) + ")";
+    pushLightsTheme(t, false);
   }
 
   // Every bundled background, in theme order (DATA.wallpapers: theme -> list of paths).
@@ -347,7 +378,7 @@
       '<span style="color:' + t.accent + '">' + tr("term_theme") + '</span><span style="color:' + t.fg + '">' + cfg.theme + '</span>\n' +
       '<span style="color:' + t.accent + '">' + tr("term_net") + '</span><span style="color:' + t.fg + '">Wi-Fi</span>\n' +
       '<span style="color:' + t.accent + '">' + tr("term_up") + '</span><span style="color:' + t.fg + '">' + upStr + '</span>' +
-      '<span style="color:' + t.fgDim + '"> · 2.11.0-testing</span>';
+      '<span style="color:' + t.fgDim + '"> · 2.13.0-beta</span>';
   }
 
   function fmtTemp(c) {
@@ -416,7 +447,7 @@
       aiBody.style.color = "var(--t-fg)";
       aiBody.textContent = formatAiPane(s);
       if (ws4Live) {
-        ws4Live.textContent = "Connected to " + (s.host || "omarchy-pc") + " (" + (cfg.pcHost || "simulated LAN link") + ")\nCPU: " + s.cpu + "% · RAM: " + s.ram + "% · GPU: " + (s.gpu || "18%") + "\nDeploys: " + (s.deploy || "omarchytv-webos 2.11.0-testing ✓");
+        ws4Live.textContent = "Connected to " + (s.host || "omarchy-pc") + " (" + (cfg.pcHost || "simulated LAN link") + ")\nCPU: " + s.cpu + "% · RAM: " + s.ram + "% · GPU: " + (s.gpu || "18%") + "\nDeploys: " + (s.deploy || "omarchytv-webos 2.13.0-beta ✓");
       }
     } else {
       pcBody.style.color = "var(--t-fg-dim)";
@@ -562,8 +593,8 @@
 
     var tip = document.getElementById("bar-tip");
     if (state.zone === "bar" && state.barIdx >= 6) {
-      var tipKeys = ["tip_wifi", "tip_bt", "tip_vol", "tip_inputs", "tip_saver"];
-      tip.textContent = tr(tipKeys[state.barIdx - 6]);
+      var tipKeys = ["tip_cinemarchy", "tip_wifi", "tip_bt", "tip_vol", "tip_inputs", "tip_saver"];
+      tip.textContent = tr(tipKeys[state.barIdx - 6] || "tip_saver");
       tip.style.display = "block";
     } else {
       tip.style.display = "none";
@@ -639,6 +670,8 @@
     var transPct = Math.round((1 - cfg.opacity) * 100) + "%";
     var idleStr = cfg.saverIdleMin === 0 ? "never" : (cfg.saverIdleMin + " min");
     return [
+      { label: "🎬 Cinemarchy (Media, Streaming, Live TV & Snippets)", val: "C ›", act: function () { openCinemarchyModal(0); } },
+      { label: "🧩 " + tr("sys_plugins"), val: ((cfg.pluginSpacexTv ? 1 : 0) + (cfg.pluginGrokbot ? 1 : 0)) + " enabled ›", act: openPluginsModal },
       { label: tr("sys_webos"), val: "›", act: function () { launchApp({ name: "LG Settings", appId: "com.palm.app.settings" }); } },
       { label: tr("sys_themes"), val: cfg.theme, act: openThemesModal },
       { label: tr("sys_trans"), val: transPct, act: function () {
@@ -650,6 +683,7 @@
       { label: tr("sys_widgets"), val: "›", act: openWidgetsModal },
       { label: tr("sys_arrange"), val: "›", act: function () { showToast("Arrange panels: use D-pad on Home"); switchWorkspace(0); } },
       { label: tr("sys_saver"), val: "›", act: openSaverModal },
+      { label: "Ambilight & Lights", val: (cfg.lightsHub || "off") + " ›", act: openLightsModal },
       { label: tr("sys_saver_idle"), val: idleStr, act: function () {
         var opts = [1, 2.5, 5, 10, 0];
         cfg.saverIdleMin = opts[(opts.indexOf(cfg.saverIdleMin) + 1) % opts.length];
@@ -658,14 +692,16 @@
       { label: tr("sys_logo_anim"), val: cfg.logoAnim ? "on" : "off", act: function () { cfg.logoAnim = !cfg.logoAnim; saveCfg(); renderAll(); animateLogo(); } },
       { label: tr("sys_text_tiles"), val: cfg.textTiles ? "on" : "off", act: function () { cfg.textTiles = !cfg.textTiles; saveCfg(); renderAll(); } },
       { label: tr("sys_all"), val: "›", act: openAllSettingsModal },
-      { label: tr("sys_about"), val: "2.11.0-testing ›", act: openAboutModal }
+      { label: tr("sys_about"), val: "2.13.0-beta ›", act: openAboutModal }
     ];
   }
 
-  function openModal(title, sub, items, withInput, onInput) {
+  function openModal(title, sub, items, withInput, onInput, opts) {
+    opts = opts || {};
     state.modalOpen = true;
     state.modalItems = items || [];
-    state.modalIdx = 0;
+    state.modalIdx = opts.focusIdx > 0 && opts.focusIdx < state.modalItems.length ? opts.focusIdx : 0;
+    state.modalDigit = null;
     document.getElementById("modal-title").textContent = title;
     var subEl = document.getElementById("modal-sub");
     subEl.textContent = sub || "";
@@ -678,7 +714,9 @@
       inp.value = "";
       inp.placeholder = withInput;
       inp.oninput = function () { if (onInput) onInput(inp.value); };
-      setTimeout(function () { inp.focus(); }, 30);
+      // opts.noAutoFocus: the field is not focused on open, so the TV keyboard only appears once the
+      // user moves onto the field (▲ from the first item) and selects it.
+      if (!opts.noAutoFocus) setTimeout(function () { inp.focus(); }, 30);
     } else {
       iw.style.display = "none";
       inp.oninput = null;
@@ -707,6 +745,8 @@
   }, true);
 
   function closeModal() {
+    if (state.cineTab === 0 && dhhState.videos && window.OmarchyDhh) window.OmarchyDhh.markSeen(window.localStorage, dhhState.videos);
+    state.cineTab = -1;
     state.modalOpen = false;
     document.getElementById("modal-backdrop").className = "";
     renderAll();
@@ -725,22 +765,63 @@
     });
   }
 
-  function openThemesModal() {
+  var ANIMATED_INTROS = [
+    { theme: "last-horizon", idx: 0, wp: "wallpapers/last-horizon/01-eyes-wide.webp" },
+    { theme: "cumulus", idx: 0, wp: "wallpapers/cumulus/01-cloud-town-path.webp" },
+    { theme: "cumulus", idx: 1, wp: "wallpapers/cumulus/02-cottage.webp" },
+    { theme: "cumulus", idx: 2, wp: "wallpapers/cumulus/03-airship.webp" },
+    { theme: "cumulus", idx: 3, wp: "wallpapers/cumulus/04-lighthouse.webp" }
+  ];
+
+  function rotateRandomIfEnabled() {
+    if (!cfg.randomTheme && !cfg.randomWallpaper) return false;
+    var pick = ANIMATED_INTROS[Math.floor(Math.random() * ANIMATED_INTROS.length)];
+    if (cfg.randomTheme && cfg.randomWallpaper) {
+      cfg.theme = pick.theme;
+      cfg.wallpaper = "";
+      cfg.wallpaperIdx = pick.idx;
+    } else if (cfg.randomTheme) {
+      cfg.theme = cfg.theme === "last-horizon" ? "cumulus" : "last-horizon";
+    } else if (cfg.randomWallpaper) {
+      cfg.wallpaper = pick.wp;
+      cfg.wallpaperIdx = pick.idx;
+    }
+    saveCfg();
+    applyTheme();
+    renderAll();
+    return true;
+  }
+
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden && !state.modalOpen) rotateRandomIfEnabled();
+  });
+
+  function openThemesModal(keepFocus) {
+    var focus = state.modalIdx;
     var names = Object.keys(DATA.themes);
-    var items = names.map(function (n) {
+    var items = [
+      { label: tr("random_theme"), right: cfg.randomTheme ? "on" : "off", act: function () {
+        cfg.randomTheme = !cfg.randomTheme; saveCfg(); openThemesModal(true);
+      } },
+      { label: tr("random_wallpaper"), right: cfg.randomWallpaper ? "on" : "off", act: function () {
+        cfg.randomWallpaper = !cfg.randomWallpaper; saveCfg(); openThemesModal(true);
+      } }
+    ].concat(names.map(function (n) {
       return {
         label: n,
-        right: n === cfg.theme ? "✓" : "",
+        right: !cfg.randomTheme && n === cfg.theme ? "✓" : (n === cfg.theme ? "●" : ""),
         act: function () {
           cfg.theme = n;
+          cfg.randomTheme = false;
           cfg.wallpaperIdx = 0;
           saveCfg(); applyTheme(); renderAll(); closeModal();
         }
       };
-    });
+    }));
     var curIdx = names.indexOf(cfg.theme);
     openModal(tr("sys_themes") + " (" + names.length + ")", "Select a theme (MIT omarchy.webp + Liftoff Sunset)", items);
-    if (curIdx >= 0) { state.modalIdx = curIdx; renderModalList(); }
+    if (keepFocus) { state.modalIdx = Math.min(focus, items.length - 1); renderModalList(); }
+    else if (curIdx >= 0) { state.modalIdx = curIdx + 2; renderModalList(); }
   }
 
   function openWeatherModal() {
@@ -785,8 +866,16 @@
 
   function openSaverModal(keepFocus) {
     var focus = state.modalIdx;
-    openModal(tr("sys_saver"), "37 tte.js TerminalTextEffects over screensaver-tv.txt", [
+    openModal(tr("sys_saver"), "37 tte.js TerminalTextEffects or multi-layer Omarchy Cyber-TUI Aquarium", [
       { label: "Preview screensaver now", right: "▶", act: function () { closeModal(); startScreensaver(); } },
+      { label: "Screensaver mode / art", right: cfg.saverMode === "aquarium" ? (cfg.saverArt === "aquarium-classic" ? "Aquarium Classic" : "Omarchy Aquarium (homage)") : (cfg.saverArt === "cinemarchy" ? "CINEMARCHY" : "OMARCHY TV"), act: function () {
+        // cycle: Aquarium (homage, default) -> Aquarium Classic -> OMARCHY TV -> CINEMARCHY -> Aquarium
+        if (cfg.saverMode === "aquarium" && cfg.saverArt !== "aquarium-classic") { cfg.saverArt = "aquarium-classic"; cfg.saverMode = "aquarium"; }
+        else if (cfg.saverMode === "aquarium") { cfg.saverArt = "omarchy-tv"; cfg.saverMode = "logo"; }
+        else if (cfg.saverArt !== "cinemarchy") { cfg.saverArt = "cinemarchy"; cfg.saverMode = "logo"; }
+        else { cfg.saverArt = "aquarium"; cfg.saverMode = "aquarium"; }
+        saveCfg(); openSaverModal(true);
+      } },
       { label: tr("sys_saver_idle"), right: cfg.saverIdleMin === 0 ? "never" : (cfg.saverIdleMin + " min"), act: function () {
         var opts = [1, 2.5, 5, 10, 0];
         cfg.saverIdleMin = opts[(opts.indexOf(cfg.saverIdleMin) + 1) % opts.length];
@@ -794,6 +883,9 @@
       } },
       { label: "Clock under logo", right: cfg.saverShowClock ? "on" : "off", act: function () {
         cfg.saverShowClock = !cfg.saverShowClock; saveCfg(); openSaverModal(true);
+      } },
+      { label: "Aquarium ST3 Synth Audio", right: cfg.saverSound !== false ? "on" : "off", act: function () {
+        cfg.saverSound = cfg.saverSound === false; saveCfg(); openSaverModal(true);
       } },
       { label: "Turn off after idle", right: cfg.offIdleMin ? cfg.offIdleMin + " min" : "never", act: function () {
         var opts = [0, 5, 15, 30, 60, 120];
@@ -941,7 +1033,7 @@
       state.keepLoaded = null;   // checking
       keepRefresh(function () { if (state.modalOpen) openAllSettingsModal(true); });
     }
-    openModal(tr("sys_all"), "OmarchyTV 2.11.0-testing (LG webOS)", [
+    openModal(tr("sys_all"), "OmarchyTV 2.13.0-beta (LG webOS)", [
       { label: "Language", right: cfg.lang || "auto", act: function () {
         var l = ["", "en", "it", "de"];
         cfg.lang = l[(l.indexOf(cfg.lang) + 1) % l.length];
@@ -994,13 +1086,20 @@
   }
 
   function openHiddenAppsModal() {
+    // Drop ids of apps that no longer exist (e.g. removed from DEFAULT_APPS) so the count stays honest.
+    var known = DEFAULT_APPS.map(function (a) { return a.id; });
+    var pruned = cfg.hiddenApps.filter(function (id) { return known.indexOf(id) >= 0; });
+    if (pruned.length !== cfg.hiddenApps.length) { cfg.hiddenApps = pruned; saveCfg(); }
     var items = DEFAULT_APPS.filter(function (a) { return cfg.hiddenApps.indexOf(a.id) >= 0; }).map(function (a) {
-      return { label: a.name, right: "show", act: function () {
+      return { label: a.name, right: tr("hidden_show"), act: function () {
         cfg.hiddenApps = cfg.hiddenApps.filter(function (id) { return id !== a.id; });
         saveCfg(); renderAll();
         if (cfg.hiddenApps.length) openHiddenAppsModal(); else closeModal();
       } };
     });
+    if (items.length > 1) items.push({ label: tr("hidden_show_all"), right: String(items.length), act: function () {
+      cfg.hiddenApps = []; saveCfg(); renderAll(); closeModal(); showToast(tr("hidden_all_shown"));
+    } });
     if (!items.length) items = [{ label: tr("hidden_none"), right: "", act: closeModal }];
     openModal(tr("hidden_apps"), tr("hidden_sub"), items);
   }
@@ -1043,13 +1142,13 @@
   }
 
   function openAboutModal() {
-    var sub = "OmarchyTV 2.11.0-testing for LG webOS (community testing — NOT a beta)\n" +
-      "Based on OmarchyTV v2.11.0 for Android TV by Marco Porro (MIT License).\n" +
+    var sub = "OmarchyTV 2.13.0-beta for LG webOS (community testing — NOT a beta)\n" +
+      "Based on OmarchyTV v2.13.0-beta for Android TV by Marco Porro (MIT License).\n" +
       "Includes " + Object.keys(DATA.themes).length + " Omarchy themes, " + [].concat.apply([], Object.keys(DATA.wallpapers).map(function (t) { return DATA.wallpapers[t]; })).length +
       " wallpapers (MIT, and 'Liftoff Sunset' by Tom Ballard), and 37 tte.js effects.";
     openModal(tr("sys_about"), sub, [
-      { label: "Version", right: "2.11.0-testing (webOS)", act: closeModal },
-      { label: "Android base release", right: "2.11.0", act: closeModal },
+      { label: "Version", right: "2.13.0-beta (webOS)", act: closeModal },
+      { label: "Android base release", right: "2.13.0-beta", act: closeModal },
       { label: "Wallpaper credit (tokyo-night)", right: "Liftoff Sunset — Tom Ballard", act: closeModal },
       { label: "Close", right: "ESC / Back", act: closeModal }
     ]);
@@ -1075,10 +1174,13 @@
   // Picking applies at once and keeps the menu open on that row, so you can compare a few.
   function openWallpaperModal(keepFocus) {
     var focus = state.modalIdx;
-    function pick(v) { cfg.wallpaper = v; saveCfg(); applyTheme(); openWallpaperModal(true); }
+    function pick(v) { cfg.wallpaper = v; cfg.randomWallpaper = false; saveCfg(); applyTheme(); openWallpaperModal(true); }
     var items = [
-      { label: tr("wp_follow"), right: cfg.wallpaper ? "" : "✓", act: function () { pick(""); } },
-      { label: tr("wp_plain"), right: cfg.wallpaper === "plain" ? "✓" : "", act: function () { pick("plain"); } }
+      { label: tr("random_wallpaper"), right: cfg.randomWallpaper ? "on" : "off", act: function () {
+        cfg.randomWallpaper = !cfg.randomWallpaper; saveCfg(); openWallpaperModal(true);
+      } },
+      { label: tr("wp_follow"), right: !cfg.randomWallpaper && !cfg.wallpaper ? "✓" : (!cfg.wallpaper ? "●" : ""), act: function () { pick(""); } },
+      { label: tr("wp_plain"), right: !cfg.randomWallpaper && cfg.wallpaper === "plain" ? "✓" : "", act: function () { pick("plain"); } }
     ];
     allWallpapers().forEach(function (p) {
       var parts = p.split("/");   // wallpapers/<theme>/<NN-name>.webp
@@ -1092,8 +1194,280 @@
     renderModalList();
   }
 
+
+  // ---- v2.13: Ambilight & Lights (Philips Hue Bridge + Home Assistant) -------------------------
+  function hexRgb(hex) {
+    var h = (hex || "#7aa2f7").replace("#", "");
+    return [parseInt(h.slice(0,2),16)||0, parseInt(h.slice(2,4),16)||0, parseInt(h.slice(4,6),16)||0];
+  }
+  function rgbToXy(r, g, b) {
+    function lin(v) { v /= 255; return v > 0.04045 ? Math.pow((v + 0.055) / 1.055, 2.4) : v / 12.92; }
+    var R = lin(r), G = lin(g), B = lin(b);
+    var X = R * 0.664511 + G * 0.154324 + B * 0.162028;
+    var Y = R * 0.283881 + G * 0.668433 + B * 0.047685;
+    var Z = R * 0.000088 + G * 0.072310 + B * 0.986039;
+    var s = X + Y + Z;
+    return s < 1e-6 ? [0.3127, 0.3290] : [+(X / s).toFixed(4), +(Y / s).toFixed(4)];
+  }
+  function pushLightsTheme(t, dim) {
+    if (!cfg.lightsHub || cfg.lightsHub === "off") return;
+    var rgb = hexRgb(dim ? (t.accent2 || t.accent) : t.accent);
+    var pct = dim ? Math.min(12, cfg.lightsBri || 70) : (cfg.lightsBri || 70);
+    if (cfg.lightsHub === "hue" && cfg.hueIp && cfg.hueUser && cfg.hueGroup) {
+      fetch("http://" + cfg.hueIp + "/api/" + encodeURIComponent(cfg.hueUser) + "/groups/" + encodeURIComponent(cfg.hueGroup) + "/action", {
+        method: "PUT",
+        body: JSON.stringify({ on: true, xy: rgbToXy(rgb[0], rgb[1], rgb[2]), bri: Math.max(1, Math.round(pct * 2.54)), transitiontime: dim ? 20 : 8 })
+      }).catch(function () {});
+    } else if (cfg.lightsHub === "ha" && cfg.haUrl && cfg.haToken && cfg.haEntity) {
+      fetch(cfg.haUrl.replace(/\/+$/, "") + "/api/services/light/turn_on", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + cfg.haToken, "Content-Type": "application/json" },
+        body: JSON.stringify({ entity_id: cfg.haEntity.split(/[,\s]+/).filter(Boolean), rgb_color: rgb, brightness_pct: pct, transition: dim ? 2 : 1 })
+      }).catch(function () {});
+    }
+  }
+  function openLightsModal() {
+    var hub = cfg.lightsHub || "off";
+    var bri = cfg.lightsBri || 70;
+    var items = [
+      { label: "Lights hub", right: hub === "hue" ? "Philips Hue" : (hub === "ha" ? "Home Assistant" : "off"), act: function () {
+        var order = ["off", "hue", "ha"];
+        cfg.lightsHub = order[(order.indexOf(hub) + 1) % order.length];
+        saveCfg(); openLightsModal();
+      } },
+      { label: "Brightness", right: bri + "%", act: function () {
+        var steps = [10, 25, 40, 55, 70, 85, 100];
+        cfg.lightsBri = steps[(steps.indexOf(bri) + 1) % steps.length];
+        saveCfg(); applyTheme(); openLightsModal();
+      } }
+    ];
+    if (hub === "hue") {
+      items.push({ label: "Find Hue Bridge (meethue.com)", right: cfg.hueIp || "discover ›", act: function () {
+        fetch("https://discovery.meethue.com").then(function (r) { return r.json(); }).then(function (a) {
+          if (a && a[0] && a[0].internalipaddress) { cfg.hueIp = a[0].internalipaddress; saveCfg(); showToast("Hue Bridge: " + cfg.hueIp); openLightsModal(); }
+          else showToast("No Hue Bridge found on LAN");
+        }).catch(function () { showToast("Discovery failed — enter IP manually"); });
+      } });
+      items.push({ label: "Hue Bridge IP (use input above)", right: cfg.hueIp || "—", act: function () {
+        var v = (document.getElementById("modal-input").value || "").trim();
+        if (v) { cfg.hueIp = v; saveCfg(); openLightsModal(); }
+      } });
+      items.push({ label: "Pair (press bridge button first)", right: cfg.hueUser ? "paired" : "pair ›", act: function () {
+        if (!cfg.hueIp) { showToast("Set Bridge IP first"); return; }
+        fetch("http://" + cfg.hueIp + "/api", { method: "POST", body: JSON.stringify({ devicetype: "omarchytv#webos" }) })
+          .then(function (r) { return r.json(); }).then(function (a) {
+            if (a && a[0] && a[0].success && a[0].success.username) { cfg.hueUser = a[0].success.username; cfg.hueGroup = cfg.hueGroup || "0"; saveCfg(); showToast("Hue paired"); openLightsModal(); }
+            else showToast((a && a[0] && a[0].error && a[0].error.description) || "Press link button on bridge, then retry");
+          }).catch(function () { showToast("Cannot reach Hue Bridge"); });
+      } });
+      items.push({ label: "Entertainment area / Room ID", right: cfg.hueGroup || "0 (all)", act: function () {
+        var v = (document.getElementById("modal-input").value || "").trim();
+        if (v) { cfg.hueGroup = v; saveCfg(); openLightsModal(); }
+      } });
+    } else if (hub === "ha") {
+      items.push({ label: "Home Assistant URL (use input above)", right: cfg.haUrl || "—", act: function () {
+        var v = (document.getElementById("modal-input").value || "").trim();
+        if (v) { cfg.haUrl = v; saveCfg(); openLightsModal(); }
+      } });
+      items.push({ label: "Long-lived token (use input above)", right: cfg.haToken ? "••••••" : "—", act: function () {
+        var v = (document.getElementById("modal-input").value || "").trim();
+        if (v) { cfg.haToken = v; saveCfg(); openLightsModal(); }
+      } });
+      items.push({ label: "Light entity_id(s) (use input above)", right: cfg.haEntity || "—", act: function () {
+        var v = (document.getElementById("modal-input").value || "").trim();
+        if (v) { cfg.haEntity = v; saveCfg(); openLightsModal(); }
+      } });
+    }
+    if (hub !== "off") {
+      items.push({ label: "Apply theme colours now", right: "▶", act: function () { pushLightsTheme(currentThemeObj(), false); showToast("Pushed theme to lights"); } });
+      items.push({ label: "Forget hub credentials (confirm with OK)", right: "forget", act: function () {
+        openModal("Forget hub?", "Remove saved Hue / Home Assistant credentials from this TV?", [
+          { label: "Cancel", right: "", act: openLightsModal },
+          { label: "Forget hub", right: "confirm", act: function () {
+            cfg.lightsHub = "off"; cfg.hueUser = ""; cfg.haToken = ""; saveCfg(); openLightsModal();
+          } }
+        ]);
+      } });
+    }
+    openModal("Ambilight & Lights", "Sync Philips Hue or Home Assistant lights with Omarchy themes & Cinemarchy", items, "IP / URL / entity_id / token…");
+  }
+
+  // v2.13 helpers: HTML-escape for modal labels built from feed data (renderModalList uses innerHTML).
+  function escHtml(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  var dhhState = { videos: null, at: 0, error: "", loading: false, timer: 0 };
+  function dhhFetchText(url) {
+    return fetch(url).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); });
+  }
+  function loadDhh(force, then) {
+    var D = window.OmarchyDhh;
+    if (!D || dhhState.loading) return;
+    dhhState.loading = true;
+    D.load(window.localStorage, dhhFetchText, force, Date.now()).then(function (res) {
+      dhhState.loading = false;
+      dhhState.videos = res.videos; dhhState.at = res.at; dhhState.error = res.error || "";
+      if (then) then();
+    });
+    clearTimeout(dhhState.timer);
+    dhhState.timer = setTimeout(function () { loadDhh(true); }, D.TTL_MS);   // every 6 h while the app runs
+  }
+  function agoText(t) {
+    if (!t) return "never";
+    var m = Math.round((Date.now() - t) / 60000);
+    return m < 1 ? "just now" : m < 60 ? m + " min ago" : Math.round(m / 60) + " h ago";
+  }
+
+  // YouTube deep links. Not verified on a real TV: webOS takes contentTarget, Tizen a v=ID payload.
+  function openYoutubeApp(id) {
+    var url = "https://www.youtube.com/watch?v=" + id;
+    try {
+      if (window.webOS && window.webOS.service && window.webOS.service.request) {
+        window.webOS.service.request("luna://com.webos.applicationManager", {
+          method: "launch", parameters: { id: "youtube.leanback.v4", params: { contentTarget: "https://www.youtube.com/tv?v=" + id } }
+        });
+        return;
+      }
+      if (window.tizen && window.tizen.application && window.tizen.ApplicationControl) {
+        var ac = new window.tizen.ApplicationControl("http://tizen.org/appcontrol/operation/view", null, null, null,
+          [new window.tizen.ApplicationControlData("PAYLOAD", ['{"values":"v=' + id + '"}'])]);
+        window.tizen.application.launchAppControl(ac, "111299001912", null, function () { window.tizen.application.launch("111299001912"); });
+        return;
+      }
+    } catch (e) {}
+    showToast("Open on YouTube: " + url);
+  }
+
+  // Optional official IFrame embed ("Play inside Cinemarchy", default off). Commands go over the documented
+  // postMessage channel of the embed (no stream extraction). Errors 2/5/100/101/150/153 fall back to the app.
+  var embed = { id: "", dur: 0, t: 0, playing: true, idx: 0, timer: 0 };
+  var EMBED_ROWS = ["Start", "25%", "50%", "75%", "−30 s", "+30 s", "Play / pause", "Open in YouTube app"];
+  function embedCmd(func, args) {
+    var f = document.getElementById("yt-embed-frame");
+    if (f && f.contentWindow) f.contentWindow.postMessage(JSON.stringify({ event: "command", func: func, args: args || [] }), "*");
+  }
+  function renderEmbedRail() {
+    var rail = document.getElementById("yt-embed-rail");
+    if (!rail) return;
+    rail.innerHTML = EMBED_ROWS.map(function (r, i) {
+      return '<span class="yt-chip' + (i === embed.idx ? " focused" : "") + '">' + (i < 4 ? "[" + (i + 1) + "] " : "") + escHtml(r) + "</span>";
+    }).join("");
+  }
+  function embedAct(i) {
+    if (i < 4) { if (embed.dur) embedCmd("seekTo", [embed.dur * i / 4, true]); }
+    else if (i === 4) embedCmd("seekTo", [Math.max(0, embed.t - 30), true]);
+    else if (i === 5) embedCmd("seekTo", [embed.t + 30, true]);
+    else if (i === 6) { embedCmd(embed.playing ? "pauseVideo" : "playVideo"); embed.playing = !embed.playing; }
+    else { var id = embed.id; closeEmbed(); openYoutubeApp(id); }
+  }
+  function openEmbed(id) {
+    closeModal();
+    var ov = document.getElementById("yt-embed");
+    if (!ov) {
+      ov = document.createElement("div");
+      ov.id = "yt-embed";
+      document.body.appendChild(ov);
+    }
+    embed = { id: id, dur: 0, t: 0, playing: true, idx: 0, timer: 0 };
+    ov.innerHTML = '<iframe id="yt-embed-frame" allow="autoplay; encrypted-media" src="https://www.youtube-nocookie.com/embed/' + id +
+      '?enablejsapi=1&autoplay=1&rel=0&playsinline=1"></iframe><div id="yt-embed-rail"></div>' +
+      '<div class="yt-note">Official YouTube embed · Back closes · ←/→ + OK on the chapter rail</div>';
+    ov.className = "open";
+    state.embedOpen = true;
+    renderEmbedRail();
+    var f = document.getElementById("yt-embed-frame");
+    f.onload = function () { f.contentWindow.postMessage(JSON.stringify({ event: "listening", id: 1 }), "*"); };
+    embed.timer = setTimeout(function () { if (!embed.dur) { showToast("Embed did not start · opening the YouTube app"); var i2 = embed.id; closeEmbed(); openYoutubeApp(i2); } }, 20000);
+  }
+  function closeEmbed() {
+    var ov = document.getElementById("yt-embed");
+    clearTimeout(embed.timer);
+    if (ov) { ov.className = ""; ov.innerHTML = ""; }
+    state.embedOpen = false;
+    renderAll();
+  }
+  window.addEventListener("message", function (ev) {
+    if (!state.embedOpen || !/youtube(-nocookie)?\.com$/.test(String(ev.origin).replace(/^https?:\/\/(www\.)?/, ""))) return;
+    var m; try { m = JSON.parse(ev.data); } catch (e) { return; }
+    if (m.event === "onError") {
+      var id = embed.id;
+      showToast("YouTube does not allow this video here (error " + m.info + ") · opening the YouTube app");
+      closeEmbed(); openYoutubeApp(id);
+    } else if (m.event === "infoDelivery" && m.info) {
+      if (m.info.duration) embed.dur = m.info.duration;
+      if (m.info.currentTime != null) embed.t = m.info.currentTime;
+    }
+  });
+  function embedKey(k, isBack) {
+    if (isBack) closeEmbed();
+    else if (k === "ArrowLeft") embed.idx = (embed.idx + EMBED_ROWS.length - 1) % EMBED_ROWS.length;
+    else if (k === "ArrowRight") embed.idx = (embed.idx + 1) % EMBED_ROWS.length;
+    else if (k === "Enter") embedAct(embed.idx);
+    else if (k >= "1" && k <= "4") embedAct(parseInt(k, 10) - 1);
+    renderEmbedRail();
+  }
+  function playDhh(v) {
+    if (cfg.embedPlayer) openEmbed(v.id);
+    else { closeModal(); openYoutubeApp(v.id); }
+  }
+
+  function openCinemarchyModal(tabIdx) {
+    pushLightsTheme(currentThemeObj(), true);
+    var tab = tabIdx || 0;
+    var tabs = ["[1] @dhh37", "[2] Streaming", "[3] Live TV", "[4] Player & tools"];
+    var items = [
+      { label: "Switch tab: " + tabs.join(" · "), right: tabs[tab], act: function () { openCinemarchyModal((tab + 1) % 4); } }
+    ];
+    var D = window.OmarchyDhh;
+    if (tab === 0 && D) {
+      if (!dhhState.videos && !dhhState.loading) loadDhh(false, function () { if (state.modalOpen && state.cineTab === 0) openCinemarchyModal(0); });
+      var seen = D.lastSeen(window.localStorage);
+      var vids = dhhState.videos || D.curated();
+      items.push({ label: dhhState.loading ? "Checking the @dhh37 channel feed…" : dhhState.error ? "Offline · showing the saved list (" + escHtml(dhhState.error) + ")" : "Feed updated " + agoText(dhhState.at) + " · OK refreshes",
+        right: "↻", act: function () { loadDhh(true, function () { openCinemarchyModal(0); }); openCinemarchyModal(0); } });
+      vids.forEach(function (v) {
+        var fresh = D.isNew(v, seen, Date.now());
+        items.push({ label: (fresh ? "★ " : "▶ ") + escHtml(v.title), right: fresh ? "NEW" : (cfg.embedPlayer ? "play ›" : "youtube ›"), act: function () { playDhh(v); } });
+      });
+      items.push({ label: "Omarchy manual (omarchy.org)", right: "docs", act: function () { closeModal(); showToast("Open on your TV browser or phone: omarchy.org"); } });
+    } else if (tab === 1) {
+      ["jellyfin", "plex", "netflix", "prime", "disney", "youtube", "raiplay"].forEach(function (id) {
+        var a = DEFAULT_APPS.filter(function (x) { return x.id === id; })[0];
+        if (a) items.push({ label: escHtml(a.name), right: a.appId, act: function () { closeModal(); launchApp(a); } });
+      });
+    } else if (tab === 2) {
+      TV_INPUTS.forEach(function (inp) {
+        items.push({ label: escHtml(inp.name + " · " + inp.sub), right: "watch ›", act: function () { closeModal(); launchApp(inp); } });
+      });
+    } else {
+      items.push({ label: "Play @dhh37 inside Cinemarchy (official YouTube embed)", right: cfg.embedPlayer ? "on" : "off", act: function () {
+        cfg.embedPlayer = !cfg.embedPlayer; saveCfg(); openCinemarchyModal(3);
+      } });
+      items.push({ label: "⏸ Preview the pause screensaver (10 s)", right: "test", act: function () {
+        closeModal();
+        state.pauseTitle = "Preview · OK to resume";
+        startScreensaver("‖ PAUSED · " + state.pauseTitle);
+      } });
+    }
+    state.cineTab = tab;
+    openModal("CINEMARCHY · " + tabs[tab], "", items);
+    state.modalDigit = function (n) { if (n >= 1 && n <= 4) openCinemarchyModal(n - 1); };
+    var subEl = document.getElementById("modal-sub");
+    if (subEl && DATA.cinemarchyLogo) {
+      subEl.style.display = "block";
+      subEl.innerHTML = '<pre style="font-size:9px;line-height:1.05;color:var(--t-accent);margin-bottom:8px;overflow:hidden;">' + DATA.cinemarchyLogo + '</pre>' +
+        '<div style="margin-bottom:6px;"><span style="border:1px solid var(--t-accent);color:var(--t-accent);padding:0 5px;font-weight:bold;">ALPHA</span> Cinemarchy ' + CINEMARCHY_VERSION + ' (preview)</div>' +
+        '<div>Press 1-4 or OK on the top row to switch tabs</div>';
+    }
+  }
+
   function openOmarchyMenu() {
-    openModal("Omarchy Menu", "OmarchyTV 2.11.0-testing (LG webOS)", [
+    openModal("Omarchy Menu", "OmarchyTV 2.13.0-beta (LG webOS)", [
+      { label: "🎬 Cinemarchy (Media, Streaming, Live TV & Snippets)", right: "C ›", act: function () { openCinemarchyModal(0); } },
+      { label: "🧩 " + tr("sys_plugins"), right: ((cfg.pluginSpacexTv ? 1 : 0) + (cfg.pluginGrokbot ? 1 : 0)) + " on ›", act: openPluginsModal },
       { label: "Walker (app launcher)", right: "›", act: openWalkerModal },
       { label: tr("sys_themes"), right: cfg.theme, act: openThemesModal },
       { label: tr("wp_title"), right: "›", act: function () { openWallpaperModal(); } },
@@ -1108,12 +1482,17 @@
         if (row) row.right = cfg.aiCredits === "dollars" ? "dollars" : "percent";
         renderModalList();
       } },
-      { label: tr("sys_about"), right: "2.11.0-testing", act: openAboutModal }
+      { label: tr("sys_about"), right: "2.13.0-beta", act: openAboutModal }
     ]);
   }
 
+  var saverStatusOverride = "";
   window.OmarchySaver = {
-    text: function () { return DATA.logo; },
+    text: function () { return cfg.saverArt === "cinemarchy" && DATA.cinemarchyLogo ? DATA.cinemarchyLogo : DATA.logo; },
+    saverMode: function () { return cfg.saverMode || "logo"; },
+    saverVariant: function () { return cfg.saverArt === "aquarium-classic" ? "classic" : "homage"; },
+    palette: function () { return currentThemeObj(); },
+    statusOverride: function () { return saverStatusOverride; },
     color: function () { return currentThemeObj().accent; },
     clockColor: function () { return currentThemeObj().fg; },
     showClock: function () { return !!cfg.saverShowClock; },
@@ -1126,7 +1505,8 @@
     log: function (m) { console.log("[OmarchySaver]", m); }
   };
 
-  function startScreensaver() {
+  function startScreensaver(statusText) {
+    saverStatusOverride = typeof statusText === "string" ? statusText : "";
     var ov = document.getElementById("saver-overlay");
     var fr = document.getElementById("saver-frame");
     fr.src = "saver/index.html";
@@ -1244,6 +1624,11 @@
         });
         return;
       }
+      var tzId = app.tizenId || (window.OMARCHY_TIZEN_IDS || {})[app.id];
+      if (window.tizen && window.tizen.application && tzId) {   // Samsung Tizen build (tizen/), see tizen-shim.js
+        window.tizen.application.launch(tzId);
+        return;
+      }
       if (window.PalmServiceBridge) {
         var b = new window.PalmServiceBridge();
         b.call("luna://com.webos.applicationManager/launch", JSON.stringify({ id: app.appId }));
@@ -1263,19 +1648,170 @@
     renderAll();
   }
 
+
+  // v2.13 Grok Bot ball mark, redrawn from Tom Ballard's MIT grokbot-desktop.svg ((c) 2026 Tom Ballard):
+  // round orange body (#E06512, or the mirrored bot's colour), soft highlight, capsule eyes (lid 1 open .. 0.1 shut).
+  function orbSvg(color, lid, px) {
+    var c = /^#[0-9a-fA-F]{6}$/.test(color || "") ? color : "#E06512";
+    var n = parseInt(c.slice(1), 16), luma = (0.2126 * (n >> 16) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255)) / 255;
+    var eye = luma < 0.25 ? "#F4F4F5" : "#141416";
+    var h = Math.max(3.2, 12 * (lid == null ? 1 : lid)), y = 27 - h / 2;
+    return '<svg class="gb-orb" viewBox="0 0 64 64" width="' + (px || 44) + '" height="' + (px || 44) + '" aria-hidden="true">' +
+      '<defs><radialGradient id="gbShine" cx="0.36" cy="0.3" r="0.6"><stop offset="0" stop-color="#fff" stop-opacity="0.42"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>' +
+      '<circle cx="32" cy="32" r="28" fill="' + c + '" stroke="#141416" stroke-opacity="0.55" stroke-width="1.6"/>' +
+      '<circle cx="32" cy="32" r="28" fill="url(#gbShine)"/>' +
+      '<rect x="20.4" y="' + y + '" width="5.2" height="' + h + '" rx="2.6" fill="' + eye + '"/>' +
+      '<rect x="38.4" y="' + y + '" width="5.2" height="' + h + '" rx="2.6" fill="' + eye + '"/></svg>';
+  }
+  var gbLid = 1;
+  var grokbotBlink = false;
+  setInterval(function () {
+    if (!cfg.pluginGrokbot || document.hidden) return;
+    if (Math.random() < 0.3) { gbLid = 0.5; renderPluginsUI(); setTimeout(function () { gbLid = 1; renderPluginsUI(); }, 1400); return; }   // idle squint
+    grokbotBlink = true;
+    renderPluginsUI();
+    setTimeout(function () { grokbotBlink = false; renderPluginsUI(); }, 180);
+  }, 3200);
+
+  function renderPluginsUI() {
+    var pill = document.getElementById("spacex-pill");
+    if (pill) {
+      pill.style.display = cfg.pluginSpacexTv ? "inline-flex" : "none";
+      pill.textContent = "🚀 SpaceX TV · launches";
+    }
+    var gb = document.getElementById("grokbot-companion");
+    if (gb) {
+      gb.style.display = (cfg.pluginGrokbot && state.ws === 0) ? "block" : "none";
+      var eyes = document.getElementById("grokbot-eyes");
+      var sub = document.getElementById("grokbot-sub");
+      if (eyes) eyes.innerHTML = orbSvg(cfg.grokbotColor, grokbotBlink ? 0.1 : gbLid, 44) + '<span class="gb-name">' + escHtml(cfg.grokbotName || "Grok Bot") + "</span>";
+      if (sub) sub.textContent = cfg.grokbotMessage ? cfg.grokbotMessage : "Blue key · chat";
+      placeCompanion(gb);
+    }
+  }
+
+  function openPluginsModal() {
+    openModal(tr("sys_plugins"), "Sandboxed declarative JSON plugins (v1 schema · zero native code execution)", [
+      { label: "🚀 SpaceX TV (@sighmon · MIT)", right: cfg.pluginSpacexTv ? "on" : "off", act: function () {
+        cfg.pluginSpacexTv = !cfg.pluginSpacexTv; saveCfg(); renderPluginsUI(); openPluginsModal();
+      } },
+      { label: "🚀 Open SpaceX TV Launches & Live Streams", right: "4 streams ›", act: openSpacexModal },
+      { label: "🤖 Omarchy Grok Bot Desktop Companion (@tcballard · MIT)", right: cfg.pluginGrokbot ? "on" : "off", act: function () {
+        cfg.pluginGrokbot = !cfg.pluginGrokbot; saveCfg(); renderPluginsUI(); openPluginsModal();
+      } },
+      { label: "🤖 Open Grok Bot Desktop Companion", right: "[ ◉ ◉ ] ›", act: openGrokbotCompanionModal }
+    ]);
+  }
+
+  function openSpacexModal() {
+    var streams = [
+      { title: "🚀 SpaceX launches · next-launch countdown", sub: "spacex.com/launches" },
+      { title: "🛰️ SpaceX broadcasts on X", sub: "x.com/SpaceX" },
+      { title: "🎬 Starship (spacex.com)", sub: "spacex.com/vehicles/starship" }
+    ];
+    var items = streams.map(function (s) {
+      return { label: s.title, right: s.sub, act: function () {
+        closeModal();
+        showToast("Open on your TV browser or phone: " + s.sub);
+      } };
+    });
+    items.push({ label: "Top-bar countdown pill", right: cfg.pluginSpacexTv ? "on" : "off", act: function () {
+      cfg.pluginSpacexTv = !cfg.pluginSpacexTv; saveCfg(); renderPluginsUI(); openSpacexModal();
+    } });
+    openModal("SpaceX TV · com.sighmon.spacex-tv", "Based on sighmon's Omarchy SpaceX TV plugin (github.com/sighmon/omarchy-spacex-tv · MIT)", items);
+  }
+
+  // v2.13 Grok Bot Companion (TV), webOS/Tizen. Experimental, tracks @tcballard's in-development
+  // Grok Bot Desktop Companion (MIT); my own code. Never takes D-pad focus by itself: the Blue colour key
+  // (or a click) opens the chat. There is no omarchy-link channel on webOS/Tizen yet, so questions go to
+  // grok.com in the TV browser. Voice: the Web Speech API when the TV's engine has it, else keyboard only.
+  var COMPANION_CORNERS = ["bottom-right", "bottom-left", "top-right", "top-left"];
+  function placeCompanion(el) {
+    var c = COMPANION_CORNERS.indexOf(cfg.companionCorner) >= 0 ? cfg.companionCorner : "bottom-right";
+    var ox = 48 + (cfg.companionOffsetX || 0), oy = (cfg.companionOffsetY || 0);
+    el.style.left = el.style.right = el.style.top = el.style.bottom = "";
+    if (c.indexOf("right") >= 0) el.style.right = ox + "px"; else el.style.left = ox + "px";
+    if (c.indexOf("bottom") >= 0) el.style.bottom = (340 + oy) + "px"; else el.style.top = (120 + oy) + "px";
+  }
+  function speechCtor() { return window.SpeechRecognition || window.webkitSpeechRecognition || null; }
+  function askGrokWeb(q) {
+    var url = "https://grok.com/?q=" + encodeURIComponent(q);
+    try {
+      if (window.webOS && window.webOS.service && window.webOS.service.request) {
+        window.webOS.service.request("luna://com.webos.applicationManager", { method: "launch", parameters: { id: "com.webos.app.browser", params: { target: url } } });
+        return;
+      }
+      if (window.tizen && window.tizen.ApplicationControl) {
+        window.tizen.application.launchAppControl(new window.tizen.ApplicationControl("http://tizen.org/appcontrol/operation/view", url), null, null, null);
+        return;
+      }
+    } catch (e) {}
+    showToast("Ask Grok: " + url);
+  }
+  function openCompanionChat() {
+    var q = "";
+    var voice = speechCtor();
+    var items = [
+      { label: "Send to Grok (opens grok.com in the TV browser)", right: "OK ›", act: function () {
+        if (!q.trim()) { showToast("Type a question first (▲ goes back to the field)"); return; }
+        closeModal(); askGrokWeb(q.trim());
+      } },
+      voice ? { label: "🎤 Speak instead", right: "voice", act: function () {
+        try {
+          var r = new voice(); r.lang = navigator.language || "en-US";
+          r.onresult = function (ev) { q = ev.results[0][0].transcript; modalInput.value = q; showToast("Heard: " + q); };
+          r.onerror = function () { showToast("Voice is not available here · use the keyboard"); };
+          r.start(); showToast("Listening…");
+        } catch (e) { showToast("Voice is not available here · use the keyboard"); }
+      } } : { label: "Voice: not available on this TV · keyboard only", right: "", act: function () {} },
+      { label: "Companion corner", right: cfg.companionCorner || "bottom-right", act: function () {
+        var i = COMPANION_CORNERS.indexOf(cfg.companionCorner || "bottom-right");
+        cfg.companionCorner = COMPANION_CORNERS[(i + 1) % 4]; saveCfg(); renderPluginsUI();
+        state.modalItems[state.modalIdx].right = cfg.companionCorner; renderModalList();
+      } },
+      { label: "Show floating companion on Home", right: cfg.pluginGrokbot ? "on" : "off", act: function () {
+        cfg.pluginGrokbot = !cfg.pluginGrokbot; saveCfg(); renderPluginsUI();
+        state.modalItems[state.modalIdx].right = cfg.pluginGrokbot ? "on" : "off"; renderModalList();
+      } }
+    ];
+    openModal("Grok Bot Companion (TV) · experimental",
+      "Tracks @tcballard's in-development Grok Bot Desktop Companion (MIT) · Blue key opens this chat", items,
+      "Ask anything… (on-screen or Bluetooth keyboard)", function (v) { q = v; },
+      { noAutoFocus: true, focusIdx: voice ? 1 : 0 });
+    var subEl = document.getElementById("modal-sub");
+    if (subEl) subEl.innerHTML = '<div style="display:flex;align-items:center;gap:12px;">' + orbSvg(cfg.grokbotColor, 1, 40) +
+      "<div>Tracks @tcballard's in-development Grok Bot Desktop Companion (MIT) · Blue key opens this chat</div></div>";
+  }
+
+  function openGrokbotCompanionModal() {
+    openModal("Grok Bot Desktop Companion · io.github.tcballard.grokbot-desktop",
+      "Experimental, tracks @tcballard's in-development branch (MIT) · the PC bridge runs on Android TV via omarchy-link", [
+      { label: "💬 Chat with the companion", right: "OK ›", act: openCompanionChat },
+      { label: "Show floating companion on Home", right: cfg.pluginGrokbot ? "on" : "off", act: function () {
+        cfg.pluginGrokbot = !cfg.pluginGrokbot; saveCfg(); renderPluginsUI(); openGrokbotCompanionModal();
+      } },
+      { label: "Companion corner", right: cfg.companionCorner || "bottom-right", act: function () {
+        var j = COMPANION_CORNERS.indexOf(cfg.companionCorner || "bottom-right");
+        cfg.companionCorner = COMPANION_CORNERS[(j + 1) % 4]; saveCfg(); renderPluginsUI(); openGrokbotCompanionModal();
+      } }
+    ]);
+  }
+
   function renderAll() {
     renderTerminal();
     renderWidgets();
     renderDock();
     renderWorkspaces();
+    renderPluginsUI();
     if (state.modalOpen) renderModalList();
   }
 
   function activateBarItem(idx) {
     if (idx === 0) openOmarchyMenu();
     else if (idx >= 1 && idx <= 5) switchWorkspace(idx - 1);
-    else if (idx === 9) switchWorkspace(1);
-    else if (idx === 10) startScreensaver();
+    else if (idx === 6) openCinemarchyModal(0);
+    else if (idx === 10) switchWorkspace(1);
+    else if (idx === 11) startScreensaver();
     else launchApp({ name: "LG Settings", appId: "com.palm.app.settings" });
   }
 
@@ -1308,7 +1844,7 @@
     var code = e.keyCode;
     // webOS 3.x (Chrome 38) has no KeyboardEvent.key: derive it from the remote's keyCode
     var k = e.key || LEGACY_KEYS[code] || (code >= 48 && code <= 57 ? String(code - 48) : "");
-    var isBack = (k === "Escape" || k === "Backspace" || code === 461);
+    var isBack = (k === "Escape" || k === "Backspace" || code === 461 || code === 10009);   // 10009: Samsung Tizen Return
 
     // A long press opened a menu while OK is still held: drop its auto-repeat so it can't pick an item.
     if (state.okHeld && k === "Enter") { e.preventDefault(); return; }
@@ -1326,8 +1862,12 @@
       return;
     }
 
+    if (state.embedOpen) { embedKey(k, isBack); e.preventDefault(); return; }
+    if ((code === 406 || k === "ColorF3Blue") && !state.modalOpen && cfg.pluginGrokbot) { openCompanionChat(); e.preventDefault(); return; }
+
     if (state.modalOpen) {
       if (isBack) { closeModal(); e.preventDefault(); return; }
+      if (state.modalDigit && k >= "1" && k <= "9" && document.activeElement !== modalInput) { state.modalDigit(parseInt(k, 10)); e.preventDefault(); return; }
       if (k === "ArrowDown") { state.modalIdx = (state.modalIdx + 1) % Math.max(1, state.modalItems.length); renderModalList(); e.preventDefault(); return; }
       if (k === "ArrowUp") { state.modalIdx = (state.modalIdx - 1 + Math.max(1, state.modalItems.length)) % Math.max(1, state.modalItems.length); renderModalList(); e.preventDefault(); return; }
       if (k === "Enter") {
@@ -1355,8 +1895,14 @@
       return;
     }
 
+    if ((k === "c" || k === "C" || code === 67) && !state.modalOpen) {
+      openCinemarchyModal(0);
+      e.preventDefault();
+      return;
+    }
+
     if (state.zone === "bar") {
-      if (k === "ArrowRight") { state.barIdx = Math.min(10, state.barIdx + 1); renderAll(); e.preventDefault(); return; }
+      if (k === "ArrowRight") { state.barIdx = Math.min(11, state.barIdx + 1); renderAll(); e.preventDefault(); return; }
       if (k === "ArrowLeft") { state.barIdx = Math.max(0, state.barIdx - 1); renderAll(); e.preventDefault(); return; }
       if (k === "ArrowDown") {
         if (state.ws === 0) state.zone = enterWidgets() ? "widgets" : "dock";
@@ -1501,6 +2047,10 @@
     })(waybarButtons[bi]);
   }
 
+  var spEl = document.getElementById("spacex-pill");
+  if (spEl) spEl.onclick = openSpacexModal;
+  var gbEl = document.getElementById("grokbot-companion");
+  if (gbEl) gbEl.onclick = openCompanionChat;
   document.getElementById("wx-box").onclick = openWeatherModal;
   document.getElementById("term-box").onclick = openThemesModal;
   document.getElementById("pc-box").onclick = function () { switchWorkspace(3); };
@@ -1514,6 +2064,16 @@
     openWeatherModal: openWeatherModal,
     openThemesModal: openThemesModal,
     openWalkerModal: openWalkerModal,
+    openCinemarchyModal: openCinemarchyModal,
+    openPluginsModal: openPluginsModal,
+    openSpacexModal: openSpacexModal,
+    openGrokbotCompanionModal: openGrokbotCompanionModal,
+    openCompanionChat: openCompanionChat,
+    openOmarchyMenu: openOmarchyMenu,
+    openLightsModal: openLightsModal,
+    openAllSettingsModal: openAllSettingsModal,
+    openEmbed: openEmbed,
+    closeEmbed: closeEmbed,
     openAboutModal: openAboutModal,
     startScreensaver: startScreensaver,
     stopScreensaver: stopScreensaver,

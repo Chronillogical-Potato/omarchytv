@@ -116,7 +116,7 @@ public class AskActivity extends Activity implements OmarchyLink.Listener {
         DisplayMetrics dm = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getRealMetrics(dm);
         s = Math.min(dm.heightPixels / 1080f, dm.widthPixels / 1920f);
-        tf = getResources().getFont(R.font.caskaydia);
+        tf = CastUi.font(this);
         tfBold = Typeface.create(tf, Typeface.BOLD);
 
         LauncherConfig cfg = LauncherConfig.get(this);

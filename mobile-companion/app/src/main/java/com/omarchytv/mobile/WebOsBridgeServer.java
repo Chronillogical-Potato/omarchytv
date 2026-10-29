@@ -363,7 +363,7 @@ public final class WebOsBridgeServer implements Closeable {
             o.put("version", "2.11.0-testing");
             o.put("host", "omarchytv-mobile");
             o.put("platform", "Universal Smart TV Bridge (Android TV · LG webOS · Samsung Tizen · Hisense)");
-            o.put("kernel", "Android Mobile Companion 2.12.0");
+            o.put("kernel", "Android Mobile Companion 2.13.0");
             o.put("cpu", 14);
             o.put("ram", 42);
             o.put("uptimeSec", upSec);
@@ -373,7 +373,7 @@ public final class WebOsBridgeServer implements Closeable {
             o.put("openai", "51.20");
             o.put("xai", "110.00");
             o.put("hasWallpaper", customWallpaperBytes != null && customWallpaperBytes.length > 0);
-            o.put("deploy", "omarchytv-mobile 2.12.0 (Universal TV) ✓");
+            o.put("deploy", "omarchytv-mobile 2.13.0 (Universal TV) ✓");
             o.put("remoteKeySeq", remoteKeySeq);
             o.put("lastRemoteKey", lastRemoteKey);
             o.put("lastPrompt", lastPrompt);

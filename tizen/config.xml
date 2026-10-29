@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets"
+        id="http://marcoporro.it/omarchytv" version="2.13.0" viewmodes="maximized">
+    <tizen:application id="OmarchyTV0.OmarchyTV" package="OmarchyTV0" required_version="2.3"/>
+    <content src="index.html"/>
+    <feature name="http://tizen.org/feature/screen.size.all"/>
+    <icon src="icon.png"/>
+    <name>OmarchyTV</name>
+    <author href="https://www.marcoporro.it">Marco Porro</author>
+    <description>Omarchy-themed TV home screen (unofficial fan project, MIT). Shares its web app with the LG webOS build.</description>
+    <license href="https://opensource.org/licenses/MIT">MIT</license>
+    <!-- v2.13: network for the @dhh37 feed, the YouTube embed, weather and lights; launch for YouTube / browser hand-off -->
+    <access origin="*" subdomains="true"/>
+    <tizen:privilege name="http://tizen.org/privilege/internet"/>
+    <tizen:privilege name="http://tizen.org/privilege/application.launch"/>
+    <tizen:privilege name="http://tizen.org/privilege/appmanager.launch"/>
+    <tizen:profile name="tv-samsung"/>
+</widget>

@@ -51,6 +51,33 @@ import javax.crypto.Cipher;
 public final class AdbTcpClient implements Closeable {
 
     public static final int DEFAULT_PORT = 5555;
+
+    /** Parsed "host" or "host:port" from user input; port falls back to the given default. */
+    public static final class HostPort {
+        public final String host;
+        public final int port;
+        HostPort(String host, int port) { this.host = host; this.port = port; }
+    }
+
+    /**
+     * Splits "192.168.1.50:37123" into host and port. Accepts a bare host (uses {@code defaultPort}).
+     * Throws IllegalArgumentException for an empty host or a port outside 1..65535.
+     */
+    public static HostPort parseHostPort(String input, int defaultPort) {
+        String s = input == null ? "" : input.trim();
+        int port = defaultPort;
+        int colon = s.lastIndexOf(':');
+        if (colon >= 0 && s.indexOf(':') == colon) {
+            String p = s.substring(colon + 1).trim();
+            s = s.substring(0, colon).trim();
+            try { port = Integer.parseInt(p); } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Invalid ADB port: " + p);
+            }
+        }
+        if (s.isEmpty()) throw new IllegalArgumentException("Empty host");
+        if (port < 1 || port > 65535) throw new IllegalArgumentException("ADB port out of range: " + port);
+        return new HostPort(s, port);
+    }
     public static final String REMOTE_APK_TMP = "/data/local/tmp/omarchytv.apk";
 
     public static final int CMD_SYNC = 0x434e5953;
@@ -167,7 +194,7 @@ public final class AdbTcpClient implements Closeable {
                 }
 
                 if (pkt.command == CMD_STLS) {
-                    throw new IOException("TV requested ADB TLS; enable standard Network/TCP debugging on port 5555");
+                    throw new IOException("TV requested ADB TLS (Android 11+ Wireless debugging). Pair once from a PC with `adb pair <ip>:<pair-port> <code>`, then `adb connect <ip>:<port>` and `adb tcpip 5555`, or use classic Network debugging on port " + port);
                 }
 
                 if (pkt.command != CMD_AUTH || pkt.arg0 != AUTH_TYPE_TOKEN) {

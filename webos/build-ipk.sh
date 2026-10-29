@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
-# Build OmarchyTV for LG webOS (omarchytv-webos-2.11.0-testing.ipk)
+# Build OmarchyTV for LG webOS (omarchytv-webos-<appinfo version>-testing.ipk)
 # Synchronizes shared fonts, themes, MIT wordmark wallpapers, and tte.js screensaver
 # assets from ../launcher/app/src/main/ and generates the binary PNG icons before
 # running ares-package.
 set -euo pipefail
+# The version comes from app/appinfo.json, so the package name never goes stale.
+VERSION="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["version"])' "$(dirname "$0")/app/appinfo.json")"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -47,5 +49,5 @@ done
 OUT_DIR="${1:-$SCRIPT_DIR}"
 mkdir -p "$OUT_DIR"
 ares-package "$APP" -o "$OUT_DIR"
-mv -f "$OUT_DIR/com.omarchytv.home_2.11.0_all.ipk" "$OUT_DIR/omarchytv-webos-2.11.0-testing.ipk"
-sha256sum "$OUT_DIR/omarchytv-webos-2.11.0-testing.ipk"
+mv -f "$OUT_DIR/com.omarchytv.home_${VERSION}_all.ipk" "$OUT_DIR/omarchytv-webos-${VERSION}-testing.ipk"
+sha256sum "$OUT_DIR/omarchytv-webos-${VERSION}-testing.ipk"

@@ -42,7 +42,7 @@ public class DockDecoration extends RecyclerView.ItemDecoration {
         this.density = density;
         Typeface tf;
         try {
-            tf = ctx.getResources().getFont(R.font.caskaydia);
+            tf = CastUi.font(ctx);
         } catch (Exception e) {
             tf = Typeface.MONOSPACE;
         }

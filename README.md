@@ -1,12 +1,12 @@
 # OmarchyTV
 
-**An Omarchy-style home screen for Android TV, featuring a native Omarchy TUI Grok Bot assistant, 26 MIT themes with 4K wallpapers, a desktop link to your Omarchy PC / Mac, a native MCP server, and an Android smartphone wireless installer.**
+**An Omarchy-style home screen for Android TV, featuring a native Omarchy TUI Grok Bot assistant, 28 MIT themes with 4K wallpapers, a desktop link to your Omarchy PC / Mac, a native MCP server, and an Android smartphone wireless installer.**
 
 Created by **[Marco Porro](https://www.marcoporro.it)** ([x.com/MarcoPorro](https://x.com/MarcoPorro) · [www.marcoporro.it](https://www.marcoporro.it))
 
 Official Synchronized Repositories: **[GitHub (`github.com/piermark/omarchytv`)](https://github.com/piermark/omarchytv)** · **[GitLab (`gitlab.com/piermark/omarchytv`)](https://gitlab.com/piermark/omarchytv)**
 
-Published: **25 October 2026 (beta)** · Version **2.12.0-beta** (`versionCode 20` — Android TV, PC/Mac Plugin & Mobile Companion) / **2.11.0-testing** (LG webOS experimental) · License **MIT**
+Published: **29 October 2026 (pre-release)** · Version **2.13.0-beta** (`versionCode 21` — Android TV, PC/Mac Plugin & Mobile Companion) / **2.13.0-testing** (LG webOS & Samsung Tizen, experimental) · Cinemarchy **0.1.0-alpha** · License **MIT**
 
 > [!WARNING]
 > **BETA SOFTWARE: THINGS MAY NOT WORK.** OmarchyTV has been tested on several devices (Sony KD-55XE9005 on Android 9,
@@ -29,31 +29,78 @@ OmarchyTV; see [Trademarks](#trademarks).*
 
 ---
 
-## Release Downloads & Checksums (`v2.12.0-beta`)
+## Release Downloads & Checksums (`v2.13.0-beta`, pre-release)
 
-Every Android APK is signed with the official OmarchyTV release certificate (`SHA-256: 90aa68d9f45e623eadfd349ab1eb66042356f95ff6347a4568c3f3a78f8ea33d`), so `adb install -r` upgrades cleanly over `2.11.0-beta` and earlier builds while keeping all user settings.
+I sign every Android APK with the OmarchyTV release certificate (`SHA-256: 90aa68d9f45e623eadfd349ab1eb66042356f95ff6347a4568c3f3a78f8ea33d`), so `adb install -r` upgrades over `2.12.0-beta` and keeps your settings. All checksums are also in `SHA256SUMS` on the release.
 
-| Artifact | Downloads (GitHub & GitLab Mirrors) | Platform | Version | Size | SHA-256 |
+| Artifact | Download | Platform | Version | Size | SHA-256 |
 |---|---|---|---|---|---|
-| **`omarchytv-release-2.12.0-beta.apk`** | **[GitHub](https://github.com/piermark/omarchytv/releases/download/v2.12.0-beta/omarchytv-release-2.12.0-beta.apk)** · **[GitLab](https://gitlab.com/-/project/87958120/uploads/6cceb57b0e117e4607982769d2affef5/omarchytv-release-2.12.0-beta.apk)** | Android TV / Google TV (`com.omarchytv.home`, `minSdk 24`, `targetSdk 34`) | `2.12.0-omarchytv` (`versionCode 20`) | `3.8 MB` | `9dedc335fb1150afa6027f4123bd295bec8241a4c654842a6be65caff993f035` |
-| **`omarchy-tv-pc-plugin-2.12.0-beta.tar.gz`** | **[GitHub](https://github.com/piermark/omarchytv/releases/download/v2.12.0-beta/omarchy-tv-pc-plugin-2.12.0-beta.tar.gz)** · **[GitLab](https://gitlab.com/-/project/87958120/uploads/b99cf1095f23c74fc75abb9cdd0d3322/omarchy-tv-pc-plugin-2.12.0-beta.tar.gz)** | Omarchy Linux / macOS (`omarchy-tv` + `omarchy-link` + `tools/`) | `2.12.0-beta` | `184 KB` | `2aef33b30e38eba6eb4355ad597bf382bb5e7210be59d7070d6b5f509765bd0c` |
-| **`omarchytv-mobile-2.12.0-beta.apk`** | **[GitHub](https://github.com/piermark/omarchytv/releases/download/v2.12.0-beta/omarchytv-mobile-2.12.0-beta.apk)** · **[GitLab](https://gitlab.com/-/project/87958120/uploads/b6ff99262524aaf8186ab44906a91fdf/omarchytv-mobile-2.12.0-beta.apk)** | Android Smartphone Installer & Companion (`com.omarchytv.mobile`, `minSdk 26`, `targetSdk 34`) | `2.12.0-beta` (`versionCode 21200`) | `178 KB` | `42bb62aa6169c52afacc9b477d25f6f95fffe2eeea9f779394606e1a4e5ad0a4` |
-| **`omarchytv-webos-2.11.0-testing.ipk`** | **[GitHub](https://github.com/piermark/omarchytv/releases/download/v2.11.0-testing-webos/omarchytv-webos-2.11.0-testing.ipk)** · **[GitLab](https://gitlab.com/piermark/omarchytv/-/releases)** | LG webOS TV (`com.omarchytv.webos`, experimental `testing`) | `2.11.0-testing` | `124 KB` | `04eb928640a0212cad83457ad50b502bc81da440445e33ea2eee95e6eefcc9df` |
+| **`omarchytv-release-2.13.0-beta.apk`** | **[GitHub](https://github.com/piermark/omarchytv/releases/download/v2.13.0-beta/omarchytv-release-2.13.0-beta.apk)** · **[GitLab](https://gitlab.com/piermark/omarchytv/-/releases/v2.13.0-beta)** | Android TV / Google TV / Fire OS (`com.omarchytv.home`, `minSdk 24`, `targetSdk 34`) | `2.13.0-beta` (`versionCode 21`) | `8.2 MB` | `53d88d14ffad8933048570e7ae324d11bba0907ff0a8252ad142eb6ac564b2ea` |
+| **`omarchytv-webos-2.13.0-testing.ipk`** | **[GitHub](https://github.com/piermark/omarchytv/releases/download/v2.13.0-beta/omarchytv-webos-2.13.0-testing.ipk)** · **[GitLab](https://gitlab.com/piermark/omarchytv/-/releases/v2.13.0-beta)** | LG webOS TV (`com.omarchytv.home`, experimental) | `2.13.0-testing` | `6.4 MB` | `bdc817b791f3385be18a1a7f88c1b5b1d09012634b8308a61cd030d90afeb773` |
+| **`OmarchyTV-tizen-2.13.0-beta-unsigned.wgt`** | **[GitHub](https://github.com/piermark/omarchytv/releases/download/v2.13.0-beta/OmarchyTV-tizen-2.13.0-beta-unsigned.wgt)** · **[GitLab](https://gitlab.com/piermark/omarchytv/-/releases/v2.13.0-beta)** | Samsung Tizen TV (unsigned testing build, sign it in Tizen Studio; see [INSTALL-TIZEN.md](tizen/INSTALL-TIZEN.md)) | `2.13.0-beta` | `6.5 MB` | `b3af5fa83eab75dbaedb9d2d7fb7e6088c077812083347a572dba4ffb5529e10` |
+| **`omarchytv-mobile-2.13.0-beta.apk`** | **[GitHub](https://github.com/piermark/omarchytv/releases/download/v2.13.0-beta/omarchytv-mobile-2.13.0-beta.apk)** · **[GitLab](https://gitlab.com/piermark/omarchytv/-/releases/v2.13.0-beta)** | Android phone installer & companion (`com.omarchytv.mobile`, `minSdk 26`) | `2.13.0-beta` (`versionCode 21300`) | `177 KB` | `e45a5c0f7ccd662279d34e80ffbf4e9581061603012e8814e5941e8909b67f79` |
+| **`omarchy-tv-pc-plugin-2.13.0-beta.tar.gz`** | **[GitHub](https://github.com/piermark/omarchytv/releases/download/v2.13.0-beta/omarchy-tv-pc-plugin-2.13.0-beta.tar.gz)** · **[GitLab](https://gitlab.com/piermark/omarchytv/-/releases/v2.13.0-beta)** | Omarchy Linux / macOS (`omarchy-tv` + `omarchy-link`) | `2.13.0-beta` | `216 KB` | `350ca6dca3685be8838b0b258a70b7e5ae52c50b192400e83f8be9739e652152` |
+| **`omarchy-tv-2.13.0-beta.tar.gz`** | **[GitHub](https://github.com/piermark/omarchytv/releases/download/v2.13.0-beta/omarchy-tv-2.13.0-beta.tar.gz)** · **[GitLab](https://gitlab.com/piermark/omarchytv/-/releases/v2.13.0-beta)** | PC plugin `omarchy-tv` only | `2.13.0-beta` | `48 KB` | `c68a194391bfefff5ac3b06665ab833223735ecb66d9993e944549292374bae2` |
+| **`omarchy-link-2.13.0-beta.tar.gz`** | **[GitHub](https://github.com/piermark/omarchytv/releases/download/v2.13.0-beta/omarchy-link-2.13.0-beta.tar.gz)** · **[GitLab](https://gitlab.com/piermark/omarchytv/-/releases/v2.13.0-beta)** | PC plugin `omarchy-link` only | `2.13.0-beta` | `168 KB` | `e788142beb048c66d103fd013a688b4c5b590cdda7b917aac2b5514c0af0eb5a` |
 
-All releases are available on both **[GitHub Releases](https://github.com/piermark/omarchytv/releases)** and **[GitLab Releases](https://gitlab.com/piermark/omarchytv/-/releases)**. Full release notes: **[RELEASE-2.12.0-beta.md](RELEASE-2.12.0-beta.md)** and **[CHANGELOG.md](CHANGELOG.md)**.
+All releases are on **[GitHub Releases](https://github.com/piermark/omarchytv/releases)** and **[GitLab Releases](https://gitlab.com/piermark/omarchytv/-/releases)**. Full notes: **[CHANGELOG.md](CHANGELOG.md)**. Previous release: [v2.12.0-beta](https://github.com/piermark/omarchytv/releases/tag/v2.12.0-beta).
 
 ---
+
+## See it in action (`2.13.0-beta`)
+
+![Omarchy Aquarium: my homage to Future Crew's Second Reality, running on the webOS build](docs/media/aquarium-homage.gif)
+
+*The new default screensaver, my Aquarium homage to Future Crew's* Second Reality *(all code, art and audio are mine). Short clip with the original tracker-style audio: [aquarium-homage-demo.mp4](docs/media/aquarium-homage-demo.mp4).*
+
+| Android TV · Home | Android TV · Cinemarchy 0.1.0-alpha | Android TV · Grok Bot Companion |
+|---|---|---|
+| ![Android TV home](docs/media/android-home.jpg) | ![Cinemarchy on Android TV](docs/media/android-cinemarchy.jpg) | ![Companion chat on Android TV](docs/media/android-companion-chat.jpg) |
+| **LG webOS · Home** | **LG webOS · Cinemarchy** | **LG webOS · Plugins** |
+| ![webOS home](docs/media/webos-home.jpg) | ![Cinemarchy on webOS](docs/media/webos-cinemarchy.jpg) | ![Plugins on webOS](docs/media/webos-plugins.jpg) |
+| **Aquarium (homage, default)** | **Aquarium Classic** | **Samsung Tizen · Companion** |
+| ![Aquarium homage](docs/media/webos-aquarium-homage.jpg) | ![Aquarium Classic](docs/media/webos-aquarium-classic.jpg) | ![Companion on Tizen](docs/media/tizen-companion-chat.jpg) |
+
+*Android screenshots come from the Android TV emulator (API 28, 1920×1080). webOS and Tizen screenshots come from the web app in headless Chrome with a Tizen shim, not from a real TV.*
+
+---
+
+## What's New in `2.13.0-beta` (`versionCode 21`, pre-release)
+
+- **Default Aquarium screensaver: "asciiquarium × Second Reality" homage + 4-channel tracker audio:** the default screensaver (`saverArt = "aquarium"`, sound on by default, `M` toggles mute) is now a small demo in five parts that loop: **Surface** (ship with OMARCHY on the hull, whale and spout, ducks), **Descent**, **Mid waters** (porthole lens, copper bars, the moving OMARCHY castle), **Abyss** (translucent glenz vector, angler fish, leviathan) and an **end credits** scroller with greetz. Many fish species swim in depth lanes with parallax, fish breathe bubbles, and a shark eats fish. The depth header and the right ruler show the same depth. The palette comes from the current Omarchy theme. Audio is my own 4-channel tracker-style tune at 48 kHz stereo, with tracker panning (L R R L), click-free envelopes, per-part variations, an ambient abyss, and VU meters fed by the real channel levels. For burn-in, the whole picture shifts a few pixels slowly, the HUD fades in and out, and nothing stays still. Rendering is capped at 30 fps.
+- **Aquarium Classic:** the previous Cyber-TUI Aquarium, with its look and its original ST3 tune, is still available as **Aquarium Classic** (`saverArt = "aquarium-classic"`) in the screensaver picker on Android TV, webOS and Tizen. I only fixed its bugs: full OMARCHY logo, no overlapping text (the ST3 line has its own row; ticker, copper bar and scroller no longer collide), dim sonar column behind the fish, and anti burn-in pixel shift + HUD fade.
+
+  > **A personal homage:** I made the ASCII Aquarium as my personal homage to the 1990s demoscene and to Future Crew's *Second Reality* (1993). All of the code, graphics and audio are original. Nothing was taken from their demo. The fish-tank idea is inspired by [asciiquarium](https://robobunny.com/projects/asciiquarium/) by Kirk Baucom (GPL); no code or art from it was copied, every sprite was drawn from scratch. — Marco Porro
+
+- **Default `last-horizon` ("Eyes Wide") Animated Intro + Random Theme/Wallpaper Toggles:** Starts on **`last-horizon`** (`01-eyes-wide.webp` + `01-eyes-wide.mp4`, artwork by **Erik Johansson** `@erikrjohansson`, used with permission) and rotates across the 5 animated intros (`last-horizon` `01-eyes-wide` and `cumulus` `01..04`) on Home resume while **Random theme** / **Random wallpaper / intro** are enabled; picking any theme or wallpaper manually locks your choice.
+- **Sandboxed Plugin Engine (`SpaceX TV` by `@sighmon` & `Grok Bot Companion` by `@tcballard`):** Manage declarative JSON plugins from `Settings → Plugins` or `omarchy-tv plugins`, featuring the **SpaceX TV** top-bar launch pill (based on `@sighmon`'s MIT Omarchy plugin `omarchy-spacex-tv`) and the Grok Bot companion named after **Tom Ballard's** (`@tcballard`) MIT `omarchy-plugin-grokbot-desktop` with blinking capsule eyes (`[ ◉ ◉ ]`).
+  - `omarchy-tv plugins catalog [QUERY]` browses the official Omarchy desktop registry ([plugins.omarchy.org/catalog.json](https://plugins.omarchy.org/catalog.json)). By default only TV-relevant entries are shown (media and visual tags such as themes, wallpapers, screensavers, ambience, or a TV manifest); desktop-only bar/shell/quickshell plugins are hidden (`--all` shows them). It is browse-only: each entry shows its repo and PC install command; only plugins that also have an OmarchyTV TV manifest are installable on the TV (`TV ✓`).
+- **Queue with subtitles:** `omarchy-tv send URL --queue --sub subs.srt` (local .srt/.vtt sent inline, or a subtitle URL).
+- **Wireless debugging pairing (Android 11+):** `omarchy-tv adb-pair 192.168.1.9:37000 123456 --connect 192.168.1.9:5555` (wraps `adb pair`).
+- **Universal Android TV & Fire TV Support (`minSdk 24`):** Supports Android 7.0+ (`API 24+`), including Fire TV Stick (Fire OS 6, 7, 8), Google TV, Sony Bravia, Nvidia Shield, TCL, Hisense, Xiaomi, and Sharp AQUOS, plus LG webOS (`.ipk`) and Samsung Tizen (`.wgt`).
+- **Send to TV:** `omarchy-tv send <file|URL> [--sub subs.srt] [--queue]`, plus a file-manager "Send to TV" action (`pc-plugin/omarchy-tv/share/install-file-manager.sh`).
+- **Samsung Tizen (experimental):** build a `.wgt` with `tizen/build-wgt.sh`; guide in `tizen/INSTALL-TIZEN.md`. Not tested on a Samsung TV yet.
+- **webOS hidden apps:** "Show all hidden apps" and translated labels in the Hidden apps menu.
+- **Phone companion:** type `IP:PORT` to use a custom ADB port.
+- **Fixes and credits:** IPTV `--epg` parsing fix and corrected wallpaper credits. See `CHANGELOG.md` for details.
+
+### Cinemarchy @dhh37, YouTube embed and the TV companion (2.13.0-beta)
+
+- **@dhh37:** I read DHH's public uploads feed every 6 h (and on open), cache it, merge it with a curated list and mark new videos `NEW`. Only links and metadata; nothing is downloaded.
+- **Play inside Cinemarchy (off by default):** the official YouTube IFrame embed with chapter jumps. If YouTube refuses the embed, I open the YouTube app.
+- **Grok Bot Companion (TV), experimental, tracks @tcballard's in-development branch:** a floating bot in a corner of the home screen. Android: long-press Menu, then OK. webOS/Tizen: the Blue key. Keyboard and (Android) voice input. With Tom Ballard's [Grok Bot Desktop Companion](https://github.com/tcballard/omarchy-plugin-grokbot-desktop) (MIT) on the PC, answers come from it through omarchy-link; otherwise from Ask (Android) or grok.com in the TV browser (webOS/Tizen).
+- Config keys: `cinemarchy.embedPlayer`, `cinemarchy.dhhLastSeen`, `plugins.companionOverlay`, `plugins.companionCorner` (`bottom-right`, `bottom-left`, `top-right`, `top-left`), `plugins.companionOffsetX/Y` (dp, max 240). PC side: `grokbotBridge`, `grokbotDesktopDir`, `grokbotTimeoutS`, and `OMARCHY_GROKBOT_DESKTOP_REF` (defaults to his branch; set `v0.1.0` once the tag exists).
 
 ## What's New in `2.12.0-beta` (`versionCode 20`)
 
 1. **Native Grok Bot · Omarchy TUI (`AskActivity`) on the TV Home Shelf:**
    - Clicking the **Grok Bot** tile (`grokbot@tv:~$ > GROK BOT [ omarchy · tui ]`) on the TV Home shelf — or selecting `Grok Bot (Omarchy TUI)` in the menu — opens a **native Omarchy-styled TUI assistant window** (`BoxView` 2 px border, `btop`-style legend `grok bot · omarchy tui [<theme>]`, translucent theme surface over the live 4K `WallpaperView`, `CaskaydiaMono` font, and `grokbot@omarchytv:~$` prompt) instead of jumping straight into a raw web browser.
-   - **Standalone Local TV & MCP Control (works offline without a PC):** Switch any of the 26 MIT themes (`theme jade-horse`, `theme year-of-the-horse`, `theme hermarchy`, `next theme`, `themes`), cycle 4K wallpapers (`wallpaper`), launch or configure the 37 `tte.js` ASCII screensavers (`screensaver`, `speed slow|normal|fast`), launch installed TV apps or Live TV (`open YouTube`, `open TV`, `apps`), or inspect TV/network/MCP status (`status`, `mcp`) via voice, keyboard, or 1-click D-pad quick chips (`[ ⏭ next theme ]`, `[ 🖼 wallpaper ]`, `[ ✦ screensaver ]`, `[ 📊 status ]`, `[ 📦 apps ]`, `[ ❓ help ]`).
+   - **Standalone Local TV & MCP Control (works offline without a PC):** Switch any of the 28 MIT themes (`theme jade-horse`, `theme year-of-the-horse`, `theme hermarchy`, `next theme`, `themes`), cycle 4K wallpapers (`wallpaper`), launch or configure the 37 `tte.js` ASCII screensavers (`screensaver`, `speed slow|normal|fast`), launch installed TV apps or Live TV (`open YouTube`, `open TV`, `apps`), or inspect TV/network/MCP status (`status`, `mcp`) via voice, keyboard, or 1-click D-pad quick chips (`[ ⏭ next theme ]`, `[ 🖼 wallpaper ]`, `[ ✦ screensaver ]`, `[ 📊 status ]`, `[ 📦 apps ]`, `[ ❓ help ]`).
    - **Paired PC / Mac AI Bridge (`OmarchyLink`):** Automatically forwards open-ended AI questions over the encrypted LAN link to your already-authenticated PC/Mac CLI (`grok`, `claude`, `codex`, `gemini`, `hermes`, or local `ollama`) and streams the reply typewriter-style in the TUI terminal.
    - **Optional 1-Click Full Browser WebApp Mode (`[ 🌐 grok.com ]` / `[ 🌐 web ▾ ]`):** Whenever you want the full web interface, select `[ 🌐 grok.com ]` or `[ 🌐 web ▾ ]` inside the TUI header (or from `> Grok Bot & AI`) to open **Grok Web** (`grok.com`), **Grok (X)** (`x.com/i/grok`), **ChatGPT** (`chatgpt.com`), **Claude** (`claude.ai`), or **Hermes** (`hermes.nousresearch.com`) in the sandboxed `:web` process (`WebAppActivity`) with persistent cookies/DOM storage and D-pad cursor.
 2. **26 100%-MIT Themes & Bundled 4K Wallpapers + `Sync PC wallpaper` Toggle:**
    - Added 3 new 100%-MIT community themes with all their original 4K wallpapers: DHH's **[`jade-horse`](https://github.com/dhh/omarchy-jade-horse-theme)** and **[`year-of-the-horse`](https://github.com/dhh/omarchy-year-of-the-horse-theme)**, plus Archer Clawbot's **[`hermarchy`](https://github.com/archer-clawbot/omarchy-hermarchy-theme)**.
-   - Added 4K Omarchy wordmark wallpapers (`01-omarchy.webp`) for **[`last-horizon`](https://github.com/containerscrew/omarchy-last-horizon-theme)**, **[`solitude`](https://github.com/containerscrew/omarchy-solitude-theme)**, and **[`starship`](https://github.com/vyrx-dev/omarchy-starship-theme)**, so all **26 bundled MIT themes** include at least one 100%-MIT 4K wallpaper.
+   - Added 4K Omarchy wordmark wallpapers (`01-omarchy.webp`) for **[`last-horizon`](https://github.com/omacom/omarchy/tree/quattro/themes/last-horizon)**, **[`solitude`](https://github.com/omacom/omarchy/tree/quattro/themes/solitude)**, and **[`starship`](https://github.com/omacom/omarchy/tree/quattro/themes/starship)**, so all **26 bundled MIT themes** include at least one 100%-MIT 4K wallpaper.
    - **`Sync PC wallpaper` Toggle (off by default):** Pairing or syncing with a PC never overwrites the TV's bundled 4K MIT wallpaper unless you explicitly enable *Sync PC wallpaper* in the TV's Themes or Wallpaper menu.
 3. **Native MCP Server (TV `POST /mcp` & PC `omarchy-tv mcp`):**
    - Control your TV from **Grok Bot**, **Claude Desktop**, **Cursor**, **Hermes**, or any Model Context Protocol (`2024-11-05`, JSON-RPC 2.0) client using a strict TV-only tool whitelist (`tv_get_status`, `tv_list_themes`, `tv_set_theme`, `tv_send_key`, `tv_launch_app`, `tv_cast_media`, `tv_show_notification`, `tv_open_ai_webapp`).
@@ -73,7 +120,7 @@ All releases are available on both **[GitHub Releases](https://github.com/pierma
 - **Workspaces 1–5**: `1` Home, `2` TV & Inputs, `3` All Apps, `4` PC Link & AI, `5` System & Settings. Switch workspaces with number keys `1–5` or the top bar.
 - **Native Grok Bot · Omarchy TUI (`AskActivity`)**: Built-in terminal assistant on the Home shelf supporting standalone local TV commands, voice recognition, paired PC CLI streaming, and 1-click launch of full AI WebApps (`Grok Web`, `Grok (X)`, `ChatGPT`, `Claude`, `Hermes`).
 - **One-Press Live TV & HDMI Inputs**: Supports Sony BRAVIA, Sharp AQUOS, Google TV, AOSP TV, DTVKit, TCL, Hisense, Philips, and standard Android TV Input Framework (`TIF`) channels.
-- **26 Bundled MIT Themes & 4K Wallpapers**: Instant live theme switching with bundled 4K WebP backgrounds, `"next wallpaper"` cycling, custom image support, procedural aurora fallback, and custom theme packs pushed from your PC.
+- **28 Bundled MIT Themes & 4K Wallpapers**: Instant live theme switching with bundled 4K WebP backgrounds, `"next wallpaper"` cycling, custom image support, procedural aurora fallback, and custom theme packs pushed from your PC.
 - **Customizable Home Panels**: Toggle individual panels (Clock, Weather with `°C / °F` switch and auto-location, PC Stats, AI Credits, Deploys, Terminal) and move them on a **12×8 grid** with **Arrange panels**.
 - **App Shelf & Hidden Apps Manager**: Reorder or pin favorite apps, hide unwanted system tiles (including optional Sony bloatware toggle), restore hidden tiles in Workspace 5 (`System → Hidden apps`), and push custom 16:9 PNG app banners (`omarchy-tv icons push`).
 - **37 `tte.js` ASCII Screensaver Effects**: Runs all 37 `TerminalTextEffects` / `tte.js` animations in a dedicated `:saver` process with configurable idle timeout (`1 / 2.5 / 5 / 10 min` or `Never`), **Effect speed (`Slow / Normal / Fast`)**, native fallback for legacy WebViews, and Android Daydream (`OmarchyDream`) support.
@@ -91,14 +138,14 @@ All releases are available on both **[GitHub Releases](https://github.com/pierma
 
 ### 3. Android Smartphone Companion (`OmarchyTV Mobile`, `178 KB`) — [mobile-companion/](mobile-companion/README-MOBILE.md)
 - **No-PC Wireless TV Installer**: Scans your `/24` Wi-Fi LAN, downloads the latest release from GitLab/GitHub, verifies its SHA-256 checksum, performs a pure-Java 2048-bit RSA Wireless ADB handshake (`:5555`), installs OmarchyTV (`pm install -r`), and pins it as your default Home launcher in one tap.
-- **Live Theme Switcher & Touch Remote**: Switch all **26 MIT themes** in real time, control the TV with a tactile D-Pad and media keys, upload custom phone photos as TV wallpapers, and run safe 1-tap reversible brand debloat (`pm disable-user --user 0` / `pm enable`).
+- **Live Theme Switcher & Touch Remote**: Switch all **28 MIT themes** in real time, control the TV with a tactile D-Pad and media keys, upload custom phone photos as TV wallpapers, and run safe 1-tap reversible brand debloat (`pm disable-user --user 0` / `pm enable`).
 - **LG webOS & Universal Smart TV Bridge (`:8765`)**: Serves themes/wallpapers to LG webOS TVs and hosts the full 1080p HTML5 OmarchyTV Web Launcher (`http://<phone-ip>:8765/tv`) for **Samsung Tizen** and **Hisense VIDAA** TVs.
 
 ---
 
-## All 26 Bundled MIT Themes & Repositories
+## All 28 Bundled MIT Themes & Repositories
 
-Every theme bundled in OmarchyTV `2.12.0-beta` is **100% MIT-licensed** and ships inside the APK with its palette (`assets/omarchy_themes.json`) and verified 4K WebP wallpapers (`assets/wallpapers/<theme>/`). Full file-by-file provenance is documented in **[THIRD-PARTY.md](THIRD-PARTY.md)**, **[NOTICE](NOTICE)**, and **[launcher/WALLPAPER-PROVENANCE.csv](launcher/WALLPAPER-PROVENANCE.csv)**.
+Every theme bundled in OmarchyTV `2.13.0-beta` is **100% MIT-licensed** and ships inside the APK with its palette (`assets/omarchy_themes.json`) and verified 4K WebP wallpapers (`assets/wallpapers/<theme>/`). Full file-by-file provenance is documented in **[THIRD-PARTY.md](THIRD-PARTY.md)**, **[NOTICE](NOTICE)**, and **[launcher/WALLPAPER-PROVENANCE.csv](launcher/WALLPAPER-PROVENANCE.csv)**.
 
 | # | Theme ID | Accent | Bundled 4K Wallpapers | Author | MIT Repository / Source |
 |---|---|---|---|---|---|
@@ -114,7 +161,7 @@ Every theme bundled in OmarchyTV `2.12.0-beta` is **100% MIT-licensed** and ship
 | 10 | **`gruvbox`** | `#7daea3` | `06-omarchy.webp` | David Heinemeier Hansson / Omarchy contributors | [basecamp/omarchy (`themes/gruvbox`)](https://github.com/basecamp/omarchy/tree/master/themes/gruvbox) (MIT) |
 | 11 | **`hackerman`** | `#82FB9C` | `03-omarchy.webp` | David Heinemeier Hansson / Omarchy contributors | [basecamp/omarchy (`themes/hackerman`)](https://github.com/basecamp/omarchy/tree/master/themes/hackerman) (MIT) |
 | 12 | **`kanagawa`** | `#dcd7ba` | `02-omarchy.webp` | David Heinemeier Hansson / Omarchy contributors | [basecamp/omarchy (`themes/kanagawa`)](https://github.com/basecamp/omarchy/tree/master/themes/kanagawa) (MIT) |
-| 13 | **`last-horizon`** | `#b59790` | `01-omarchy.webp` | containerscrew / Omarchy contributors | [containerscrew/omarchy-last-horizon-theme](https://github.com/containerscrew/omarchy-last-horizon-theme) · [basecamp/omarchy](https://github.com/basecamp/omarchy) (MIT) |
+| 13 | **`last-horizon`** | `#b59790` | `01-omarchy.webp` | Omarchy built-in theme (Omarchy contributors) | [omacom/omarchy themes/last-horizon](https://github.com/omacom/omarchy/tree/quattro/themes/last-horizon) · [basecamp/omarchy](https://github.com/basecamp/omarchy) (MIT) |
 | 14 | **`lumon`** | `#8bc9eb` | `03-omarchy.webp` | David Heinemeier Hansson / Omarchy contributors | [basecamp/omarchy (`themes/lumon`)](https://github.com/basecamp/omarchy/tree/master/themes/lumon) (MIT) |
 | 15 | **`lupine`** | `#3264eb` | `06-omarchy.webp` | David Heinemeier Hansson / Omarchy contributors | [basecamp/omarchy (`themes/lupine`)](https://github.com/basecamp/omarchy/tree/master/themes/lupine) (MIT) |
 | 16 | **`matte-black`** | `#e68e0d` | `04-omarchy.webp` | David Heinemeier Hansson / Omarchy contributors | [basecamp/omarchy (`themes/matte-black`)](https://github.com/basecamp/omarchy/tree/master/themes/matte-black) (MIT) |
@@ -124,27 +171,29 @@ Every theme bundled in OmarchyTV `2.12.0-beta` is **100% MIT-licensed** and ship
 | 20 | **`retro-82`** | `#faa968` | `09-omarchy.webp` | David Heinemeier Hansson / Omarchy contributors | [basecamp/omarchy (`themes/retro-82`)](https://github.com/basecamp/omarchy/tree/master/themes/retro-82) (MIT) |
 | 21 | **`ristretto`** | `#f38d70` | `05-omarchy.webp` | David Heinemeier Hansson / Omarchy contributors | [basecamp/omarchy (`themes/ristretto`)](https://github.com/basecamp/omarchy/tree/master/themes/ristretto) (MIT) |
 | 22 | **`rose-pine`** | `#56949f` | `04-omarchy.webp` | David Heinemeier Hansson / Omarchy contributors | [basecamp/omarchy (`themes/rose-pine`)](https://github.com/basecamp/omarchy/tree/master/themes/rose-pine) (MIT) |
-| 23 | **`solitude`** | `#798186` | `01-omarchy.webp` | containerscrew / Omarchy contributors | [containerscrew/omarchy-solitude-theme](https://github.com/containerscrew/omarchy-solitude-theme) · [basecamp/omarchy](https://github.com/basecamp/omarchy) (MIT) |
-| 24 | **`starship`** | `#ff9f0a` | `01-omarchy.webp` | vyrx-dev / Omarchy contributors | [vyrx-dev/omarchy-starship-theme](https://github.com/vyrx-dev/omarchy-starship-theme) · [basecamp/omarchy](https://github.com/basecamp/omarchy) (MIT) |
+| 23 | **`solitude`** | `#798186` | `01-omarchy.webp` | Omarchy built-in theme (Omarchy contributors) | [omacom/omarchy themes/solitude](https://github.com/omacom/omarchy/tree/quattro/themes/solitude) · [basecamp/omarchy](https://github.com/basecamp/omarchy) (MIT) |
+| 24 | **`starship`** | `#ff9f0a` | `01-omarchy.webp` | Omarchy built-in theme (Omarchy contributors) | [omacom/omarchy themes/starship](https://github.com/omacom/omarchy/tree/quattro/themes/starship) · [basecamp/omarchy](https://github.com/basecamp/omarchy) (MIT) |
 | 25 | **`vantablack`** | `#8d8d8d` | `05-omarchy.webp` | David Heinemeier Hansson / Omarchy contributors | [basecamp/omarchy (`themes/vantablack`)](https://github.com/basecamp/omarchy/tree/master/themes/vantablack) (MIT) |
 | 26 | **`white`** | `#6e6e6e` | `04-omarchy.webp` | David Heinemeier Hansson / Omarchy contributors | [basecamp/omarchy (`themes/white`)](https://github.com/basecamp/omarchy/tree/master/themes/white) (MIT) |
+| 27 | **`cumulus`** *(animated)* | theme palette | `01-cloud-town-path` .. `04-lighthouse` + 4 animated intros, `05-omarchy.webp` | Erik Johansson ([@erikrjohansson](https://github.com/erikrjohansson)) | [erikrjohansson/omarchy-cumulus-theme](https://github.com/erikrjohansson/omarchy-cumulus-theme) (MIT) |
+| 28 | **`tokyo-roadster`** | theme palette | `01-tokyo-wall-ride` .. `10-tokyo-starlight`, `11-omarchy.webp` | Tom Ballard ([@tcballard](https://github.com/tcballard)) | [tcballard/omarchy-theme-tokyo-roadster](https://github.com/tcballard/omarchy-theme-tokyo-roadster) (MIT) |
 
 ---
 
 ## Installation & Usage Guide
 
-### 1. Install on Android TV / Google TV / Sony BRAVIA / Sharp AQUOS (`2.12.0-beta`)
+### 1. Install on Android TV / Google TV / Sony BRAVIA / Sharp AQUOS (`2.13.0-beta`)
 
 #### Option A — Install via ADB from a PC / Mac
 1. On your TV, enable Developer Options: **Settings → Device Preferences → About → press Build 7 times**, then enable **USB debugging / Network debugging** in **Developer options** and note the TV's IP address.
 2. Connect and install the signed release APK:
    ```bash
    adb connect <tv-ip>:5555
-   sha256sum omarchytv-release-2.12.0-beta.apk
-   # Expected SHA-256: 9dedc335fb1150afa6027f4123bd295bec8241a4c654842a6be65caff993f035
-   apksigner verify --print-certs omarchytv-release-2.12.0-beta.apk
+   sha256sum omarchytv-release-2.13.0-beta.apk
+   # Expected SHA-256: 53d88d14ffad8933048570e7ae324d11bba0907ff0a8252ad142eb6ac564b2ea
+   apksigner verify --print-certs omarchytv-release-2.13.0-beta.apk
    # Expected Signer #1 SHA-256: 90aa68d9f45e623eadfd349ab1eb66042356f95ff6347a4568c3f3a78f8ea33d
-   adb install -r omarchytv-release-2.12.0-beta.apk
+   adb install -r omarchytv-release-2.13.0-beta.apk
    ```
 3. **Set OmarchyTV as the default Home screen (optional):**
    ```bash
@@ -157,7 +206,7 @@ Every theme bundled in OmarchyTV `2.12.0-beta` is **100% MIT-licensed** and ship
    ```
 
 #### Option B — Install Wirelessly from Your Android Smartphone (`OmarchyTV Mobile`, no PC needed)
-1. Install **`omarchytv-mobile-2.12.0-beta.apk`** (`178 KB`, SHA-256: `42bb62aa6169c52afacc9b477d25f6f95fffe2eeea9f779394606e1a4e5ad0a4`) on your Android phone.
+1. Install **`omarchytv-mobile-2.13.0-beta.apk`** (`177 KB`, SHA-256: `e45a5c0f7ccd662279d34e80ffbf4e9581061603012e8814e5941e8909b67f79`) on your Android phone.
 2. Tap **Scan LAN** to auto-discover your TV on `:5555` / `:47800`.
 3. Tap **1-Tap Install / Update OmarchyTV** — the phone downloads the release APK, verifies the SHA-256 digest, performs a 2048-bit RSA Wireless ADB handshake, installs the APK via `pm install -r`, and pins OmarchyTV as your Home screen.
 
@@ -170,7 +219,7 @@ Full step-by-step guide: **[launcher/docs/INSTALL.md](launcher/docs/INSTALL.md)*
 - **Switch Workspaces (`1–5`)**: Press number keys `1`–`5` on your remote, or press **▲ Up** to focus the top Waybar and select `1` (Home), `2` (TV & HDMI Inputs), `3` (All Apps), `4` (PC Link & AI), or `5` (System & Settings).
 - **Open the Main Omarchy Menu**: Click the `[ ☰ ]` icon on the top-left of the Waybar, or press the **MENU** key on your remote.
 - **Open Walker Fuzzy Search**: Long-press **OK / Center** on the Home screen (or press the Search key) to search apps, themes, settings, and AI commands (`> grok bot`, `> ask`).
-- **Switch Themes & 4K Wallpapers**: Open **Menu → Themes** (scrolls smoothly through all 26 MIT themes with D-pad ▲/▼) or **Menu → Wallpaper → Next background** (`Sync PC wallpaper` is off by default so your TV's bundled 4K MIT wallpapers are preserved).
+- **Switch Themes & 4K Wallpapers**: Open **Menu → Themes** (scrolls smoothly through all 28 MIT themes with D-pad ▲/▼) or **Menu → Wallpaper → Next background** (`Sync PC wallpaper` is off by default so your TV's bundled 4K MIT wallpapers are preserved).
 - **Customize App Tiles & Hidden Apps**: Long-press **OK** (or press **MENU**) on any app tile to move it, pin/unpin it from the Home row, or select **Hide from launcher**. To unhide any app later, open **Workspace 5 (`System`) → Hidden apps**.
 
 ---
@@ -184,8 +233,8 @@ You can interact using the **1-click D-pad quick-action chips** at the top of th
 | Command / Action | What It Does (Works Offline on the TV!) |
 |---|---|
 | `theme <name>` (e.g. `theme jade-horse`, `theme year-of-the-horse`, `theme hermarchy`) | Immediately switches the active Omarchy theme and loads its bundled 4K MIT wallpaper |
-| `next theme` / `[ ⏭ next theme ]` / `[ 🎨 themes ▾ ]` | Cycles to the next MIT theme or opens the 26-theme popup selector |
-| `themes` | Lists all 26 bundled MIT themes in the terminal transcript |
+| `next theme` / `[ ⏭ next theme ]` / `[ 🎨 themes ▾ ]` | Cycles to the next MIT theme or opens the 28-theme popup selector |
+| `themes` | Lists all 28 bundled MIT themes in the terminal transcript |
 | `wallpaper` / `next wallpaper` / `[ 🖼 wallpaper ]` | Cycles through the bundled 4K wallpapers for the current theme |
 | `screensaver` / `[ ✦ screensaver ]` | Starts the 37-effect `tte.js` ASCII screensaver immediately |
 | `speed slow` · `speed normal` · `speed fast` | Sets the screensaver animation speed |
@@ -197,10 +246,10 @@ You can interact using the **1-click D-pad quick-action chips** at the top of th
 
 ---
 
-### 4. PC / macOS Plugin & MCP Server (`omarchy-tv-pc-plugin-2.12.0-beta.tar.gz`)
+### 4. PC / macOS Plugin & MCP Server (`omarchy-tv-pc-plugin-2.13.0-beta.tar.gz`)
 
 ```bash
-tar -xzf omarchy-tv-pc-plugin-2.12.0-beta.tar.gz
+tar -xzf omarchy-tv-pc-plugin-2.13.0-beta.tar.gz
 cd pc-plugin
 mkdir -p ~/.local/share ~/.local/bin
 cp -r omarchy-link ~/.local/share/omarchy-link
@@ -221,10 +270,10 @@ Full PC plugin documentation: **[pc-plugin/README.md](pc-plugin/README.md)** and
 
 ---
 
-### 5. LG webOS TV — Experimental (`2.11.0-testing`, not beta)
-An experimental **`testing`** edition for **LG webOS TVs** (`omarchytv-webos-2.11.0-testing.ipk`) is available in [`webos/`](webos/INSTALL-WEBOS.md):
-- **Install Guide:** **[webos/INSTALL-WEBOS.md](webos/INSTALL-WEBOS.md)**
-- **Release Notes & Checksums:** **[webos/RELEASE-2.11.0-testing-webos.md](webos/RELEASE-2.11.0-testing-webos.md)**
+### 5. LG webOS and Samsung Tizen TVs — Experimental (`2.13.0-testing`)
+- **LG webOS:** `omarchytv-webos-2.13.0-testing.ipk`. Install guide: **[webos/INSTALL-WEBOS.md](webos/INSTALL-WEBOS.md)**.
+- **Samsung Tizen:** `OmarchyTV-tizen-2.13.0-beta-unsigned.wgt` is unsigned: sign it with your own Samsung certificate in Tizen Studio before installing. Guide: **[tizen/INSTALL-TIZEN.md](tizen/INSTALL-TIZEN.md)**.
+- Both share the same web app (`webos/app`), including Cinemarchy 0.1.0-alpha, the Grok Bot companion (Blue key), the plugin marketplace and both Aquariums.
 
 ---
 
@@ -263,8 +312,11 @@ of them.
 - Inspired by **[tv-vibehack](https://github.com/Gathin23/tv-vibehack)** by Gathin (MIT).
 - **Omarchy** by David Heinemeier Hansson and contributors ([github.com/basecamp/omarchy](https://github.com/basecamp/omarchy), MIT): logo, icon, theme palettes, wordmark backgrounds, plus **[`omarchy-jade-horse-theme`](https://github.com/dhh/omarchy-jade-horse-theme)** and **[`omarchy-year-of-the-horse-theme`](https://github.com/dhh/omarchy-year-of-the-horse-theme)** (MIT).
 - **[`omarchy-hermarchy-theme`](https://github.com/archer-clawbot/omarchy-hermarchy-theme)** by Archer Clawbot (MIT).
-- **[`omarchy-last-horizon-theme`](https://github.com/containerscrew/omarchy-last-horizon-theme)** and **[`omarchy-solitude-theme`](https://github.com/containerscrew/omarchy-solitude-theme)** by containerscrew (MIT palettes + Omarchy wordmark 4K wallpapers).
-- **[`omarchy-starship-theme`](https://github.com/vyrx-dev/omarchy-starship-theme)** by vyrx-dev (MIT palette + Omarchy wordmark 4K wallpaper).
+- **[`omarchy-cumulus-theme`](https://github.com/erikrjohansson/omarchy-cumulus-theme)** by Erik Johansson ([@erikrjohansson](https://github.com/erikrjohansson)), MIT (c) 2026 Erik Johansson: palette, 4 wallpapers and the 4 matching animated intros.
+- **[`omarchy-theme-tokyo-roadster`](https://github.com/tcballard/omarchy-theme-tokyo-roadster)** by Tom Ballard ([@tcballard](https://github.com/tcballard)), MIT (c) 2026 Tom Ballard: palette and 10 wallpapers. Wallpapers are Tom Ballard's work from his MIT repo.
+- **Last Horizon `01-eyes-wide`** still and animated intro from [Omarchy's built-in Last Horizon theme](https://github.com/basecamp/omarchy/tree/master/themes/last-horizon) (theme by HANCORE; intro added in basecamp/omarchy PR #9639). The artwork licence is not stated upstream; permission from the artist is pending, see THIRD-PARTY.md.
+- **[`last-horizon`](https://github.com/omacom/omarchy/tree/quattro/themes/last-horizon)** and **[`solitude`](https://github.com/omacom/omarchy/tree/quattro/themes/solitude)**, built-in Omarchy themes (omacom/omarchy, MIT) (MIT palettes + Omarchy wordmark 4K wallpapers).
+- **[`starship`](https://github.com/omacom/omarchy/tree/quattro/themes/starship)**, built-in Omarchy theme (omacom/omarchy, MIT) (MIT palette + Omarchy wordmark 4K wallpaper).
 - **"Liftoff Sunset"** (default Tokyo Night wallpaper) by **Tom Ballard** ([@tcballard](https://x.com/tcballard)), from
   [omarchy-theme-tokyo-liftoff](https://github.com/tcballard/omarchy-theme-tokyo-liftoff); original photograph SpaceX
   (public domain per author); included with the author's permission granted on X on Oct 22, 2026. Thank you, Tom!
@@ -279,3 +331,7 @@ Third-party wallpapers whose licence could not be verified are **not** included.
 ## License
 MIT, see [LICENSE](LICENSE).
 Copyright (c) 2026 Marco Porro ([x.com/MarcoPorro](https://x.com/MarcoPorro) · [www.marcoporro.it](https://www.marcoporro.it)).
+
+## Cinemarchy 0.1.0-alpha (preview)
+
+Cinemarchy has its own version (0.1.0-alpha), separate from OmarchyTV. It's an early preview, so I'd really appreciate your feedback: open an issue at https://github.com/piermark/omarchytv/issues.

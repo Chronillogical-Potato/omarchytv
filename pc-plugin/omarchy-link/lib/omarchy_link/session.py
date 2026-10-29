@@ -17,7 +17,7 @@ import sys
 import threading
 import time
 
-from . import ai, assistant, client as link, config, mdns, netcheck, panes, stats, sync, theme
+from . import ai, assistant, client as link, config, grokbot, mdns, netcheck, panes, stats, sync, theme
 
 KEYS = {"home", "back", "up", "down", "left", "right", "select", "play_pause", "play", "pause",
         "stop", "next", "previous", "rewind", "fast_forward", "volume_up", "volume_down", "mute",
@@ -51,6 +51,7 @@ class Session:
         self.agent_put = 0.0
         self.agent_was_on = False
         self.cfg_mtime = 0.0
+        self.grokbot_sig = None
 
     # ---------------------------------------------------------------- io
     def emit(self, event: str, **data) -> None:
@@ -166,6 +167,8 @@ class Session:
             self.push_providers(c, force=True)
             self.saver_mtime = None
             self.push_home(c)
+            self.grokbot_sig = None
+            self.push_grokbot(c)
         except (link.LinkError, OSError, ValueError, RuntimeError, subprocess.SubprocessError) as e:
             self.log(f"initial push: {e}")
 
@@ -193,6 +196,8 @@ class Session:
             threading.Thread(target=self.handle_agent_ask, args=(self.stream, data), daemon=True).start()
         elif kind == "ask" and self.stream:
             threading.Thread(target=self.handle_ask, args=(self.stream, data), daemon=True).start()
+        elif kind == "grokbot_ask" and self.stream:
+            threading.Thread(target=self.handle_grokbot_ask, args=(self.stream, data), daemon=True).start()
 
     # ------------------------------------------------------------ assistant (TV -> PC "ask")
     def handle_ask(self, stream, data: dict) -> None:
@@ -362,6 +367,44 @@ class Session:
             except (link.LinkError, OSError, ValueError, RuntimeError, subprocess.SubprocessError) as e:
                 self.log(f"AI push after source change: {e}")
 
+    # ------------------------------------------------------------ Grok Bot Desktop Companion (experimental)
+    def handle_grokbot_ask(self, stream, data: dict) -> None:
+        """TV -> PC "grokbot_ask" {id, text, bot?}: forwarded to @tcballard's companion (grokbot.py).
+        Replies "grokbot_answer" {id, bot, text, mode} or "grokbot_error" {id, error, message}."""
+        rid = str(data.get("id", ""))[:64]
+
+        def send(kind, payload):
+            try:
+                stream.send(kind, {"id": rid, **payload})
+            except OSError:
+                pass
+        if not rid:
+            return
+        self._reload_cfg()
+        if not self.cfg.get("grokbotBridge", True):
+            return send("grokbot_error", {"error": "disabled", "message": "the Grok Bot bridge is off on the PC"})
+        try:
+            res = grokbot.ask(self.cfg, data.get("text"), data.get("bot") or None)
+        except grokbot.GrokbotError as e:
+            return send("grokbot_error", {"error": e.code, "message": str(e)[:200]})
+        self.log(f"TV question for Grok Bot {res['bot']} ({res['mode']})")
+        send("grokbot_answer", res)
+
+    def push_grokbot(self, c: link.Client) -> None:
+        """Mirror the companion's current bot (name, shape, colour) on the TV tile when its files change.
+        An older launcher answers 404/400: ignored."""
+        if not self.cfg.get("grokbotBridge", True):
+            return
+        sig = grokbot.state_signature(self.cfg)
+        if sig == self.grokbot_sig:
+            return
+        self.grokbot_sig = sig
+        try:
+            c.put_grokbot(grokbot.current(self.cfg))
+        except link.LinkError as e:
+            if e.status not in (400, 404, 429):
+                raise
+
     def push_providers(self, c: link.Client, force: bool = False) -> None:
         if not self.cfg.get("assistant", True):
             return
@@ -495,6 +538,7 @@ class Session:
                     self.last_pane = time.time()
                 if c:
                     self.push_home(c)
+                    self.push_grokbot(c)
                 minutes = max(5, int(self.cfg.get("aiRefreshMinutes", 15)))
                 if c and time.time() - self.last_ai > minutes * 60:
                     self.push_ai(c)

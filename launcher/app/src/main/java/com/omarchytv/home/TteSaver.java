@@ -146,8 +146,12 @@ final class TteSaver {
     }
 
     static String text(Context c) {
-        String t = LauncherConfig.get(c).screensaverText;
+        LauncherConfig cfg = LauncherConfig.get(c);
+        String t = cfg.screensaverText;
         if (t != null && !t.trim().isEmpty()) return t;
+        if ("cinemarchy".equals(cfg.screensaverArt)) return Art.load(c, "cinemarchy");
+        if ("omarchy".equals(cfg.screensaverArt)) return Art.load(c, "omarchy");
+        if ("original".equals(cfg.screensaverArt)) return Art.load(c, "original");
         try (InputStream in = c.getAssets().open("saver/screensaver-tv.txt")) {
             byte[] b = new byte[in.available()];
             int n = in.read(b);
@@ -226,8 +230,9 @@ final class TteSaver {
             return;
         }
         drawn = false;
-        if ("native".equals(forceMode)) {
-            toNative("forzato");
+        LauncherConfig cfg = LauncherConfig.get(ctx);
+        if ("native".equals(forceMode) || AsciiSaverView.isAquarium(cfg)) {
+            toNative("aquarium/nativo");
             return;
         }
         // v2.10 "never black": the native logo animates at once; the WebView renders invisibly on top and is revealed
@@ -308,6 +313,21 @@ final class TteSaver {
         fallback = newNative();
         root.addView(fallback, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         fallback.start();
+    }
+
+    boolean toggleSound() {
+        if (fallback != null && fallback.isAquariumMode()) {
+            return fallback.toggleSound();
+        }
+        if (placeholder != null && placeholder.isAquariumMode()) {
+            return placeholder.toggleSound();
+        }
+        return false;
+    }
+
+    boolean isAquariumActive() {
+        return (fallback != null && fallback.isAquariumMode())
+                || (placeholder != null && placeholder.isAquariumMode());
     }
 
     void stop() {

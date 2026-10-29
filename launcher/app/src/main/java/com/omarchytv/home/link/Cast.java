@@ -24,6 +24,8 @@ public final class Cast {
     static final int URL_MAX = 4096, TEXT_MAX = 32 * 1024, TITLE_MAX = 200, FROM_MAX = 40;
 
     public String id, kind, app, url, videoId, mime, title, text, from;
+    /** Optional http(s) subtitle track (.srt / .vtt) for video casts, or null. */
+    public String subtitle;
     /** Uploaded file in the private cache (getCacheDir()/cast/&lt;sha256&gt;), or null. */
     public File file;
     /** Start offset, seconds (video/audio/youtube). */
@@ -114,6 +116,11 @@ public final class Cast {
             c.position = p;
         }
         c.live = b.optBoolean("live", false);
+        if (b.has("subtitle") && !b.isNull("subtitle")) {
+            Object sv = b.opt("subtitle");
+            if (!(sv instanceof String) || !httpUrl((String) sv)) throw new Bad(400, "bad_cast", "subtitle must be http(s)");
+            c.subtitle = (String) sv;
+        }
         switch (c.kind) {
             case "youtube":
                 c.videoId = b.optString("videoId", "");

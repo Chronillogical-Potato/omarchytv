@@ -321,9 +321,9 @@ public final class GitLabReleaseClient {
                 downloadUrl = "https://gitlab.com/piermark/omarchytv/-/releases/" + tag
                         + "/downloads/omarchytv-webos-2.11.0-testing.ipk";
             } else if (!wantWebOsIpk && !isWebOsTag && !tag.isEmpty()) {
-                assetName = "omarchytv-release-2.12.0-beta.apk";
+                assetName = "omarchytv-release-2.13.0-beta.apk";
                 downloadUrl = "https://gitlab.com/piermark/omarchytv/-/raw/" + tag
-                        + "/omarchytv-release-2.12.0-beta.apk";
+                        + "/omarchytv-release-2.13.0-beta.apk";
             }
         }
 
@@ -379,7 +379,7 @@ public final class GitLabReleaseClient {
                 assetName = "omarchytv-webos-2.11.0-testing.ipk";
                 downloadUrl = "https://github.com/piermark/omarchytv/releases/download/" + tag + "/" + assetName;
             } else if (!wantWebOsIpk && !isWebOsTag && !tag.isEmpty()) {
-                assetName = "omarchytv-release-2.12.0-beta.apk";
+                assetName = "omarchytv-release-2.13.0-beta.apk";
                 downloadUrl = "https://github.com/piermark/omarchytv/releases/download/" + tag + "/" + assetName;
             }
         }
@@ -447,7 +447,7 @@ public final class GitLabReleaseClient {
             conn.setInstanceFollowRedirects(true);
             conn.setConnectTimeout(timeoutMs);
             conn.setReadTimeout(timeoutMs);
-            conn.setRequestProperty("User-Agent", "OmarchyTV-Mobile/2.12.0 (Android; Linux)");
+            conn.setRequestProperty("User-Agent", "OmarchyTV-Mobile/2.13.0 (Android; Linux)");
             conn.setRequestProperty("Accept", "application/json, */*");
             int code = conn.getResponseCode();
             if (code == HttpURLConnection.HTTP_MOVED_PERM

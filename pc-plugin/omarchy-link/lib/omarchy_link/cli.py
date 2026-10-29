@@ -157,16 +157,19 @@ def cmd_sync(a, cfg):
     p = config.Pairing.load()
     if not p.paired:
         return 0 if a.quiet else EXIT_NOT_PAIRED
-    try:
-        res = sync.sync_theme(link.Client(p.tv, p.pc_id, not cfg.get("allowOtherSubnets")), cfg, a.force,
-                              (lambda m: None) if a.quiet else print)
-        if res is None and not a.quiet:
-            print("Nothing to send (unchanged, or themeSync is off; use --force).")
-        return 0
-    except (link.LinkError, OSError, RuntimeError, ValueError, subprocess.SubprocessError) as e:
-        if not a.quiet:
-            print(f"omarchy-link: {e}", file=sys.stderr)
-        return 0 if a.quiet else 1  # a hook must never fail a theme switch
+    failed = 0
+    for tv in p.tvs:  # 2.13: every paired TV gets the theme
+        try:
+            res = sync.sync_theme(link.Client(tv, p.pc_id, not cfg.get("allowOtherSubnets")), cfg, a.force,
+                                  (lambda m: None) if a.quiet else print)
+            if res is None and not a.quiet:
+                print("Nothing to send (unchanged, or themeSync is off; use --force)." if len(p.tvs) == 1 else
+                      f"{tv.get('name') or tv.get('address')}: Nothing to send (unchanged, or themeSync is off; use --force).")
+        except (link.LinkError, OSError, RuntimeError, ValueError, subprocess.SubprocessError) as e:
+            failed += 1
+            if not a.quiet:
+                print(f"omarchy-link: {tv.get('name') or tv.get('address')}: {e}", file=sys.stderr)
+    return 0 if a.quiet or not failed else 1  # a hook must never fail a theme switch
 
 
 def cmd_push_widgets(a, cfg):

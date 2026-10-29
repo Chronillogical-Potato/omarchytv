@@ -13,10 +13,10 @@ import android.view.View;
 import java.util.Random;
 
 /**
- * The home-screen logo: the pixel ASCII wordmark chosen by config "logo" (default "omarchy-tv": Omarchy's
- * logo.txt plus a matching "TV"), drawn as exact rectangles so it is sharp at 1080p and 4K.
- * "OMARCHY" is foreground lavender, "TV" a blue-to-purple gradient. {@link #reveal()} plays a short
- * "decrypt": cells scramble in comment blue and lock into blocks left to right (~650 ms, then static).
+ * The home-screen and Cinemarchy wordmark: the pixel ASCII wordmark chosen by config "logo"
+ * (default "omarchy-tv": Omarchy's logo.txt plus a matching "TV", or "cinemarchy": 35mm film-reel + "CINE"
+ * in accent gradient + Omarchy's "MARCHY" in foreground), drawn as exact rectangles so it is sharp at 1080p and 4K.
+ * {@link #reveal()} plays a short "decrypt": cells scramble in comment blue and lock into blocks left to right (~650 ms, then static).
  */
 public class WordmarkView extends View {
 
@@ -28,6 +28,7 @@ public class WordmarkView extends View {
     private final String[] lines;
     private final int cols;
     private final int split;
+    private final boolean prefixAccent;
     private final Paint word = new Paint();
     private final Paint accent = new Paint();
     private final Paint shadow = new Paint();
@@ -36,24 +37,34 @@ public class WordmarkView extends View {
     private final float[][] settle;
     private final Random random = new Random();
     private long revealStart = -1;
+    private boolean continuousShimmer = false;
+    private final Paint shimmerPaint = new Paint();
 
     public WordmarkView(Context context, AttributeSet attrs) {
+        this(context, attrs, LauncherConfig.get(context).logo, WIDTH_DP);
+    }
+
+    public WordmarkView(Context context, String forcedLogo, float widthDp) {
+        this(context, null, forcedLogo, widthDp);
+    }
+
+    private WordmarkView(Context context, AttributeSet attrs, String which, float widthDp) {
         super(context, attrs);
         float density = getResources().getDisplayMetrics().density;
-        String which = LauncherConfig.get(context).logo;
         lines = Art.lines(Art.load(context, which));
         int c = 1;
         for (String l : lines) c = Math.max(c, l.length());
         cols = c;
         split = Art.split(which);
-        cellW = WIDTH_DP * density / cols;
-        word.setColor(getResources().getColor(R.color.tn_fg, null));
+        prefixAccent = Art.isPrefixAccent(which);
+        cellW = widthDp * density / cols;
+        word.setColor(Theme.m(getResources().getColor(R.color.tn_fg, null)));
         shadow.setColor(Theme.m(0xFF0E0E14));
-        scramble.setColor(getResources().getColor(R.color.tn_comment, null));
+        scramble.setColor(Theme.m(getResources().getColor(R.color.tn_comment, null)));
         scramble.setTextSize(cellW * 1.7f);
         scramble.setTextAlign(Paint.Align.CENTER);
         try {
-            scramble.setTypeface(getResources().getFont(R.font.caskaydia));
+            scramble.setTypeface(CastUi.font(getContext()));
         } catch (Exception e) {
             scramble.setTypeface(Typeface.MONOSPACE);
         }
@@ -69,6 +80,12 @@ public class WordmarkView extends View {
         invalidate();
     }
 
+    /** Enables or disables the live cinema projector shimmer wave across the wordmark. */
+    void setContinuousShimmer(boolean enabled) {
+        this.continuousShimmer = enabled;
+        invalidate();
+    }
+
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         setMeasuredDimension((int) Math.ceil(cols * cellW + cellW), (int) Math.ceil(lines.length * cellW * 2 + cellW));
@@ -78,8 +95,13 @@ public class WordmarkView extends View {
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
         LauncherConfig cfg = LauncherConfig.get(getContext());
-        float x0 = Math.max(0, split) * cellW;
-        accent.setShader(new LinearGradient(x0, 0, w, h, cfg.accent, cfg.accent2, Shader.TileMode.CLAMP));
+        if (prefixAccent && split > 0) {
+            float x1 = Math.max(1f, split * cellW);
+            accent.setShader(new LinearGradient(0, 0, x1, h, cfg.accent, cfg.accent2, Shader.TileMode.CLAMP));
+        } else {
+            float x0 = Math.max(0, split) * cellW;
+            accent.setShader(new LinearGradient(x0, 0, w, h, cfg.accent, cfg.accent2, Shader.TileMode.CLAMP));
+        }
     }
 
     @Override
@@ -102,13 +124,26 @@ public class WordmarkView extends View {
                         }
                         continue;
                     }
-                    Paint paint = pass == 0 ? shadow : (split >= 0 && c >= split ? accent : word);
+                    boolean useAccent = split >= 0 && (prefixAccent ? (c < split) : (c >= split));
+                    Paint paint = pass == 0 ? shadow : (useAccent ? accent : word);
+                    if (pass == 1 && continuousShimmer && p >= 1f) {
+                        float phase = ((SystemClock.uptimeMillis() % 3200L) / 3200f) * (cols + 24) - 12f;
+                        float dist = Math.abs(c - phase);
+                        if (dist < 6.5f) {
+                            Theme t = Theme.cur();
+                            shimmerPaint.setColor(dist < 2.2f ? t.fgBright : (useAccent ? t.cyan : t.accent));
+                            paint = shimmerPaint;
+                        }
+                    }
                     blockRect(canvas, ch, x, y, cellW, cellH, paint);
                 }
             }
         }
         if (p < 1f) postInvalidateDelayed(33);
-        else revealStart = -1;
+        else {
+            revealStart = -1;
+            if (continuousShimmer) postInvalidateDelayed(48);
+        }
     }
 
     /** Draws █ ▄ ▀ ▌ ▐ (and '#') as rectangles. */

@@ -74,6 +74,7 @@ public final class MainActivity extends Activity {
     // Connection settings
     private String tvIp = "192.168.1.50";
     private int linkPort = OmarchyLinkClient.DEFAULT_LINK_PORT;
+    private int adbPort = AdbTcpClient.DEFAULT_PORT;
     private String secretToken = "omarchy-default-secret";
     private String selectedBrand = "sony-bravia";
 
@@ -115,7 +116,7 @@ public final class MainActivity extends Activity {
         setContentView(rootLayout);
 
         String phoneIp = OmarchyLinkClient.detectLocalIpv4();
-        appendLog("omarchy-mobile 2.12.0 ready | Phone LAN: " + phoneIp + ":8765");
+        appendLog("omarchy-mobile 2.13.0 ready | Phone LAN: " + phoneIp + ":8765");
         appendLog("WebTV & webOS Bridge active at http://" + phoneIp + ":8765/tv");
         switchTab(TAB_LINK);
     }
@@ -146,6 +147,7 @@ public final class MainActivity extends Activity {
         SharedPreferences sp = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
         tvIp = sp.getString("tv_ip", "192.168.1.50");
         linkPort = sp.getInt("link_port", OmarchyLinkClient.DEFAULT_LINK_PORT);
+        adbPort = sp.getInt("adb_port", AdbTcpClient.DEFAULT_PORT);
         secretToken = sp.getString("secret_token", "omarchy-default-secret");
         targetPlatformMode = sp.getInt("platform_mode", MODE_ANDROID_TV);
         String savedThemeId = sp.getString("theme_id", "tokyo-night");
@@ -157,10 +159,22 @@ public final class MainActivity extends Activity {
         }
     }
 
+    /** Accepts "ip" or "ip:adbPort" (Wireless debugging uses a random port). Keeps old values on bad input. */
+    private void applyHostInput(String raw) {
+        try {
+            AdbTcpClient.HostPort hp = AdbTcpClient.parseHostPort(raw, AdbTcpClient.DEFAULT_PORT);
+            tvIp = hp.host;
+            adbPort = hp.port;
+        } catch (IllegalArgumentException e) {
+            appendLog("Ignoring address: " + e.getMessage());
+        }
+    }
+
     private void savePrefs() {
         getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit()
                 .putString("tv_ip", tvIp)
                 .putInt("link_port", linkPort)
+                .putInt("adb_port", adbPort)
                 .putString("secret_token", secretToken)
                 .putInt("platform_mode", targetPlatformMode)
                 .putString("theme_id", currentTheme != null ? currentTheme.id : "tokyo-night")
@@ -204,7 +218,7 @@ public final class MainActivity extends Activity {
         topBarLeft.setTypeface(monoBold);
         topBarLeft.setTextSize(TypedValue.COMPLEX_UNIT_SP, 12);
         topBarLeft.setTextColor(currentTheme.accentColor());
-        topBarLeft.setText("▊ OMARCHY-MOBILE 2.12.0-beta");
+        topBarLeft.setText("▊ OMARCHY-MOBILE 2.13.0-beta");
         LinearLayout.LayoutParams lpLeft = new LinearLayout.LayoutParams(
                 0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
         topBar.addView(topBarLeft, lpLeft);
@@ -381,7 +395,7 @@ public final class MainActivity extends Activity {
 
         // Manual IP + LAN Subnet Discovery
         TuiBoxView connBox = makeBox("TV LAN DISCOVERY & PAIRING");
-        final EditText ipInput = makeInput(tvIp, "TV IPv4 Address (e.g. 192.168.1.50)");
+        final EditText ipInput = makeInput(adbPort == AdbTcpClient.DEFAULT_PORT ? tvIp : tvIp + ":" + adbPort, "TV IP or IP:ADB-port (e.g. 192.168.1.50 or 192.168.1.50:37123)");
         final EditText tokenInput = makeInput(secretToken, "omarchy-link Shared Secret / PIN");
         connBox.addView(makeLabel("Target TV IP Address:", 11f, currentTheme.accentColor()));
         connBox.addView(ipInput, rowParams());
@@ -395,7 +409,7 @@ public final class MainActivity extends Activity {
 
         Button btnScan = makeTuiButton("[ AUTO-SCAN WI-FI SUBNET (/24) ]", true);
         btnScan.setOnClickListener(v -> {
-            tvIp = ipInput.getText().toString().trim();
+            applyHostInput(ipInput.getText().toString());
             secretToken = tokenInput.getText().toString().trim();
             savePrefs();
             scanResultText.setText("Scanning local /24 subnet on ports 8999, 5555, 47800...");
@@ -428,13 +442,13 @@ public final class MainActivity extends Activity {
 
         Button btnPing = makeTuiButton("[ PING OMARCHY-LINK (:8999) & ADB (:5555) ]", false);
         btnPing.setOnClickListener(v -> {
-            tvIp = ipInput.getText().toString().trim();
+            applyHostInput(ipInput.getText().toString());
             secretToken = tokenInput.getText().toString().trim();
             savePrefs();
             appendLog("Probing " + tvIp + " (:8999 / :5555)...");
             bgPool.execute(() -> {
                 OmarchyLinkClient.DiscoveredTv d = OmarchyLinkClient.probeHost(
-                        tvIp, linkPort, 5555, 47800, 1500, secretToken);
+                        tvIp, linkPort, adbPort, 47800, 1500, secretToken);
                 mainHandler.post(() -> {
                     if (d != null) {
                         scanResultText.setText("CONNECTED: " + d.tvName + " | ver=" + d.version
@@ -452,7 +466,7 @@ public final class MainActivity extends Activity {
         Button btnSamsungLaunch = makeTuiButton(
                 "[ 1-TAP LAUNCH ON SAMSUNG TIZEN / SMART TV (:8001 -> :8765/tv) ]", false);
         btnSamsungLaunch.setOnClickListener(v -> {
-            tvIp = ipInput.getText().toString().trim();
+            applyHostInput(ipInput.getText().toString());
             savePrefs();
             String webTvUrl = "http://" + OmarchyLinkClient.detectLocalIpv4() + ":"
                     + (bridgeServer != null ? bridgeServer.getLocalPort() : 8765) + "/tv";
@@ -525,7 +539,7 @@ public final class MainActivity extends Activity {
         // Android TV 1-Tap Wireless ADB Installer
         TuiBoxView apkBox = makeBox("ANDROID TV WIRELESS ADB INSTALLER (:5555)");
         apkBox.addView(makeLabel(
-                "1. Downloads latest omarchytv-release-2.12.0-beta.apk & verifies SHA-256\n"
+                "1. Downloads latest omarchytv-release-2.13.0-beta.apk & verifies SHA-256\n"
                         + "2. Pushes via pure-Java ADB SYNC to /data/local/tmp/omarchytv.apk\n"
                         + "3. Runs `pm install -r` & pins default Home (`com.omarchytv.launcher/.HomeV29`)",
                 10.5f, currentTheme.fgColor()));
@@ -553,7 +567,7 @@ public final class MainActivity extends Activity {
                     });
                     mainHandler.post(() -> apkProgress.setText("SHA-256 verified ✓ Pushing over ADB :5555..."));
 
-                    try (AdbTcpClient adb = AdbTcpClient.connect(tvIp, AdbTcpClient.DEFAULT_PORT, getFilesDir(), 10_000,
+                    try (AdbTcpClient adb = AdbTcpClient.connect(tvIp, adbPort, getFilesDir(), 10_000,
                             fp -> mainHandler.post(() -> apkProgress.setText("Accept RSA prompt on TV (" + fp + ")")))) {
                         String out = adb.installAndPinHome(dest, true, (sent, total, stage) -> mainHandler.post(() ->
                                 apkProgress.setText(stage + ": " + (sent / 1024) + " / " + (total / 1024) + " KB")));
@@ -793,7 +807,7 @@ public final class MainActivity extends Activity {
             appendLog("Restoring all disabled packages on " + tvIp + ":5555...");
             bgPool.execute(() -> {
                 try {
-                    try (AdbTcpClient adb = AdbTcpClient.connect(tvIp, AdbTcpClient.DEFAULT_PORT, getFilesDir(), 8_000, null)) {
+                    try (AdbTcpClient adb = AdbTcpClient.connect(tvIp, adbPort, getFilesDir(), 8_000, null)) {
                         Set<String> disabled = adb.listDisabledPackages();
                         int count = 0;
                         for (String pkg : disabled) {
@@ -867,7 +881,7 @@ public final class MainActivity extends Activity {
         appendLog((disable ? "Disabling " : "Enabling ") + pkg + " on " + tvIp + ":5555...");
         bgPool.execute(() -> {
             try {
-                try (AdbTcpClient adb = AdbTcpClient.connect(tvIp, AdbTcpClient.DEFAULT_PORT, getFilesDir(), 8_000, null)) {
+                try (AdbTcpClient adb = AdbTcpClient.connect(tvIp, adbPort, getFilesDir(), 8_000, null)) {
                     String out = disable ? adb.disablePackageUser0(pkg) : adb.enablePackage(pkg);
                     appendLog(out.trim());
                 }

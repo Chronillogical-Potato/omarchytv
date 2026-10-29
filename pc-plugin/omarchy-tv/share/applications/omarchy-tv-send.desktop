@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Send to TV (Cinemarchy)
+Name[it]=Invia alla TV (Cinemarchy)
+Name[de]=An TV senden (Cinemarchy)
+Comment=Stream this file to Cinemarchy on the paired OmarchyTV over the LAN
+Exec=omarchy-tv send %f
+Icon=video-display
+Terminal=false
+NoDisplay=true
+MimeType=video/mp4;video/x-matroska;video/webm;video/quicktime;video/x-msvideo;video/mpeg;video/mp2t;audio/mpeg;audio/flac;audio/ogg;audio/x-wav;audio/mp4;
+Categories=AudioVideo;Video;

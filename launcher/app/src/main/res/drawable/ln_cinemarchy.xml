@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- v2.13 stroke line icon (24 grid): 35mm film strip + play triangle, tinted from code. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="2"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M3,4h18v16H3zM7,4v16M17,4v16M3,8h4M3,12h4M3,16h4M17,8h4M17,12h4M17,16h4" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M10.2,8.8L15.4,12L10.2,15.2Z" />
+</vector>

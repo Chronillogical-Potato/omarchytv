@@ -51,5 +51,60 @@ public class ThemeTest {
             double cr = Surfaces.contrast(Surfaces.luminance(dim & 0xFFFFFF), Surfaces.luminance(bg & 0xFFFFFF));
             assertTrue(name + " dim text " + cr, cr >= 4.5 || dim == fg);
         }
+        assertTrue(themes.has("cumulus"));
+        assertTrue(themes.has("tokyo-roadster"));
+    }
+
+    @Test
+    public void cinemarchyWordmarkAndAquariumArtNormaliseCleanly() throws Exception {
+        assertEquals("cinemarchy", Art.normalise("cinemarchy"));
+        assertEquals("aquarium", Art.normalise("aquarium"));
+        assertTrue(Art.isPrefixAccent("cinemarchy"));
+        assertEquals(40, Art.split("cinemarchy"));
+        String logo = new String(Files.readAllBytes(Paths.get("src/main/res/raw/cinemarchy_logo.txt")), StandardCharsets.UTF_8);
+        String[] lines = logo.replace("\r", "").split("\n");
+        assertTrue(lines.length >= 10);
+        assertTrue(logo.contains("█") && logo.contains("▀") && logo.contains("▄"));
+    }
+
+    @Test
+    public void v213BetaDefaultsAndRandomRotationLocking() throws Exception {
+        try {
+            LauncherConfig defCfg = new LauncherConfig(null, null, 0L);
+            assertEquals("last-horizon", defCfg.theme.name);
+            assertEquals("aquarium", defCfg.screensaverArt);
+            assertEquals("aquarium", defCfg.screensaverMode);
+            assertTrue(defCfg.saverSound);
+            assertTrue(defCfg.randomTheme);
+            assertTrue(defCfg.randomWallpaper);
+
+            JSONObject j = new JSONObject();
+            assertTrue(LauncherConfig.applyRandomRotation(j, new java.util.Random(42L)));
+            String rotTheme = j.getJSONObject("theme").getString("name");
+            assertTrue("last-horizon".equals(rotTheme) || "cumulus".equals(rotTheme));
+
+            // Lock theme manually -> random_theme becomes false and stays locked across rotations
+            LauncherConfig.lockTheme(j, "tokyo-night");
+            LauncherConfig lockedThemeCfg = new LauncherConfig(null, j, 1L);
+            assertEquals("tokyo-night", lockedThemeCfg.theme.name);
+            org.junit.Assert.assertFalse(lockedThemeCfg.randomTheme);
+            assertTrue(lockedThemeCfg.randomWallpaper);
+
+            assertTrue(LauncherConfig.applyRandomRotation(j, new java.util.Random(7L)));
+            assertEquals("tokyo-night", j.getJSONObject("theme").getString("name"));
+            assertTrue(j.getString("wallpaper").startsWith("wallpapers/"));
+
+            // Lock wallpaper manually -> both random_theme and random_wallpaper are false, rotation is a no-op
+            LauncherConfig.lockWallpaper(j, "omarchy", 2);
+            LauncherConfig lockedBoth = new LauncherConfig(null, j, 2L);
+            org.junit.Assert.assertFalse(lockedBoth.randomTheme);
+            org.junit.Assert.assertFalse(lockedBoth.randomWallpaper);
+            org.junit.Assert.assertFalse(LauncherConfig.applyRandomRotation(j, new java.util.Random(99L)));
+            assertEquals("tokyo-night", j.getJSONObject("theme").getString("name"));
+            assertEquals("omarchy", j.getString("wallpaper"));
+            assertEquals(2, j.getInt("wallpaper_bg"));
+        } finally {
+            Theme.resolve(null, new JSONObject().put("name", "tokyo-night"));
+        }
     }
 }

@@ -8,10 +8,10 @@ from dataclasses import dataclass
 from pathlib import Path
 
 USER = Path.home() / ".config/omarchy/themes"
-BUNDLED = {"catppuccin", "catppuccin-latte", "ethereal", "everforest", "flexoki-light", "gruvbox", "hackerman",
+BUNDLED = {"catppuccin", "catppuccin-latte", "cumulus", "ethereal", "everforest", "flexoki-light", "gruvbox", "hackerman",
            "hermarchy", "jade-horse", "kanagawa", "last-horizon", "lumon", "lupine", "matte-black", "miasma",
            "nord", "osaka-jade", "retro-82", "ristretto", "rose-pine", "solitude", "starship", "tokyo-night",
-           "vantablack", "white", "year-of-the-horse"}
+           "tokyo-roadster", "vantablack", "white", "year-of-the-horse"}
 IMG = (".jpg", ".jpeg", ".png", ".webp")
 CAP = 50 * 1024 * 1024
 MAX_IMAGES = 32

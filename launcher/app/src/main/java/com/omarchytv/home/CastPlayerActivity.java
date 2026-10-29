@@ -39,14 +39,15 @@ import java.io.File;
 @OptIn(markerClass = UnstableApi.class)
 public final class CastPlayerActivity extends Activity implements CastRouter.Surface {
 
-    private static final long TICK_MS = 10_000, UI_MS = 1_000, OVERLAY_MS = 4_000;
+    private static final long TICK_MS = 10_000, UI_MS = 1_000, OVERLAY_MS = 4_000, PAUSE_SAVER_MS = 8_000;
 
     private ExoPlayer player;
-    private String id, kind, lastState;
+    private String id, kind, lastState, mediaTitle, mediaUrl;
     private boolean live, replaced, done;
     private FrameLayout root;
     private SurfaceView video;
     private LinearLayout overlay;
+    private AsciiSaverView pauseSaver;
     private TextView timeView, stateView;
     private View progress;
     private FrameLayout progressTrack;
@@ -71,6 +72,17 @@ public final class CastPlayerActivity extends Activity implements CastRouter.Sur
     private final Runnable hideOverlay = () -> {
         if (player != null && player.isPlaying()) overlay.setVisibility(View.GONE);
     };
+    private final Runnable showPauseSaver = () -> {
+        if (player != null && !player.isPlaying() && pauseSaver != null) {
+            double posS = player.getCurrentPosition() / 1000.0;
+            double durS = player.getDuration() > 0 ? player.getDuration() / 1000.0 : -1;
+            String label = "‖ PAUSED · " + (mediaTitle != null ? mediaTitle : "") + " · " + CastUi.clock(posS)
+                    + (durS > 0 ? " / " + CastUi.clock(durS) : "") + " · OK to resume";
+            pauseSaver.setStatusOverride(label);
+            pauseSaver.setVisibility(View.VISIBLE);
+            pauseSaver.start();
+        }
+    };
 
     @Override
     protected void attachBaseContext(Context base) {
@@ -85,6 +97,8 @@ public final class CastPlayerActivity extends Activity implements CastRouter.Sur
         kind = getIntent().getStringExtra(CastRouter.EXTRA_KIND);
         live = getIntent().getBooleanExtra(CastRouter.EXTRA_LIVE, false);
         String title = getIntent().getStringExtra(CastRouter.EXTRA_TITLE);
+        mediaTitle = title;
+        AmbilightController.restoreFollowVideo(this);
         String from = getIntent().getStringExtra(CastRouter.EXTRA_FROM);
         String mime = getIntent().getStringExtra(CastRouter.EXTRA_MIME);
         if (id == null) {
@@ -107,7 +121,7 @@ public final class CastPlayerActivity extends Activity implements CastRouter.Sur
         overlay.setBackground(CastUi.pane(this));
         int p = CastUi.dp(this, 14);
         overlay.setPadding(p + CastUi.dp(this, 4), p, p + CastUi.dp(this, 4), p);
-        TextView name = CastUi.label(this, title == null || title.isEmpty() ? getString(audio ? R.string.cast_audio : R.string.cast_video) : title, 20, t.fgBright);
+        TextView name = nameView = CastUi.label(this, title == null || title.isEmpty() ? getString(audio ? R.string.cast_audio : R.string.cast_video) : title, 20, t.fgBright);
         name.setSingleLine(true);
         name.setEllipsize(android.text.TextUtils.TruncateAt.END);
         overlay.addView(name);
@@ -136,6 +150,10 @@ public final class CastPlayerActivity extends Activity implements CastRouter.Sur
         FrameLayout.LayoutParams op = new FrameLayout.LayoutParams(CastUi.dp(this, 560), ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.START);
         op.setMargins(CastUi.dp(this, 56), 0, 0, CastUi.dp(this, 40));
         root.addView(overlay, op);
+        pauseSaver = new AsciiSaverView(this, null);
+        pauseSaver.setAlpha(0.92f);
+        pauseSaver.setVisibility(View.GONE);
+        root.addView(pauseSaver, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         setContentView(root);
 
         if (mime != null && (mime.contains("mpegurl") || mime.contains("dash+xml"))) {
@@ -145,6 +163,7 @@ public final class CastPlayerActivity extends Activity implements CastRouter.Sur
         Uri uri;
         String sha = getIntent().getStringExtra(CastRouter.EXTRA_FILE);
         String url = getIntent().getStringExtra(CastRouter.EXTRA_URL);
+        mediaUrl = url;
         if (sha != null) {
             File f = new File(CastRouter.dir(this), sha);
             if (!f.isFile()) {
@@ -179,6 +198,11 @@ public final class CastPlayerActivity extends Activity implements CastRouter.Sur
                 else if (s == Player.STATE_ENDED) {
                     report(live ? "stopped" : "ended", false);
                     showOverlay(false);
+                    // v2.13 up-next queue: advance to the next item instead of stopping.
+                    String[] q = listUrls();
+                    if (q != null && "queue".equals(getIntent().getStringExtra(EXTRA_LIST_MODE)) && curIdx() + 1 < q.length) {
+                        h.post(() -> tune(curIdx() + 1));
+                    }
                 } else if (s == Player.STATE_READY && !player.getPlayWhenReady()) report("paused", false);
                 updateTime();
             }
@@ -187,13 +211,22 @@ public final class CastPlayerActivity extends Activity implements CastRouter.Sur
             public void onIsPlayingChanged(boolean playing) {
                 if (playing) {
                     getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+                    h.removeCallbacks(showPauseSaver);
+                    if (pauseSaver != null && pauseSaver.getVisibility() == View.VISIBLE) {
+                        pauseSaver.stop();
+                        pauseSaver.setVisibility(View.GONE);
+                    }
                     report("playing", false);
                     h.removeCallbacks(tick);
                     h.postDelayed(tick, TICK_MS);
                 } else {
                     getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
                     h.removeCallbacks(tick);
-                    if (player.getPlaybackState() == Player.STATE_READY) report("paused", false);
+                    if (player.getPlaybackState() == Player.STATE_READY) {
+                        report("paused", false);
+                        h.removeCallbacks(showPauseSaver);
+                        h.postDelayed(showPauseSaver, PAUSE_SAVER_MS);
+                    }
                 }
                 updateTime();
             }
@@ -207,14 +240,58 @@ public final class CastPlayerActivity extends Activity implements CastRouter.Sur
             public void onVideoSizeChanged(VideoSize vs) {
                 fit(vs);
             }
+
+            @Override
+            public void onCues(androidx.media3.common.text.CueGroup cg) {
+                showCues(cg);
+            }
         });
-        player.setMediaItem(MediaItem.fromUri(uri));
+        player.setMediaItem(mediaItem(uri, getIntent().getStringExtra(CastRouter.EXTRA_SUB)));
         double pos = getIntent().getDoubleExtra(CastRouter.EXTRA_POS, 0);
         if (!live && pos > 0) player.seekTo((long) (pos * 1000));
         player.setPlayWhenReady(true);
         player.prepare();
         CastRouter.attach(this);
         showOverlay(true);
+    }
+
+    private TextView subs;
+
+    /** A MediaItem with an optional sideloaded .srt / .vtt track, selected by default. */
+    static MediaItem mediaItem(Uri uri, String sub) {
+        if (sub == null || sub.isEmpty()) return MediaItem.fromUri(uri);
+        String path = Uri.parse(sub).getPath();
+        String p = path == null ? "" : path.toLowerCase(java.util.Locale.ROOT);
+        String mime = p.endsWith(".vtt") ? androidx.media3.common.MimeTypes.TEXT_VTT
+                : androidx.media3.common.MimeTypes.APPLICATION_SUBRIP;
+        MediaItem.SubtitleConfiguration sc = new MediaItem.SubtitleConfiguration.Builder(Uri.parse(sub))
+                .setMimeType(mime).setSelectionFlags(androidx.media3.common.C.SELECTION_FLAG_DEFAULT).build();
+        return new MediaItem.Builder().setUri(uri).setSubtitleConfigurations(java.util.Collections.singletonList(sc)).build();
+    }
+
+    /** Render subtitle cues as plain outlined text at the bottom (we draw on a SurfaceView, no PlayerView). */
+    private void showCues(androidx.media3.common.text.CueGroup cg) {
+        StringBuilder sb = new StringBuilder();
+        for (androidx.media3.common.text.Cue c : cg.cues) {
+            if (c.text == null) continue;
+            if (sb.length() > 0) sb.append('\n');
+            sb.append(c.text);
+        }
+        if (subs == null) {
+            if (sb.length() == 0) return;
+            subs = new TextView(this);
+            subs.setTextSize(26);
+            subs.setTextColor(0xFFFFFFFF);
+            subs.setShadowLayer(6, 0, 0, 0xFF000000);
+            subs.setGravity(Gravity.CENTER);
+            subs.setPadding(48, 8, 48, 8);
+            FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
+            lp.bottomMargin = 64;
+            ((ViewGroup) root).addView(subs, lp);
+        }
+        subs.setText(sb);
+        subs.setVisibility(sb.length() == 0 ? View.GONE : View.VISIBLE);
     }
 
     /** Letterbox the SurfaceView to the video's aspect ratio. */
@@ -287,9 +364,78 @@ public final class CastPlayerActivity extends Activity implements CastRouter.Sur
         release();
     }
 
+    // ---- v2.13: channel list (IPTV zapping) / up-next queue -------------------------------------
+    static final String EXTRA_LIST_URLS = "omarchy.list.urls", EXTRA_LIST_TITLES = "omarchy.list.titles",
+            EXTRA_LIST_INDEX = "omarchy.list.index", EXTRA_LIST_MODE = "omarchy.list.mode",
+            EXTRA_LIST_SUBS = "omarchy.list.subs";
+    private TextView nameView;
+    private int listIdx = -1, prevIdx = -1;
+
+    private String[] listUrls() {
+        return getIntent().getStringArrayExtra(EXTRA_LIST_URLS);
+    }
+
+    private boolean iptvMode() {
+        return "iptv".equals(getIntent().getStringExtra(EXTRA_LIST_MODE));
+    }
+
+    /** Switches the running player to entry {@code i} of the list (wraps). Returns false without a list. */
+    private boolean tune(int i) {
+        String[] urls = listUrls();
+        String[] titles = getIntent().getStringArrayExtra(EXTRA_LIST_TITLES);
+        if (urls == null || urls.length == 0 || player == null) return false;
+        if (listIdx < 0) listIdx = getIntent().getIntExtra(EXTRA_LIST_INDEX, 0);
+        int n = ((i % urls.length) + urls.length) % urls.length;
+        if (n != listIdx) prevIdx = listIdx;
+        listIdx = n;
+        mediaUrl = urls[n];
+        mediaTitle = titles != null && n < titles.length ? titles[n] : urls[n];
+        if (nameView != null) nameView.setText((iptvMode() ? "CH " + (n + 1) + " · " : "") + mediaTitle);
+        if (iptvMode()) com.omarchytv.home.iptv.IptvStore.tuned(this, mediaUrl);
+        String[] subsArr = getIntent().getStringArrayExtra(EXTRA_LIST_SUBS);
+        player.setMediaItem(mediaItem(Uri.parse(mediaUrl), subsArr != null && n < subsArr.length ? subsArr[n] : null));
+        player.prepare();
+        player.play();
+        showOverlay(true);
+        return true;
+    }
+
+    /** v2.13: Cinemarchy ":pause" (main thread). */
+    void togglePlayPause() {
+        if (player == null) return;
+        if (player.getPlayWhenReady()) castControl("pause", 0);
+        else castControl("play", 0);
+        showOverlay(true);
+    }
+
+    private int curIdx() {
+        return listIdx >= 0 ? listIdx : getIntent().getIntExtra(EXTRA_LIST_INDEX, 0);
+    }
+
     @Override
     public boolean dispatchKeyEvent(KeyEvent e) {
         if (e.getAction() != KeyEvent.ACTION_DOWN) return super.dispatchKeyEvent(e);
+        if (listUrls() != null) {
+            int kc = e.getKeyCode();
+            if (kc == KeyEvent.KEYCODE_CHANNEL_UP || kc == KeyEvent.KEYCODE_PAGE_UP || kc == KeyEvent.KEYCODE_MEDIA_NEXT) {
+                return tune(curIdx() + 1) || super.dispatchKeyEvent(e);
+            }
+            if (kc == KeyEvent.KEYCODE_CHANNEL_DOWN || kc == KeyEvent.KEYCODE_PAGE_DOWN || kc == KeyEvent.KEYCODE_MEDIA_PREVIOUS) {
+                return tune(curIdx() - 1) || super.dispatchKeyEvent(e);
+            }
+            if (kc == KeyEvent.KEYCODE_LAST_CHANNEL && prevIdx >= 0) {
+                return tune(prevIdx);
+            }
+        }
+        if (pauseSaver != null && pauseSaver.getVisibility() == View.VISIBLE) {
+            pauseSaver.stop();
+            pauseSaver.setVisibility(View.GONE);
+            if (player != null && !player.getPlayWhenReady()) {
+                player.setPlayWhenReady(true);
+                showOverlay(true);
+                return true;
+            }
+        }
         switch (e.getKeyCode()) {
             case KeyEvent.KEYCODE_DPAD_CENTER:
             case KeyEvent.KEYCODE_ENTER:
@@ -314,6 +460,19 @@ public final class CastPlayerActivity extends Activity implements CastRouter.Sur
             case KeyEvent.KEYCODE_DPAD_UP:
             case KeyEvent.KEYCODE_DPAD_DOWN:
                 showOverlay(true);
+                return true;
+            case KeyEvent.KEYCODE_S:
+                if (player != null && player.isPlaying()) player.pause();
+                h.removeCallbacks(showPauseSaver);
+                showPauseSaver.run();
+                return true;
+            case KeyEvent.KEYCODE_H:
+                if (player != null) {
+                    double posS = player.getCurrentPosition() / 1000.0;
+                    OmarchyLink.handoffToPc(mediaTitle, mediaUrl, posS);
+                    android.widget.Toast.makeText(this, "Handoff to PC mpv @ " + CastUi.clock(posS), android.widget.Toast.LENGTH_SHORT).show();
+                    stopByUser();
+                }
                 return true;
             case KeyEvent.KEYCODE_MEDIA_STOP:
                 stopByUser();
@@ -397,6 +556,7 @@ public final class CastPlayerActivity extends Activity implements CastRouter.Sur
 
     private void release() {
         h.removeCallbacksAndMessages(null);
+        if (pauseSaver != null) pauseSaver.stop();
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         if (player != null) {
             player.release();

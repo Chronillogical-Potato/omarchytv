@@ -54,10 +54,15 @@ public class WebAppActivity extends Activity {
     private String mobileUa;
 
     static void open(Context c, LauncherConfig.WebApp w) {
+        AmbilightController.restoreFollowVideo(c);
         Intent i = new Intent(c, WebAppActivity.class)
                 .putExtra(EXTRA_ID, w.id).putExtra(EXTRA_NAME, w.name).putExtra(EXTRA_URL, w.url).putExtra(EXTRA_UA, w.ua)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         c.startActivity(i);
+    }
+
+    static void openUrl(Context c, String name, String url) {
+        open(c, new LauncherConfig.WebApp(LauncherConfig.slug(name), name, url, "", "desktop"));
     }
 
     @Override
@@ -97,7 +102,7 @@ public class WebAppActivity extends Activity {
         status.setTextSize(13);
         status.setBackgroundColor(Theme.m(0xE616161E));
         status.setPadding((int) (12 * d), (int) (6 * d), (int) (12 * d), (int) (6 * d));
-        status.setTypeface(getResources().getFont(R.font.caskaydia));
+        status.setTypeface(CastUi.font(this));
         status.setVisibility(View.GONE);
         FrameLayout.LayoutParams slp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT,
                 Gravity.TOP | Gravity.END);

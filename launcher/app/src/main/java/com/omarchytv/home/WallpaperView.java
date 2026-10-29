@@ -201,7 +201,19 @@ public class WallpaperView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         if (cache == null && getWidth() > 0) cache = make(getWidth(), getHeight());
-        if (cache != null) canvas.drawBitmap(cache, 0, 0, blit);
+        if (cache != null) {
+            if (LauncherConfig.get(getContext()).antiBurnIn) {
+                long step = System.currentTimeMillis() / 45_000L;
+                float dx = ((step % 5) - 2) * 1.0f;
+                float dy = (((step / 5) % 5) - 2) * 1.0f;
+                canvas.save();
+                canvas.translate(dx, dy);
+                canvas.drawBitmap(cache, 0, 0, blit);
+                canvas.restore();
+            } else {
+                canvas.drawBitmap(cache, 0, 0, blit);
+            }
+        }
         // Omarchy look: the theme wallpaper untouched. Optional uniform dimming (Layout → Wallpaper dimming).
         if (photo && cache != null) {
             float global = Surfaces.globalDim(Surfaces.dimLevel(LauncherConfig.get(getContext()).wallpaperDim));
@@ -232,21 +244,37 @@ public class WallpaperView extends View {
         }
     }
 
-    /** Official backgrounds of a theme (asset paths, sorted like Omarchy's backgrounds folder). */
+    /** Official still backgrounds of a theme (asset paths, sorted like Omarchy's backgrounds folder, excluding .mp4 intros). */
     static String[] backgrounds(Context c, String theme) {
         try {
             String[] f = c.getAssets().list("wallpapers/" + theme);
             if (f == null || f.length == 0) return new String[0];
             java.util.Arrays.sort(f);
-            for (int i = 0; i < f.length; i++) f[i] = "wallpapers/" + theme + "/" + f[i];
-            return f;
+            java.util.List<String> out = new java.util.ArrayList<>();
+            for (String s : f) {
+                if (!s.endsWith(".mp4")) out.add("wallpapers/" + theme + "/" + s);
+            }
+            return out.toArray(new String[0]);
         } catch (java.io.IOException e) {
             return new String[0];
         }
     }
 
+    /** Optional MP4 video intro matching the current theme background (e.g. cumulus, last-horizon), or null. */
+    static String introAssetFor(Context c, String which, int idx) {
+        String img = assetFor(c, which, idx);
+        if (img == null || !img.endsWith(".webp")) return null;
+        String mp4 = img.substring(0, img.length() - 5) + ".mp4";
+        try (java.io.InputStream in = c.getAssets().open(mp4)) {
+            return mp4;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
     /** "omarchy" (and legacy "omarchy-liftoff"/"omarchy-road") = background #idx of the current theme; else none. */
     static String assetFor(Context c, String which, int idx) {
+        if (which != null && which.startsWith("wallpapers/") && which.endsWith(".webp")) return which;
         if (!"omarchy".equals(which) && !"omarchy-liftoff".equals(which) && !"omarchy-road".equals(which)) return null;
         String[] all = backgrounds(c, Theme.cur().name);
         if (all.length == 0) all = backgrounds(c, "tokyo-night");

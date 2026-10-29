@@ -137,7 +137,11 @@ public final class LinkServer {
     private long lastAskMs, lastAgentAskMs;
     /** Last agent list (§6 Agents), already bounded; and the PC that sends it (agent_ask goes there). */
     private volatile JSONObject agentsNow;
+    private volatile JSONObject cinemarchyNow;
+    private volatile JSONObject snippetsNow;
     private volatile String agentsFrom;
+    private volatile String grokbotFrom;   // PC whose omarchy-link last pushed the Grok Bot companion state
+    private long lastGrokbotAskMs;
     /** Seconds; tests shift it. */
     volatile long clockOffsetS;
     /** Rate limits (§3). Only the JVM harness that runs the PC test-suite turns them off, like the PC's mock TV. */
@@ -637,6 +641,16 @@ public final class LinkServer {
         // ---- authenticated from here
         Auth a = authenticate(req);
         if (a.error != null) return a.error;
+        // Optional AES-256-GCM payloads. The HMAC signature covers the ciphertext, so auth is unchanged;
+        // clients that don't send the header keep the 2.12 plaintext behaviour.
+        final boolean enc = LinkCrypto.ENC_ALG.equals(req.header(LinkCrypto.ENC_HEADER)) && req.upload == null;
+        if (enc && req.body.length > 0) {
+            try {
+                req.body = LinkCrypto.open(a.token, "OTV1-E\n" + a.nonce, req.body);
+            } catch (java.security.GeneralSecurityException e) {
+                return sign(a, new Response(400, err("bad_enc", "payload decryption failed")));
+            }
+        }
         java.util.function.Consumer<String> rl = requestLog;
         if (rl != null) rl.accept(req.method + " " + path + " " + req.body.length);
         long retry = limited(req.peer + "|auth", 20, 1000);
@@ -678,6 +692,14 @@ public final class LinkServer {
         } catch (Exception e) {
             host.log("handler " + path + ": " + e);
             r = new Response(400, err("bad_request", String.valueOf(e.getMessage())));
+        }
+        if (enc && r.body != null && r.body.length > 0) {
+            try {
+                r.body = LinkCrypto.seal(a.token, "OTV1-E-R\n" + a.nonce, r.body);
+                r.headers.put(LinkCrypto.ENC_HEADER, LinkCrypto.ENC_ALG);
+            } catch (java.security.GeneralSecurityException e) {
+                host.log("encrypt response: " + e);
+            }
         }
         return sign(a, r);
     }
@@ -942,6 +964,19 @@ public final class LinkServer {
         if ("PUT".equals(m) && "/v1/ai/providers".equals(p)) return providers(body, a.pcId);
         if ("PUT".equals(m) && "/v1/agents".equals(p)) return agentsPut(body, a.pcId);
         if ("GET".equals(m) && "/v1/agents".equals(p)) return new Response(200, agents());
+        if ("GET".equals(m) && "/v1/cinemarchy/library".equals(p)) return new Response(200, cinemarchyLibrary());
+        if ("PUT".equals(m) && "/v1/cinemarchy/library".equals(p)) return cinemarchyLibraryPut(body, a.pcId);
+        if ("GET".equals(m) && "/v1/cinemarchy/snippets".equals(p)) return new Response(200, cinemarchySnippets());
+        if ("PUT".equals(m) && "/v1/cinemarchy/snippets".equals(p)) return cinemarchySnippetsPut(body, a.pcId);
+        if ("POST".equals(m) && "/v1/cinemarchy/handoff".equals(p)) return cinemarchyHandoff(body, a.pcId);
+        if ("POST".equals(m) && "/v1/cinemarchy/handoff-to-pc".equals(p)) return cinemarchyHandoffToPc(body);
+        if ("GET".equals(m) && "/v1/cinemarchy/iptv".equals(p)) return new Response(200, cinemarchyIptv());
+        if ("PUT".equals(m) && "/v1/cinemarchy/iptv".equals(p)) return cinemarchyIptvPut(body, a.pcId);
+        if ("POST".equals(m) && "/v1/cinemarchy/queue".equals(p)) return cinemarchyQueue(body, a.pcId);
+        if ("GET".equals(m) && "/v1/plugins".equals(p)) return new Response(200, pluginsGet());
+        if ("PUT".equals(m) && "/v1/plugins".equals(p)) return pluginsPut(body, a.pcId);
+        if ("GET".equals(m) && "/v1/plugins/grokbot".equals(p)) return new Response(200, pluginsGrokbotGet());
+        if (("POST".equals(m) || "PUT".equals(m)) && "/v1/plugins/grokbot".equals(p)) return pluginsGrokbotPost(body, a.pcId);
         if ("POST".equals(m) && ("/mcp".equals(p) || "/v1/mcp".equals(p))) {
             return mcp(body);
         }
@@ -1006,7 +1041,8 @@ public final class LinkServer {
                                 new JSONObject().put("package", new JSONObject().put("type", "string").put("description", "Android package name"))))
                         .put(mcpTool("tv_screensaver", "Set or reset custom ASCII screensaver text on the TV.",
                                 new JSONObject().put("text", new JSONObject().put("type", "string").put("description", "ASCII text (empty string resets to default)"))))
-                        .put(mcpTool("tv_ai_status", "Read live AI agents and PC stats displayed on OmarchyTV.", new JSONObject()));
+                        .put(mcpTool("tv_ai_status", "Read live AI agents and PC stats displayed on OmarchyTV.", new JSONObject()))
+                        .put(mcpTool("tv_cinemarchy", "Read Cinemarchy media library and video snippets on OmarchyTV.", new JSONObject()));
                 return new Response(200, res.put("result", new JSONObject().put("tools", tools)));
             }
             case "tools/call": {
@@ -1069,6 +1105,9 @@ public final class LinkServer {
                     case "tv_ai_status":
                         out = new JSONObject().put("agents", agents()).put("stats", stats() != null ? stats() : JSONObject.NULL);
                         break;
+                    case "tv_cinemarchy":
+                        out = new JSONObject().put("library", cinemarchyLibrary()).put("snippets", cinemarchySnippets());
+                        break;
                     default:
                         return new Response(200, res.put("error", new JSONObject().put("code", -32601).put("message", "Unknown tool: " + name)));
                 }
@@ -1098,6 +1137,9 @@ public final class LinkServer {
             caps0.put("agents");
             caps0.put("themes");
             caps0.put("banners");
+            caps0.put("cinemarchy");
+            caps0.put("plugins");
+            caps0.put("enc-a256gcm");
             caps0.put("mcp");   // v-next: PUT/DELETE /v1/banners/<package> (PNG), GET /v1/banners   // v2.10.1: PUT/DELETE /v1/themes/<name>, GET /v1/themes, POST /v1/themes/<name>/select   // §6 Agents: PUT/GET /v1/agents, agent_activity, agent_ask
             List<String> kinds = host.castKinds();
             if (kinds != null && !kinds.isEmpty()) {
@@ -1140,6 +1182,7 @@ public final class LinkServer {
             return new Response(409, err(e, "nothing on the TV can open this"));
         }
         host.log(c.toString());
+        rememberFromPc(c);
         broadcast("cast_state", new JSONObject().put("id", c.id).put("state", "opening"));
         return new Response(200, new JSONObject().put("id", c.id).put("state", "opening").put("app", c.app));
     }
@@ -1579,6 +1622,328 @@ public final class LinkServer {
         return new Response(200, ok());
     }
 
+    public JSONObject cinemarchyLibrary() throws JSONException {
+        JSONObject c = cinemarchyNow;
+        return c != null ? c : new JSONObject().put("items", new JSONArray()).put("continueWatching", new JSONArray());
+    }
+
+    private Response cinemarchyLibraryPut(JSONObject body, String pcId) throws Exception {
+        final JSONArray items = body.optJSONArray("items") != null ? body.optJSONArray("items") : new JSONArray();
+        if (items.length() > 500) return new Response(400, err("too_many", "at most 500 library items"));
+        final JSONArray cont = body.optJSONArray("continueWatching") != null ? body.optJSONArray("continueWatching") : new JSONArray();
+        JSONObject clean = new JSONObject().put("items", items).put("continueWatching", cont).put("at", now());
+        cinemarchyNow = clean;
+        host.editConfig(j -> {
+            JSONObject cm = j.optJSONObject("cinemarchy");
+            if (cm == null) j.put("cinemarchy", cm = new JSONObject());
+            cm.put("library", items).put("continueWatching", cont).put("at", now());
+        });
+        host.onEvent(pcId, "cinemarchy", clean);
+        return new Response(200, ok());
+    }
+
+    public JSONObject cinemarchySnippets() throws JSONException {
+        JSONObject s = snippetsNow;
+        return s != null ? s : new JSONObject().put("snippets", new JSONArray());
+    }
+
+    private Response cinemarchySnippetsPut(JSONObject body, String pcId) throws Exception {
+        final JSONArray sn = body.optJSONArray("snippets") != null ? body.optJSONArray("snippets") : new JSONArray();
+        if (sn.length() > 100) return new Response(400, err("too_many", "at most 100 snippets"));
+        JSONObject clean = new JSONObject().put("snippets", sn).put("at", now());
+        snippetsNow = clean;
+        host.editConfig(j -> {
+            JSONObject cm = j.optJSONObject("cinemarchy");
+            if (cm == null) j.put("cinemarchy", cm = new JSONObject());
+            cm.put("snippets", sn);
+        });
+        host.onEvent(pcId, "cinemarchy_snippets", clean);
+        return new Response(200, ok());
+    }
+
+    private Response cinemarchyHandoff(JSONObject body, String pcId) throws Exception {
+        String url = body.optString("url", "").trim();
+        String title = printable(body.optString("title", "PC mpv Handoff"), 120);
+        double pos = Math.max(0, body.optDouble("position", 0));
+        if (url.isEmpty() && !body.has("file")) {
+            return new Response(400, err("bad_request", "url or file required for handoff"));
+        }
+        JSONObject castBody = new JSONObject()
+                .put("id", "handoff-" + System.currentTimeMillis())
+                .put("kind", body.optString("kind", "video"))
+                .put("title", title)
+                .put("from", body.optString("from", "mpv · Omarchy PC"))
+                .put("position", pos);
+        if (!url.isEmpty()) castBody.put("url", url);
+        if (body.has("file")) castBody.put("file", body.optString("file"));
+        host.editConfig(j -> {
+            JSONObject cm = j.optJSONObject("cinemarchy");
+            if (cm == null) j.put("cinemarchy", cm = new JSONObject());
+            cm.put("lastHandoff", new JSONObject()
+                    .put("direction", "pc_to_tv")
+                    .put("title", title)
+                    .put("url", url)
+                    .put("position", pos)
+                    .put("at", now()));
+        });
+        return cast(castBody);
+    }
+
+    /** v2.13 IPTV: user-supplied playlists + optional XMLTV URL (cinemarchy.iptv in omarchytv.json). */
+    private JSONObject cinemarchyIptv() throws Exception {
+        JSONObject[] out = {null};
+        host.editConfig(j -> {
+            JSONObject cm = j.optJSONObject("cinemarchy");
+            JSONObject iptv = cm == null ? null : cm.optJSONObject("iptv");
+            out[0] = iptv != null ? new JSONObject(iptv.toString()) : new JSONObject();
+        });
+        JSONObject r = out[0];
+        if (!r.has("playlists")) r.put("playlists", new JSONArray());
+        if (!r.has("epg")) r.put("epg", "");
+        return r;
+    }
+
+    private static boolean httpUrl(String u) {
+        return u != null && u.length() <= 2000 && u.matches("(?i)https?://[^\\s]{3,}");
+    }
+
+    private Response cinemarchyIptvPut(JSONObject body, String pcId) throws Exception {
+        JSONArray in = body.optJSONArray("playlists") != null ? body.optJSONArray("playlists") : new JSONArray();
+        if (in.length() > 50) return new Response(400, err("too_many", "at most 50 playlists"));
+        JSONArray pl = new JSONArray();
+        for (int i = 0; i < in.length(); i++) {
+            JSONObject o = in.optJSONObject(i);
+            if (o == null || !httpUrl(o.optString("url", "").trim())) return new Response(400, err("bad_url", "playlist url must be http(s)"));
+            pl.put(new JSONObject().put("name", printable(o.optString("name", "Playlist " + (i + 1)), 80))
+                    .put("url", o.optString("url").trim()));
+        }
+        String epg = body.optString("epg", "").trim();
+        if (!epg.isEmpty() && !httpUrl(epg)) return new Response(400, err("bad_url", "epg url must be http(s)"));
+        JSONObject clean = new JSONObject().put("playlists", pl).put("epg", epg);
+        host.editConfig(j -> {
+            JSONObject cm = j.optJSONObject("cinemarchy");
+            if (cm == null) j.put("cinemarchy", cm = new JSONObject());
+            cm.put("iptv", clean);
+        });
+        host.onEvent(pcId, "cinemarchy_iptv", clean);
+        return new Response(200, ok().put("playlists", pl.length()));
+    }
+
+    /** v2.13 "omarchy-tv send --queue": append a link to Cinemarchy's Up-Next queue (queue://up-next). */
+
+    /** v2.13 Declarative Plugin Engine (sandboxed JSON state, zero LocalAdb / shell access). */
+    private JSONObject pluginsGet() throws Exception {
+        final JSONObject[] out = {null};
+        host.editConfig(j -> {
+            JSONObject pl = j.optJSONObject("plugins");
+            out[0] = pl != null ? new JSONObject(pl.toString()) : new JSONObject();
+        });
+        JSONObject r = out[0];
+        if (!r.has("spacexTv")) r.put("spacexTv", true);
+        if (!r.has("grokbot")) r.put("grokbot", true);
+        if (!r.has("plugins")) {
+            r.put("plugins", new JSONArray()
+                    .put(new JSONObject().put("id", "com.sighmon.spacex-tv").put("name", "SpaceX TV")
+                            .put("author", "sighmon").put("license", "MIT").put("enabled", r.optBoolean("spacexTv", true)))
+                    .put(new JSONObject().put("id", "io.github.tcballard.grokbot-desktop").put("name", "Grok Bot Desktop Companion")
+                            .put("author", "tcballard").put("license", "MIT").put("enabled", r.optBoolean("grokbot", true))));
+        }
+        return r;
+    }
+
+    private Response pluginsPut(JSONObject body, String pcId) throws Exception {
+        final boolean sx = body.optBoolean("spacexTv", true);
+        final boolean gb = body.optBoolean("grokbot", true);
+        JSONArray in = body.optJSONArray("plugins");
+        final JSONArray cleanArr = new JSONArray();
+        if (in != null) {
+            if (in.length() > 32) return new Response(400, err("too_many", "at most 32 plugins"));
+            for (int i = 0; i < in.length(); i++) {
+                JSONObject o = in.optJSONObject(i);
+                if (o == null) continue;
+                String id = printable(o.optString("id", ""), 64);
+                if (id.isEmpty()) continue;
+                cleanArr.put(new JSONObject()
+                        .put("id", id)
+                        .put("name", printable(o.optString("name", id), 80))
+                        .put("author", printable(o.optString("author", ""), 60))
+                        .put("license", printable(o.optString("license", "MIT"), 32))
+                        .put("enabled", o.optBoolean("enabled", true)));
+            }
+        }
+        final JSONObject clean = new JSONObject()
+                .put("spacexTv", sx)
+                .put("grokbot", gb)
+                .put("plugins", cleanArr)
+                .put("at", now());
+        host.editConfig(j -> {
+            JSONObject old = j.optJSONObject("plugins");
+            if (old != null && old.has("grokbotMessage")) clean.put("grokbotMessage", old.optString("grokbotMessage", ""));
+            if (old != null && old.has("grokbotBot")) clean.put("grokbotBot", old.opt("grokbotBot"));
+            j.put("plugins", clean);
+        });
+        host.onEvent(pcId, "plugins", clean);
+        return new Response(200, ok().put("spacexTv", sx).put("grokbot", gb));
+    }
+
+    private JSONObject pluginsGrokbotGet() throws Exception {
+        final String[] msg = {""};
+        final Object[] bot = {JSONObject.NULL};
+        host.editConfig(j -> {
+            JSONObject pl = j.optJSONObject("plugins");
+            if (pl != null) {
+                msg[0] = pl.optString("grokbotMessage", "");
+                JSONObject b = pl.optJSONObject("grokbotBot");
+                if (b != null) bot[0] = b;
+            }
+        });
+        return new JSONObject().put("ok", true).put("message", msg[0]).put("bot", bot[0]);
+    }
+
+    /** Shapes/colours @tcballard's Grok Bot Desktop Companion uses (names only; the TV draws its own primitives). */
+    static final java.util.Set<String> GROKBOT_SHAPES = new java.util.HashSet<>(java.util.Arrays.asList(
+            "circle", "square", "triangle", "diamond", "pentagon", "hexagon", "octagon", "heptagon", "pill", "cloud",
+            "heart", "crescent", "star", "spark", "burst", "flower", "clover", "sprout", "drop", "bean", "peanut",
+            "pebble", "shield", "ghost", "bolt"));
+    static final java.util.Set<String> GROKBOT_COLORS = new java.util.HashSet<>(java.util.Arrays.asList(
+            "black", "brown", "red", "orange", "yellow", "green", "cyan", "blue", "violet", "magenta", "gray", "omarchy"));
+
+    /** The companion's current bot as pushed by omarchy-link, cleaned for the tile; null when unusable. */
+    public static JSONObject sanitizeGrokbotBot(JSONObject b) throws Exception {
+        if (b == null) return null;
+        String name = printable(b.optString("name", ""), 40);
+        if (name.isEmpty()) return null;
+        String shape = b.optString("shape", "bean").toLowerCase(java.util.Locale.ROOT);
+        String color = b.optString("color", "orange").toLowerCase(java.util.Locale.ROOT);
+        String fill = b.optString("fill", "");
+        String mode = b.optString("mode", "offline");
+        String version = b.optString("version", "");
+        String compat = b.optString("compat", "branch");
+        return new JSONObject()
+                .put("name", name)
+                .put("shortName", printable(b.optString("shortName", name), 24))
+                .put("shape", GROKBOT_SHAPES.contains(shape) ? shape : "bean")
+                .put("color", GROKBOT_COLORS.contains(color) ? color : "orange")
+                .put("fill", fill.matches("#[0-9A-Fa-f]{6}") ? fill.toUpperCase(java.util.Locale.ROOT) : JSONObject.NULL)
+                .put("mode", "relay".equals(mode) || "ipc".equals(mode) ? mode : "offline")
+                // v0.1.0 = the companion release the bridge targets; the branch may report none.
+                .put("version", version.matches("v?\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}") ? version.replaceFirst("^v", "") : JSONObject.NULL)
+                .put("compat", GROKBOT_COMPAT.contains(compat) ? compat : "branch");
+    }
+
+    private static final java.util.Set<String> GROKBOT_COMPAT = new java.util.HashSet<>(
+            java.util.Arrays.asList("target", "branch", "newer", "unsupported"));
+
+    private Response pluginsGrokbotPost(JSONObject body, String pcId) throws Exception {
+        final String msg = printable(body.optString("message", body.optString("text", "")), 240);
+        final boolean hasBot = body.has("bot");
+        final JSONObject bot = hasBot ? sanitizeGrokbotBot(body.optJSONObject("bot")) : null;
+        if (hasBot && bot == null && !body.isNull("bot")) return new Response(400, err("bad_bot", "bot needs a name"));
+        if (hasBot && bot != null) grokbotFrom = pcId;
+        if (msg.isEmpty() && !hasBot) return new Response(400, err("bad_request", "message or bot required"));
+        host.editConfig(j -> {
+            JSONObject pl = j.optJSONObject("plugins");
+            if (pl == null) j.put("plugins", pl = new JSONObject().put("spacexTv", true).put("grokbot", true));
+            if (!msg.isEmpty()) pl.put("grokbotMessage", msg).put("grokbotAt", now());
+            if (hasBot) {
+                if (bot == null) pl.remove("grokbotBot");
+                else pl.put("grokbotBot", bot);
+            }
+        });
+        JSONObject ev = new JSONObject().put("from", printable(body.optString("from", "pc"), 40));
+        if (!msg.isEmpty()) ev.put("message", msg);
+        if (hasBot) ev.put("bot", bot != null ? bot : JSONObject.NULL);
+        host.onEvent(pcId, "grokbot_companion", ev);
+        JSONObject r = ok();
+        if (!msg.isEmpty()) r.put("message", msg);
+        if (hasBot) r.put("bot", bot != null ? bot : JSONObject.NULL);
+        return new Response(200, r);
+    }
+
+    private Response cinemarchyQueue(JSONObject body, String pcId) throws Exception {
+        String url = body.optString("url", "").trim();
+        if (!httpUrl(url) || url.length() > 4096) return new Response(400, err("bad_url", "url must be http(s)"));
+        String sub = body.optString("subtitle", "").trim();
+        if (!sub.isEmpty() && !httpUrl(sub)) return new Response(400, err("bad_url", "subtitle must be http(s)"));
+        // A local .srt/.vtt from the PC arrives inline (the PC is not serving it later, when the item plays).
+        String subData = body.optString("subtitleData", "");
+        if (sub.isEmpty() && !subData.isEmpty()) {
+            String fmt = body.optString("subtitleFormat", "srt");
+            if (!"srt".equals(fmt) && !"vtt".equals(fmt)) return new Response(400, err("bad_subtitle", "srt or vtt"));
+            byte[] raw = subData.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            if (raw.length > 1024 * 1024) return new Response(400, err("bad_subtitle", "subtitle larger than 1 MiB"));
+            File base = host.castDir() != null ? host.castDir() : host.wallpaperDir().getParentFile();
+            File dir = new File(base, "queue-subs");
+            if (!dir.isDirectory() && !dir.mkdirs()) return new Response(500, err("io", "cannot store subtitle"));
+            String name = LinkCrypto.hex(java.security.MessageDigest.getInstance("SHA-256").digest(raw)).substring(0, 24) + "." + fmt;
+            File f = new File(dir, name);
+            try (java.io.FileOutputStream o = new java.io.FileOutputStream(f)) { o.write(raw); }
+            sub = "file://" + f.getAbsolutePath();
+        }
+        String title = printable(body.optString("title", url), 200);
+        JSONObject e = new JSONObject().put("title", title).put("subtitle", "from PC").put("url", url)
+                .put("live", false).put("pos", 0);
+        if (!sub.isEmpty()) e.put("subs", sub);
+        final int[] n = {0};
+        host.editConfig(j -> {
+            JSONObject cm = j.optJSONObject("cinemarchy");
+            if (cm == null) j.put("cinemarchy", cm = new JSONObject());
+            JSONArray q = cm.optJSONArray("queue");
+            if (q == null) cm.put("queue", q = new JSONArray());
+            if (q.length() >= 100) q.remove(0);
+            q.put(e);
+            n[0] = q.length();
+        });
+        host.onEvent(pcId, "cinemarchy_queue", new JSONObject().put("title", title).put("length", n[0]));
+        return new Response(200, ok().put("length", n[0]));
+    }
+
+    /** v2.13 Cinemarchy "From PC" row: the last 30 video/audio casts (title, url-or-file, from, time). */
+    private void rememberFromPc(Cast c) {
+        if (!"video".equals(c.kind) && !"audio".equals(c.kind)) return;
+        try {
+            JSONObject e = new JSONObject().put("title", c.title == null || c.title.isEmpty() ? "Untitled" : c.title)
+                    .put("from", c.from == null ? "" : c.from).put("at", now()).put("kind", c.kind);
+            if (c.url != null) e.put("url", c.url);
+            if (c.file != null) e.put("file", c.file.getName());
+            if (c.subtitle != null) e.put("subs", c.subtitle);
+            host.editConfig(j -> {
+                JSONObject cm = j.optJSONObject("cinemarchy");
+                if (cm == null) j.put("cinemarchy", cm = new JSONObject());
+                JSONArray old = cm.optJSONArray("fromPc");
+                JSONArray nu = new JSONArray().put(e);
+                for (int i = 0; old != null && i < old.length() && nu.length() < 30; i++) nu.put(old.get(i));
+                cm.put("fromPc", nu);
+            });
+        } catch (Exception ignored) {
+            // history is best-effort; never fail a cast over it
+        }
+    }
+
+    /** v2.13 ":pause" with nothing playing on the TV: tells PCs to toggle mpv (event only). */
+    public void cinemarchyMpv(String action) throws Exception {
+        broadcast("cinemarchy_mpv", new JSONObject().put("action", action).put("at", now()));
+    }
+
+    public Response cinemarchyHandoffToPc(JSONObject body) throws Exception {
+        String title = printable(body.optString("title", ""), 120);
+        String url = body.optString("url", "").trim();
+        double pos = Math.max(0, body.optDouble("position", 0));
+        JSONObject payload = new JSONObject()
+                .put("direction", "tv_to_pc")
+                .put("title", title)
+                .put("url", url)
+                .put("position", Math.round(pos * 10) / 10.0)
+                .put("at", now());
+        broadcast("cinemarchy_handoff", payload);
+        host.editConfig(j -> {
+            JSONObject cm = j.optJSONObject("cinemarchy");
+            if (cm == null) j.put("cinemarchy", cm = new JSONObject());
+            cm.put("lastHandoff", payload);
+        });
+        return new Response(200, ok().put("handoff", payload));
+    }
+
     /** agent_ask_state / agent_answer / agent_ask_error reduced to their plain-text fields. */
     static JSONObject agentReply(String type, JSONObject d) {
         JSONObject o = new JSONObject();
@@ -1595,6 +1960,51 @@ public final class LinkServer {
         } catch (JSONException ignored) {
         }
         return o;
+    }
+
+    /** grokbot_answer / grokbot_error from omarchy-link (experimental Grok Bot companion bridge), plain text only. */
+    static JSONObject grokbotReply(String type, JSONObject d) {
+        JSONObject o = new JSONObject();
+        try {
+            o.put("id", printable(d.optString("id", ""), 64)).put("bot", printable(d.optString("bot", ""), 40));
+            if ("grokbot_answer".equals(type)) {
+                String mode = d.optString("mode", "relay");
+                o.put("text", printable(d.optString("text", ""), 1200)).put("mode", "ipc".equals(mode) ? "ipc" : "relay");
+            } else {
+                o.put("error", printable(d.optString("error", "failed"), 32)).put("message", printable(d.optString("message", ""), 200));
+            }
+        } catch (JSONException ignored) {
+        }
+        return o;
+    }
+
+    /**
+     * TV -> PC "grokbot_ask" {"id","text"[,"bot"]} to the PC that pushed the companion state (else the first one).
+     * Returns null when sent, else "bad_request" (empty or over 240 chars), "busy" (1 per 3 s) or "not_connected".
+     */
+    public synchronized String grokbotAsk(String id, String text, String bot) {
+        text = text == null ? "" : text.trim();
+        if (id == null || id.isEmpty() || text.isEmpty() || text.codePointCount(0, text.length()) > 240) return "bad_request";
+        long t = System.currentTimeMillis();
+        if (limits && t - lastGrokbotAskMs < 3000) return "busy";
+        WsClient target = null;
+        for (WsClient c : clients) {
+            if (c.closed) continue;
+            if (target == null || c.pcId.equals(grokbotFrom)) target = c;
+        }
+        if (target == null) return "not_connected";
+        try {
+            JSONObject d = new JSONObject().put("id", id).put("text", text);
+            if (bot != null && !bot.trim().isEmpty()) d.put("bot", printable(bot, 80));
+            target.send("grokbot_ask", d);
+            lastGrokbotAskMs = t;
+            return null;
+        } catch (JSONException e) {
+            return "bad_request";
+        } catch (IOException e) {
+            target.close();
+            return "not_connected";
+        }
     }
 
     /**
@@ -1779,6 +2189,10 @@ public final class LinkServer {
             case "agent_answer":
             case "agent_ask_error":
                 host.onEvent(c.pcId, type, agentReply(type, data));
+                break;
+            case "grokbot_answer":
+            case "grokbot_error":
+                host.onEvent(c.pcId, type, grokbotReply(type, data));
                 break;
             default:
                 break;   // ping/pong (keep-alive only; the TV uses WebSocket ping frames) and unknown types

@@ -31,7 +31,7 @@ final class CastRouter {
     static final String YOUTUBE_TV = "com.google.android.youtube.tv";
     static final String EXTRA_ID = "cast.id", EXTRA_KIND = "cast.kind", EXTRA_URL = "cast.url", EXTRA_FILE = "cast.file",
             EXTRA_MIME = "cast.mime", EXTRA_TITLE = "cast.title", EXTRA_FROM = "cast.from", EXTRA_POS = "cast.position",
-            EXTRA_LIVE = "cast.live", EXTRA_TEXT = "cast.text";
+            EXTRA_LIVE = "cast.live", EXTRA_TEXT = "cast.text", EXTRA_SUB = "cast.subtitle";
 
     /** What shows a cast inside the launcher process (player, viewer, text card). Main thread only. */
     interface Surface {
@@ -171,6 +171,7 @@ final class CastRouter {
         else if (c.url != null) i.putExtra(EXTRA_URL, c.url);
         if (c.mime != null) i.putExtra(EXTRA_MIME, c.mime);
         if (c.text != null) i.putExtra(EXTRA_TEXT, c.text);
+        if (c.subtitle != null) i.putExtra(EXTRA_SUB, c.subtitle);
         return i;
     }
 
@@ -182,6 +183,26 @@ final class CastRouter {
 
     static void detach(Surface s) {
         if (surface.get() == s) surface = new WeakReference<>(null);
+    }
+
+    /**
+     * v2.13 Cinemarchy ":pause": toggles the in-launcher player if one is attached, else the external app
+     * via a media key. Main thread. Returns false when nothing on the TV could be toggled.
+     */
+    static boolean togglePause(Context app) {
+        Surface s = surface.get();
+        if (s instanceof CastPlayerActivity) {
+            ((CastPlayerActivity) s).togglePlayPause();
+            return true;
+        }
+        if (externalId != null) {
+            AudioManager am = (AudioManager) app.getSystemService(Context.AUDIO_SERVICE);
+            if (am == null) return false;
+            am.dispatchMediaKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE));
+            am.dispatchMediaKeyEvent(new KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE));
+            return true;
+        }
+        return false;
     }
 
     /** Server thread. null when done, or an error code. */

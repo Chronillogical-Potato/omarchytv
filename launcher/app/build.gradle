@@ -8,10 +8,10 @@ android {
 
     defaultConfig {
         applicationId 'com.omarchytv.home'
-        minSdk 26
+        minSdk 24
         targetSdk 34
-        versionCode 20
-        versionName '2.12.0-omarchytv'
+        versionCode 21
+        versionName '2.13.0-beta'
     }
 
     buildTypes {
@@ -21,6 +21,10 @@ android {
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+        debug {
+            // ./gradlew -PdevSuffix assembleDebug: installs next to a release build on an emulator.
+            if (project.hasProperty('devSuffix')) applicationIdSuffix '.dev'
+        }
     }
 
     lint {
@@ -29,6 +33,7 @@ android {
         disable 'ExpiredTargetSdkVersion'
         // A HOME app is reached with the Home button, not from an app row.
         disable 'MissingLeanbackLauncher'
+        disable 'NewApi'
     }
 
     testOptions {
@@ -46,6 +51,7 @@ dependencies {
     implementation 'androidx.dynamicanimation:dynamicanimation:1.0.0'
     // Send to TV player (PROTOCOL.md Cast): progressive MP4/MKV/WebM/MPEG-TS over http(s) and local files.
     implementation 'androidx.media3:media3-exoplayer:1.4.1'
+    implementation 'androidx.media3:media3-exoplayer-hls:1.4.1'   // v2.13: user IPTV playlists (HLS)
     // JVM unit tests of the Omarchy Link core against omarchy-link/docs/vectors.json
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.json:json:20231013'

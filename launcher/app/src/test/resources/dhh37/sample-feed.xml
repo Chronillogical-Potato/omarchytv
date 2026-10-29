@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Saved sample in the shape of YouTube's public uploads feed
+     (https://www.youtube.com/feeds/videos.xml?channel_id=UCUkM9uMpWatT7gVWShgtKFw).
+     Video ids and titles are real @dhh37 uploads; the publish date of MOIG0QGJZe8 is the real one,
+     the others are illustrative. The last two entries are deliberately broken (bad id, duplicate). -->
+<feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/" xmlns="http://www.w3.org/2005/Atom">
+ <link rel="self" href="http://www.youtube.com/feeds/videos.xml?channel_id=UCUkM9uMpWatT7gVWShgtKFw"/>
+ <id>yt:channel:UkM9uMpWatT7gVWShgtKFw</id>
+ <yt:channelId>UkM9uMpWatT7gVWShgtKFw</yt:channelId>
+ <title>David Heinemeier Hansson</title>
+ <link rel="alternate" href="https://www.youtube.com/channel/UCUkM9uMpWatT7gVWShgtKFw"/>
+ <author>
+  <name>David Heinemeier Hansson</name>
+  <uri>https://www.youtube.com/channel/UCUkM9uMpWatT7gVWShgtKFw</uri>
+ </author>
+ <published>2006-04-12T10:00:00+00:00</published>
+ <entry>
+  <id>yt:video:MOIG0QGJZe8</id>
+  <yt:videoId>MOIG0QGJZe8</yt:videoId>
+  <yt:channelId>UCUkM9uMpWatT7gVWShgtKFw</yt:channelId>
+  <title>Basecamp Five&#39;s Keyboard Combos</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=MOIG0QGJZe8"/>
+  <author>
+   <name>David Heinemeier Hansson</name>
+   <uri>https://www.youtube.com/channel/UCUkM9uMpWatT7gVWShgtKFw</uri>
+  </author>
+  <published>2026-05-25T20:15:04+00:00</published>
+  <updated>2026-05-26T08:00:00+00:00</updated>
+  <media:group>
+   <media:title>Basecamp Five&#39;s Keyboard Combos</media:title>
+   <media:content url="https://www.youtube.com/v/MOIG0QGJZe8?version=3" type="application/x-shockwave-flash" width="640" height="390"/>
+   <media:thumbnail url="https://i2.ytimg.com/vi/MOIG0QGJZe8/hqdefault.jpg" width="480" height="360"/>
+   <media:description>Basecamp 5 has gained a whole new level of keyboard accessibility.</media:description>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:F7fe9pa8OeE</id>
+  <yt:videoId>F7fe9pa8OeE</yt:videoId>
+  <yt:channelId>UCUkM9uMpWatT7gVWShgtKFw</yt:channelId>
+  <title>Omarchy Quattro</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=F7fe9pa8OeE"/>
+  <published>2026-10-20T15:00:00+00:00</published>
+  <updated>2026-10-21T15:00:00+00:00</updated>
+  <media:group>
+   <media:title>Omarchy Quattro</media:title>
+   <media:thumbnail url="https://i1.ytimg.com/vi/F7fe9pa8OeE/hqdefault.jpg" width="480" height="360"/>
+  </media:group>
+ </entry>
+ <entry>
+  <id>yt:video:jgSjG0IYw4o</id>
+  <yt:videoId>jgSjG0IYw4o</yt:videoId>
+  <title>Omarchy running on 2011 X220 2GB RAM (with room to spare)</title>
+  <link rel="alternate" href="https://www.youtube.com/watch?v=jgSjG0IYw4o"/>
+  <published>2026-09-02T09:30:00+00:00</published>
+  <media:group>
+   <media:thumbnail url="https://evil.example.com/x.jpg" width="480" height="360"/>
+  </media:group>
+ </entry>
+ <entry>
+  <yt:videoId>not-an-id</yt:videoId>
+  <title>Broken entry</title>
+  <published>2026-10-01T00:00:00+00:00</published>
+ </entry>
+ <entry>
+  <yt:videoId>F7fe9pa8OeE</yt:videoId>
+  <title>Omarchy Quattro (duplicate)</title>
+  <published>2026-10-20T15:00:00+00:00</published>
+ </entry>
+</feed>

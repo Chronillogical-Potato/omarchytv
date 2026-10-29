@@ -150,6 +150,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         Watchdog.install(this);
         setContentView(R.layout.activity_main);
         Theme.apply(getWindow().getDecorView());
+        AmbilightController.syncTheme(this);
         {   // Move-mode hint: themed bg with the Hyprland "dragging" orange border (stroke colours can't be remapped from XML).
             android.graphics.drawable.GradientDrawable hb = new android.graphics.drawable.GradientDrawable();
             hb.setColor(Theme.withAlpha(Theme.cur().bg, 0.95f));
@@ -586,8 +587,20 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             case "hidden":
                 showMenu("hidden", null);
                 break;
+            case "cinemarchy":
+                open(new Intent(this, CinemarchyActivity.class));
+                break;
             case "grok-bot":
                 showMenu("grok-bot", null);
+                break;
+            case "plugins":
+                showMenu("plugins", null);
+                break;
+            case "spacex-tv":
+                showSpacexMenu();
+                break;
+            case "grokbot-companion":
+                showGrokbotCompanionDialog();
                 break;
             case "ask":
                 open(new Intent(this, AskActivity.class));
@@ -737,6 +750,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
                 items.add(new Walker.Item(w.name, tApp, () -> WebAppActivity.open(this, fw)));
             }
         }
+        items.add(new Walker.Item("🎬 Cinemarchy (Media, Streaming, Live TV & Snippets)", str(R.string.cinemarchy_hub), () -> open(new Intent(this, CinemarchyActivity.class))));
+        items.add(new Walker.Item("Aquarium Screensaver (Omarchy Cyber-TUI Ocean)", str(R.string.menu_screensaver), () -> {
+            LauncherConfig.update(this, j -> screensaver(j).put("art", "aquarium").put("mode", "aquarium"));
+            open(new Intent(this, ScreensaverPreviewActivity.class));
+        }));
         items.add(new Walker.Item("> grok bot", str(R.string.grok_bot_hub), () -> open(new Intent(this, AskActivity.class))));
         items.add(new Walker.Item(str(R.string.ask_entry), str(R.string.grok_bot_hub), () -> open(new Intent(this, AskActivity.class))));
         items.add(new Walker.Item(str(R.string.grok_bot_hub), str(R.string.v29_type_settings), () -> handler.post(() -> showMenu("grok-bot", null))));
@@ -847,6 +865,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
                     if (home != null) home.bind(LauncherConfig.get(this), adapter);
                 }
                 break;
+            case "grokbot_companion":   // omarchy-link pushed the companion's current bot / a bubble line
+                onGrokbotCompanion();
+                break;
+            case "grokbot_answer":
+            case "grokbot_error":
+                onGrokbotReply(type, data);
+                break;
             case "ai_sources_ok":
                 if (data.optString("id").equals(pendingSourcesId)) pendingSourcesId = null;
                 break;
@@ -916,8 +941,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
     @Override
     protected void onResume() {
         super.onResume();
+        bindCompanion();
         OmarchyLink.sweepCasts(this);   // 24 h cleanup of cast uploads (no-op when nothing was ever cast)
         LauncherConfig cfg = LauncherConfig.get(this);
+        if (builtWith != null && reopenPage == null && (cfg.randomTheme || cfg.randomWallpaper)) {
+            LauncherConfig.update(this, j -> LauncherConfig.applyRandomRotation(j, new java.util.Random()));
+            cfg = LauncherConfig.get(this);
+        }
         if (builtWith != null && cfg != builtWith && !cfg.restSig.equals(builtWith.restSig)) {
             builtWith = null;
             recreate();
@@ -942,6 +972,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         hideSaver();   // back from the screensaver window (own process)
         Theme.apply(getWindow().getDecorView());
         ((WallpaperView) findViewById(R.id.wallpaper)).refreshIfChanged();
+        playWallpaperIntro(cfg);
         platesSig = "";
         resetIdle();
         glassShown = false;
@@ -1000,6 +1031,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
     @Override
     protected void onPause() {
         super.onPause();
+        if (companion != null) { companion.setArmed(false); companion.stop(); }
         resumed = false;
         OmarchyLink.setHomeVisible(false);
         handler.removeCallbacks(idle);
@@ -1011,6 +1043,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             if (home.movingApp >= 0) finishHomeMove(false);
         }
         if (movingPos >= 0) finishMove(false);
+        stopWallpaperIntro();
         if (menu != null && menu.isShowing()) menu.dismiss();
     }
 
@@ -1698,10 +1731,20 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             case "webapps": return webAppsPage();
             case "assistant": return assistantPage();
             case "grok-bot": return grokBotPage();
+            case "ambilight": return ambilightPage();
+            case "lights": return lightsPage();
+            case "wireguard": return wireguardPage();
+            case "plugins": return pluginsPage();
             case "remote-keys": return remoteKeysPage();
             case "remote-key": return remoteKeyPage();
             default: return null;
         }
+    }
+
+    /** v2.13: Cinemarchy's optional official YouTube embed for @dhh37 (off = YouTube app). */
+    private boolean cinemarchyEmbedOn() {
+        org.json.JSONObject c = LauncherConfig.readJson(this).optJSONObject("cinemarchy");
+        return c != null && c.optBoolean("embedPlayer", false);
     }
 
     private AsciiMenu.Page mainPage() {
@@ -1710,7 +1753,18 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
                     handler.post(this::startVoiceSearch);
                     return false;
                 })
+                .add(str(R.string.cinemarchy_hub), "›", r -> {
+                    open(new Intent(this, CinemarchyActivity.class));
+                    return false;
+                })
+                .add("Cinemarchy · play @dhh37 inside (YouTube embed)", str(cinemarchyEmbedOn() ? R.string.on : R.string.off), r -> {
+                    boolean n = !cinemarchyEmbedOn();
+                    CinemarchyActivity.setEmbedPlayer(this, n);
+                    r.setValue(str(n ? R.string.on : R.string.off));
+                    return true;
+                })
                 .add(str(R.string.grok_bot_hub), "›", r -> push(grokBotPage()))
+                .add("Plugins (SpaceX TV · Grok Bot)", "›", r -> push(pluginsPage()))
                 .add(str(R.string.ask_entry), "›", r -> {
                     open(new Intent(this, AskActivity.class));
                     return false;
@@ -1726,6 +1780,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
                     return false;
                 })
                 .add(str(R.string.menu_screensaver), "›", r -> push(screensaverPage()))
+                .add(str(R.string.amb_title), "›", r -> push(ambilightPage()))
                 .add(str(R.string.ai_settings), "›", r -> push(aiPage()))
                 .add(str(R.string.set_widgets), "›", r -> push(widgetsPage()))
                 .add(str(R.string.menu_link), "›", r -> {
@@ -1738,6 +1793,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
                     builtWith = LauncherConfig.get(this);
                     return push(linkPage());
                 })
+                .add("WireGuard VPN", "›", r -> push(wireguardPage()))
                 .add(str(R.string.settings), null, r -> {
                     open(new Intent(Settings.ACTION_SETTINGS));
                     return false;
@@ -1746,6 +1802,246 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
                     handler.post(this::showAbout);
                     return false;
                 });
+    }
+
+    // ---- WireGuard VPN (official com.wireguard.android app; requires "Allow remote control apps") ----
+    private static final String WG_PKG = "com.wireguard.android";
+    private static final String WG_RECV = WG_PKG + ".model.TunnelManager$IntentReceiver";
+
+
+    private AsciiMenu.Page pluginsPage() {
+        LauncherConfig cfg = LauncherConfig.get(this);
+        String on = str(R.string.on), off = str(R.string.off);
+        AsciiMenu.Page p = new AsciiMenu.Page("Plugins · v2.13 Sandbox");
+        p.hint("Declarative JSON plugins · MIT credited · zero ADB/shell access");
+        String lSx = "SpaceX TV (com.sighmon.spacex-tv)";
+        p.add(lSx, cfg.pluginSpacexTv ? on : off, r -> {
+            boolean n = !cfg.pluginSpacexTv;
+            applyLive("plugins", lSx, j -> {
+                org.json.JSONObject pl = j.optJSONObject("plugins");
+                if (pl == null) j.put("plugins", pl = new org.json.JSONObject());
+                pl.put("spacexTv", n);
+            });
+            return true;
+        });
+        p.add("Open SpaceX TV launches & streams", "🚀 ›", r -> {
+            handler.post(this::showSpacexMenu);
+            return false;
+        });
+        String lGb = "Grok Bot Companion (TV) · experimental (@tcballard, MIT)";
+        p.add(lGb, cfg.pluginGrokbot ? on : off, r -> {
+            boolean n = !cfg.pluginGrokbot;
+            applyLive("plugins", lGb, j -> {
+                org.json.JSONObject pl = j.optJSONObject("plugins");
+                if (pl == null) j.put("plugins", pl = new org.json.JSONObject());
+                pl.put("grokbot", n);
+            });
+            return true;
+        });
+        p.add("Open Grok Bot Companion (TV)", "[ ◉ ◉ ] ›", r -> {
+            handler.post(this::showGrokbotCompanionDialog);
+            return false;
+        });
+        return p;
+    }
+
+    private void showSpacexMenu() {
+        if (menu != null && menu.isShowing()) menu.dismiss();
+        menu = new AsciiMenu(this, 680);
+        AsciiMenu.Page p = new AsciiMenu.Page("SpaceX TV · com.sighmon.spacex-tv (@sighmon · MIT)");
+        p.hint("Upcoming launches, Starship flight tests & X broadcasts");
+        String[][] items = {
+            {"🚀 SpaceX launches · next-launch countdown", "https://www.spacex.com/launches/"},
+            {"🛰 SpaceX broadcasts on X", "https://x.com/SpaceX"},
+            {"🎬 Starship (spacex.com)", "https://www.spacex.com/vehicles/starship/"},
+            {"📺 Open Cinemarchy SpaceX / Sci-Fi Channel", "cinemarchy"}
+        };
+        for (String[] it : items) {
+            final String title = it[0], url = it[1];
+            p.add(title, "▶", r -> {
+                if ("cinemarchy".equals(url)) {
+                    open(new Intent(this, CinemarchyActivity.class));
+                } else {
+                    open(new Intent(this, WebAppActivity.class).putExtra("url", url).putExtra("name", "SpaceX TV"));
+                }
+                return false;
+            });
+        }
+        menu.showBelow(btnMenu, p);
+    }
+
+    /** Request id of the question sent to the PC's Grok Bot companion bridge, until its answer/error. */
+    private String pendingGrokbotId;
+
+    /** Stores the line shown in the tile's bubble (plugins.grokbotMessage, 240 chars like the Link route). */
+    private void setGrokbotBubble(String line) {
+        String v = line.length() > 240 ? line.substring(0, 239) + "…" : line;
+        LauncherConfig.update(this, j -> {
+            org.json.JSONObject pl = j.optJSONObject("plugins");
+            if (pl == null) j.put("plugins", pl = new org.json.JSONObject());
+            pl.put("grokbotMessage", v);
+        });
+        builtWith = LauncherConfig.get(this);
+        if (home != null) home.bind(builtWith, adapter);
+    }
+
+    private void onGrokbotCompanion() {
+        builtWith = LauncherConfig.get(this);
+        if (companion != null) companion.bind(builtWith);
+        if (home != null) home.bind(builtWith, adapter);
+    }
+
+    private void onGrokbotReply(String type, org.json.JSONObject d) {
+        if (pendingGrokbotId == null || !pendingGrokbotId.equals(d.optString("id"))) return;
+        pendingGrokbotId = null;
+        String bot = d.optString("bot", "Grok Bot");
+        String body;
+        if ("grokbot_answer".equals(type)) {
+            body = "ipc".equals(d.optString("mode")) || d.optString("text", "").isEmpty()
+                    ? "Sent to the companion on the PC. The reply is in its desktop bubble (no reply channel in IPC-only mode)."
+                    : d.optString("text", "");
+            if (!"ipc".equals(d.optString("mode"))) setGrokbotBubble(body);
+        } else {
+            String code = d.optString("error", "failed");
+            body = "not_connected".equals(code) ? "No PC connected over omarchy-link."
+                    : "busy".equals(code) ? "One question every 3 seconds."
+                    : d.optString("message", code);
+        }
+        if (!resumed) return;
+        new android.app.AlertDialog.Builder(this)
+                .setTitle(("grokbot_answer".equals(type) ? bot : "Grok Bot companion") + " · experimental")
+                .setMessage(body)
+                .setPositiveButton(android.R.string.ok, null)
+                .show();
+    }
+
+    private CompanionOverlay companion;
+
+    private static org.json.JSONObject companionPlugins(org.json.JSONObject j) throws org.json.JSONException {
+        org.json.JSONObject pl = j.optJSONObject("plugins");
+        if (pl == null) j.put("plugins", pl = new org.json.JSONObject());
+        return pl;
+    }
+
+    /** v2.13 floating companion: created once on the root, re-bound on resume and when the PC mirror changes. */
+    private void bindCompanion() {
+        if (root == null) return;
+        if (companion == null) {
+            companion = new CompanionOverlay(this);
+            companion.setOnClickListener(v -> openCompanionChat(false));
+            root.addView(companion);
+        }
+        companion.bind(LauncherConfig.get(this));
+    }
+
+    private void openCompanionChat(boolean voice) {
+        if (companion != null) companion.setArmed(false);
+        open(new Intent(this, CompanionChatActivity.class).putExtra("voice", voice));
+    }
+
+    /** Long-press Menu arms the companion (it never takes D-pad focus by itself); OK opens the chat. */
+    private boolean companionKey(KeyEvent e) {
+        if (companion == null || companion.getVisibility() != View.VISIBLE) return false;
+        int kc = e.getKeyCode();
+        if (kc == KeyEvent.KEYCODE_MENU) {
+            if (e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 1) {
+                companion.setArmed(!companion.isArmed());
+                swallowKeyUp = kc;
+            }
+            return e.getRepeatCount() > 0 || companion.isArmed();
+        }
+        if (!companion.isArmed()) return false;
+        if (e.getAction() != KeyEvent.ACTION_DOWN) return true;
+        if (kc == KeyEvent.KEYCODE_DPAD_CENTER || kc == KeyEvent.KEYCODE_ENTER || kc == KeyEvent.KEYCODE_NUMPAD_ENTER) {
+            swallowKeyUp = kc;
+            openCompanionChat(false);
+        } else if (kc == KeyEvent.KEYCODE_SEARCH || kc == KeyEvent.KEYCODE_VOICE_ASSIST) {
+            swallowKeyUp = kc;
+            openCompanionChat(true);
+        } else {
+            companion.setArmed(false);
+            swallowKeyUp = kc;
+        }
+        return true;
+    }
+
+    private void showGrokbotCompanionDialog() {
+        LauncherConfig cfg = LauncherConfig.get(this);
+        android.widget.EditText e = new android.widget.EditText(this);
+        e.setSingleLine(true);
+        // Bridge = omarchy-link pushed the companion's bot and a PC is connected: the question goes to the PC.
+        final boolean bridge = cfg.grokbotBotName != null && !cfg.grokbotBotName.isEmpty() && OmarchyLink.hasPc();
+        String who = bridge ? cfg.grokbotBotName : "Grok Bot";
+        e.setHint(bridge ? "Ask " + who + " on the PC companion…" : "Ask Grok Bot…");
+        String state = bridge ? "Mirroring " + who + " from @tcballard's Grok Bot Desktop Companion on the PC ("
+                + ("relay".equals(cfg.grokbotBotMode) ? "replies come back here" : "replies stay in the desktop bubble") + ")."
+                : "Not linked to the desktop companion: questions open the Ask screen. Install omarchy-link and "
+                + "@tcballard's companion on the PC to mirror the bot here.";
+        String msg = (cfg.grokbotMessage != null && !cfg.grokbotMessage.isEmpty() ? "Last: " + cfg.grokbotMessage + "\n\n" : "")
+                + state + "\n\nExperimental, tracks @tcballard's in-development branch (MIT)"
+                + (bridge && cfg.grokbotBotVersion != null && !cfg.grokbotBotVersion.isEmpty()
+                ? " · companion v" + cfg.grokbotBotVersion : "") + " · built for v0.1.0.";
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("Grok Bot Companion (TV)")
+                .setMessage(msg)
+                .setView(e)
+                .setPositiveButton(bridge ? "Ask " + who : "Ask Grok Bot", (d, w) -> {
+                    String q = e.getText().toString().trim();
+                    if (q.isEmpty()) return;
+                    if (q.length() > 240) q = q.substring(0, 240);
+                    if (bridge) {
+                        pendingGrokbotId = java.util.UUID.randomUUID().toString();
+                        setGrokbotBubble("… " + q);
+                        OmarchyLink.grokbotAsk(pendingGrokbotId, q, null);
+                    } else {
+                        setGrokbotBubble(q);
+                        open(new Intent(this, AskActivity.class).putExtra("cmd", q));
+                    }
+                })
+                .setNeutralButton("Open Grok WebApp", (d, w) -> open(new Intent(this, WebAppActivity.class)
+                        .putExtra("url", "https://grok.com").putExtra("name", "Grok Bot")))
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private AsciiMenu.Page wireguardPage() {
+        String tun = getSharedPreferences("omarchytv", MODE_PRIVATE).getString("wg_tunnel", "wg0");
+        boolean installed = false;
+        try { getPackageManager().getPackageInfo(WG_PKG, 0); installed = true; } catch (Exception ignored) {}
+        final boolean inst = installed;
+        AsciiMenu.Page p = new AsciiMenu.Page("WireGuard VPN");
+        p.hint("Official WireGuard app · enable Advanced → Allow remote control apps");
+        p.add("Tunnel name", tun, r -> { handler.post(this::wgTunnelDialog); return false; });
+        p.add("Connect (" + tun + " up)", inst ? "▶" : "install app", r -> { wgBroadcast(tun, true); return false; });
+        p.add("Disconnect (" + tun + " down)", inst ? "■" : "install app", r -> { wgBroadcast(tun, false); return false; });
+        p.add("Open WireGuard app", inst ? "›" : "not installed", r -> {
+            Intent i = getPackageManager().getLaunchIntentForPackage(WG_PKG);
+            if (i != null) open(i);
+            else Toast.makeText(this, "Install WireGuard from Play Store / F-Droid first", Toast.LENGTH_LONG).show();
+            return false;
+        });
+        return p;
+    }
+
+    private void wgBroadcast(String tun, boolean up) {
+        Intent i = new Intent(WG_PKG + (up ? ".action.SET_TUNNEL_UP" : ".action.SET_TUNNEL_DOWN"));
+        i.setClassName(WG_PKG, WG_RECV);
+        i.putExtra("tunnel", tun);
+        sendBroadcast(i);
+        Toast.makeText(this, "WireGuard: " + tun + (up ? " up" : " down") + " requested", Toast.LENGTH_SHORT).show();
+    }
+
+    private void wgTunnelDialog() {
+        android.content.SharedPreferences sp = getSharedPreferences("omarchytv", MODE_PRIVATE);
+        android.widget.EditText e = new android.widget.EditText(this);
+        e.setSingleLine(true);
+        e.setText(sp.getString("wg_tunnel", "wg0"));
+        new android.app.AlertDialog.Builder(this).setTitle("WireGuard tunnel name").setView(e)
+                .setPositiveButton(android.R.string.ok, (d, w) -> {
+                    String v = e.getText().toString().trim().replaceAll("[^a-zA-Z0-9_=+.-]", "");
+                    if (!v.isEmpty() && v.length() <= 15) sp.edit().putString("wg_tunnel", v).apply();
+                    showMenu("wireguard", null);
+                }).setNegativeButton(android.R.string.cancel, null).show();
     }
 
     private boolean push(AsciiMenu.Page p) {
@@ -1787,7 +2083,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         LauncherConfig cfg = LauncherConfig.get(this);
         String[] langs = {"auto", "en", "it", "de"};
         String[] sizes = {"small", "medium", "large"};
-        String[] logos = {"omarchy-tv", "omarchy", "original"};
+        String[] logos = {"omarchy-tv", "omarchy", "cinemarchy", "original"};
         AsciiMenu.Page p = new AsciiMenu.Page(str(R.string.menu_launcher));
         String lLang = str(R.string.set_language), lSize = str(R.string.set_ui_size), lLogo = str(R.string.set_logo),
                 lAcc = str(R.string.set_accent);
@@ -1956,7 +2252,302 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             applyLive("layout", lDim, j -> geometry(j).put("wallpaperDim", n));
             return true;
         });
+        String lBurn = "OLED anti-burn-in drift";
+        p.add(lBurn, str(cfg.antiBurnIn ? R.string.on : R.string.off), r -> {
+            boolean n = !cfg.antiBurnIn;
+            applyLive("layout", lBurn, j -> j.put("anti_burn_in", n));
+            return true;
+        });
+        String lAmb = "Ambilight / Bias lighting";
+        p.add(lAmb, cfg.ambilightMode, r -> {
+            String n = AmbilightController.nextMode(cfg.ambilightMode);
+            applyLive("layout", lAmb, j -> j.put("ambilight_mode", n));
+            return true;
+        });
         return p;
+    }
+
+    // ---- v2.13 Ambilight & Lights (AmbilightController + lights.LightsHub) ------------------------
+
+    private String ambModeLabel(String m) {
+        switch (m) {
+            case "theme": return str(R.string.amb_mode_theme);
+            case "hybrid": return str(R.string.amb_mode_hybrid);
+            case "video": return str(R.string.amb_mode_video);
+            case "cinema": return str(R.string.amb_mode_cinema);
+            default: return str(R.string.off);
+        }
+    }
+
+    /** Runs a blocking probe off the main thread and shows the result in the row (never a secret). */
+    private void probe(AsciiMenu.Row row, java.util.concurrent.Callable<String> job) {
+        row.setValue("…");
+        com.omarchytv.home.lights.Lights.run(() -> {
+            String res;
+            try {
+                res = job.call();
+            } catch (Throwable t) {
+                res = "error";
+            }
+            String out = res;
+            handler.post(() -> row.setValue(out));
+        });
+    }
+
+    /** One-line text dialog; {@code secret} hides the input and never pre-fills a stored secret. */
+    private void textDialog(String title, String current, String hint, boolean secret, java.util.function.Consumer<String> done) {
+        android.widget.EditText e = new android.widget.EditText(this);
+        e.setSingleLine(true);
+        if (!secret) {
+            e.setText(current);
+            e.setSelection(e.getText().length());
+        }
+        e.setHint(hint);
+        e.setInputType(android.text.InputType.TYPE_CLASS_TEXT | (secret
+                ? android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD : android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS));
+        new android.app.AlertDialog.Builder(this)
+                .setTitle(title)
+                .setView(e)
+                .setPositiveButton(android.R.string.ok, (d, w) -> done.accept(e.getText().toString().trim()))
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private AsciiMenu.Page ambilightPage() {
+        LauncherConfig cfg = LauncherConfig.get(this);
+        boolean on = !"off".equals(cfg.ambilightMode);
+        AsciiMenu.Page p = new AsciiMenu.Page(str(R.string.amb_title));
+        String lOn = str(R.string.amb_enabled), lMode = str(R.string.amb_mode), lBri = str(R.string.amb_brightness),
+                lIp = str(R.string.amb_tv_ip), lTest = str(R.string.amb_test), lAuto = str(R.string.amb_autodetect);
+        p.add(lOn, str(on ? R.string.on : R.string.off), r -> {
+            String n = on ? "off" : "hybrid";
+            applyLive("ambilight", lOn, j -> j.put("ambilight_mode", n));
+            return true;
+        });
+        if (on) {
+            p.add(lMode, ambModeLabel(cfg.ambilightMode), r -> {
+                String n = AmbilightController.nextEnabledMode(cfg.ambilightMode);
+                applyLive("ambilight", lMode, j -> j.put("ambilight_mode", n));
+                return true;
+            });
+            Integer[] bris = {10, 25, 40, 55, 70, 85, 100};
+            p.add(lBri, cfg.ambilightBrightness + "%", r -> {
+                int cur = cfg.ambilightBrightness;
+                int n = bris[0];
+                for (Integer b : bris) if (b > cur) { n = b; break; }
+                int nn = n;
+                applyLive("ambilight", lBri, j -> j.put("ambilight_brightness", nn));
+                return true;
+            });
+        }
+        p.add(lIp, cfg.ambilightTvIp, r -> {
+            handler.post(() -> textDialog(lIp, cfg.ambilightTvIp, "127.0.0.1", false, v -> {
+                String ip = v.isEmpty() ? "127.0.0.1" : v;
+                if (!ip.matches("[0-9A-Za-z.:-]{1,64}")) {
+                    Toast.makeText(this, R.string.amb_bad_ip, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                applyLive("ambilight", lIp, j -> j.put("ambilight_tv_ip", ip));
+            }));
+            return false;
+        });
+        p.add(lAuto, "›", r -> {
+            String cur = cfg.ambilightTvIp;
+            r.setValue("…");
+            com.omarchytv.home.lights.Lights.run(() -> {
+                String found = AmbilightController.autoDetect(cur);
+                handler.post(() -> {
+                    if (found == null) r.setValue(str(R.string.amb_not_found));
+                    else if (found.equals(cur)) r.setValue("ok · " + found);
+                    else applyLive("ambilight", lIp, j -> j.put("ambilight_tv_ip", found));
+                });
+            });
+            return true;
+        });
+        p.add(lTest, "›", r -> {
+            String ip = cfg.ambilightTvIp;
+            probe(r, () -> AmbilightController.testTv(ip));
+            return true;
+        });
+        p.hint(str(R.string.amb_hint_follow));
+        String hub = com.omarchytv.home.lights.LightsStore.hub(this);
+        p.add(str(R.string.lights_hub), hubLabel(hub), r -> push(lightsPage()));
+        return p;
+    }
+
+    private String hubLabel(String hub) {
+        if ("hue".equals(hub)) return "Philips Hue";
+        if ("homeassistant".equals(hub)) return "Home Assistant";
+        return str(R.string.lights_none);
+    }
+
+    private AsciiMenu.Page lightsPage() {
+        String hub = com.omarchytv.home.lights.LightsStore.hub(this);
+        AsciiMenu.Page p = new AsciiMenu.Page(str(R.string.lights_hub));
+        String lType = str(R.string.lights_type);
+        p.add(lType, hubLabel(hub), r -> {
+            String n = next(new String[]{"none", "hue", "homeassistant"}, hub);
+            com.omarchytv.home.lights.LightsStore.setHub(this, n);
+            reopenAt("lights", lType);
+            return true;
+        });
+        if ("hue".equals(hub)) addHueRows(p);
+        else if ("homeassistant".equals(hub)) addHaRows(p);
+        else p.hint(str(R.string.lights_hint_none));
+        if (!"none".equals(hub)) {
+            p.add(str(R.string.lights_push), "›", r -> {
+                AmbilightController.syncTheme(this);
+                com.omarchytv.home.lights.LightsHub h = com.omarchytv.home.lights.Lights.current(this);
+                Theme t = Theme.cur();
+                LauncherConfig c = LauncherConfig.get(this);
+                com.omarchytv.home.lights.Lights.push(this, t.accent, t.accent2, t.bg, c.ambilightBrightness, false);
+                r.setValue(h != null && h.configured() ? "✓" : str(R.string.lights_incomplete));
+                return true;
+            });
+            p.add(str(R.string.lights_test), "›", r -> {
+                com.omarchytv.home.lights.LightsHub h = com.omarchytv.home.lights.Lights.current(this);
+                probe(r, () -> h == null ? "none" : h.test());
+                return true;
+            });
+            // Destructive: separated at the bottom and always confirmed.
+            p.hint("──");
+            p.add(str(R.string.lights_forget), null, r -> {
+                handler.post(() -> new android.app.AlertDialog.Builder(this)
+                        .setTitle(R.string.lights_forget)
+                        .setMessage(R.string.lights_forget_confirm)
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .setPositiveButton(R.string.lights_forget, (d, w) -> {
+                            com.omarchytv.home.lights.LightsStore.forget(this);
+                            reopenAt("lights", null);
+                        })
+                        .show());
+                return false;
+            });
+        }
+        return p;
+    }
+
+    private void reopenAt(String page, String row) {
+        if (menu != null) menu.dismiss();
+        handler.post(() -> showMenu(page, row));
+    }
+
+    private void addHueRows(AsciiMenu.Page p) {
+        android.content.Context c = this;
+        String ip = com.omarchytv.home.lights.LightsStore.get(c, "hue_ip");
+        boolean paired = com.omarchytv.home.lights.LightsStore.hasSecret(c, "hue_user");
+        String groupName = com.omarchytv.home.lights.LightsStore.get(c, "hue_group_name");
+        String lDisc = str(R.string.hue_discover), lIp = str(R.string.hue_ip), lPair = str(R.string.hue_pair), lArea = str(R.string.hue_area);
+        p.add(lDisc, "›", r -> {
+            r.setValue("…");
+            com.omarchytv.home.lights.Lights.run(() -> {
+                java.util.List<String> ips = com.omarchytv.home.lights.HueBridge.discover();
+                handler.post(() -> {
+                    if (ips.isEmpty()) {
+                        r.setValue(str(R.string.amb_not_found));
+                        return;
+                    }
+                    String[] arr = ips.toArray(new String[0]);
+                    new android.app.AlertDialog.Builder(this).setTitle(lDisc).setItems(arr, (d, w) -> {
+                        com.omarchytv.home.lights.LightsStore.put(c, "hue_ip", arr[w]);
+                        reopenAt("lights", lPair);
+                    }).show();
+                    r.setValue(ips.size() + " found");
+                });
+            });
+            return true;
+        });
+        p.add(lIp, ip.isEmpty() ? "—" : ip, r -> {
+            handler.post(() -> textDialog(lIp, ip, "192.168.1.20", false, v -> {
+                if (!v.matches("[0-9A-Za-z.:-]{1,64}")) {
+                    Toast.makeText(this, R.string.amb_bad_ip, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                com.omarchytv.home.lights.LightsStore.put(c, "hue_ip", v);
+                reopenAt("lights", lPair);
+            }));
+            return false;
+        });
+        if (!ip.isEmpty()) {
+            p.add(lPair, paired ? str(R.string.hue_paired) : str(R.string.hue_press_button), r -> {
+                r.setValue("…");
+                com.omarchytv.home.lights.Lights.run(() -> {
+                    com.omarchytv.home.lights.HueBridge.PairResult res = com.omarchytv.home.lights.HueBridge.pair(ip);
+                    if (res.username != null) com.omarchytv.home.lights.LightsStore.put(c, "hue_user", res.username);
+                    handler.post(() -> {
+                        if (res.username != null) reopenAt("lights", lArea);
+                        else r.setValue(res.error);
+                    });
+                });
+                return true;
+            });
+            p.hint(str(R.string.hue_pair_hint));
+        }
+        if (paired) {
+            p.add(lArea, groupName.isEmpty() ? "—" : groupName, r -> {
+                r.setValue("…");
+                com.omarchytv.home.lights.HueBridge b = new com.omarchytv.home.lights.HueBridge(ip,
+                        com.omarchytv.home.lights.LightsStore.get(c, "hue_user"), "");
+                com.omarchytv.home.lights.Lights.run(() -> {
+                    java.util.List<com.omarchytv.home.lights.HueBridge.Group> gs;
+                    try {
+                        gs = b.groups();
+                    } catch (Exception e) {
+                        gs = new java.util.ArrayList<>();
+                    }
+                    java.util.List<com.omarchytv.home.lights.HueBridge.Group> groups = gs;
+                    handler.post(() -> {
+                        if (groups.isEmpty()) {
+                            r.setValue(str(R.string.amb_not_found));
+                            return;
+                        }
+                        String[] labels = new String[groups.size()];
+                        for (int i = 0; i < labels.length; i++) labels[i] = groups.get(i).label();
+                        new android.app.AlertDialog.Builder(this).setTitle(lArea).setItems(labels, (d, w) -> {
+                            com.omarchytv.home.lights.LightsStore.put(c, "hue_group", groups.get(w).id);
+                            com.omarchytv.home.lights.LightsStore.put(c, "hue_group_name", groups.get(w).name);
+                            reopenAt("lights", lArea);
+                        }).show();
+                        r.setValue(groupName.isEmpty() ? "—" : groupName);
+                    });
+                });
+                return true;
+            });
+        }
+    }
+
+    private void addHaRows(AsciiMenu.Page p) {
+        android.content.Context c = this;
+        String url = com.omarchytv.home.lights.LightsStore.get(c, "ha_url");
+        String ents = com.omarchytv.home.lights.LightsStore.get(c, "ha_entities");
+        boolean tok = com.omarchytv.home.lights.LightsStore.hasSecret(c, "ha_token");
+        String lUrl = str(R.string.ha_url), lTok = str(R.string.ha_token), lEnt = str(R.string.ha_entities);
+        p.add(lUrl, url.isEmpty() ? "—" : url, r -> {
+            handler.post(() -> textDialog(lUrl, url, "http://homeassistant.local:8123", false, v -> {
+                if (!v.matches("https?://[^\\s]{1,200}")) {
+                    Toast.makeText(this, R.string.amb_bad_ip, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                com.omarchytv.home.lights.LightsStore.put(c, "ha_url", v);
+                reopenAt("lights", lTok);
+            }));
+            return false;
+        });
+        p.add(lTok, tok ? "••••••" : "—", r -> {
+            handler.post(() -> textDialog(lTok, "", "long-lived access token", true, v -> {
+                if (v.isEmpty()) return;
+                com.omarchytv.home.lights.LightsStore.put(c, "ha_token", v);
+                reopenAt("lights", lEnt);
+            }));
+            return false;
+        });
+        p.add(lEnt, ents.isEmpty() ? "—" : ents, r -> {
+            handler.post(() -> textDialog(lEnt, ents, "light.living_room, light.tv_strip", false, v -> {
+                com.omarchytv.home.lights.LightsStore.put(c, "ha_entities", v);
+                reopenAt("lights", lEnt);
+            }));
+            return false;
+        });
     }
 
     /** "Also use as system screensaver": enable/disable our DreamService components (own components only). */
@@ -2148,26 +2739,116 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         return p;
     }
 
+    private android.view.TextureView introView;
+    private android.media.MediaPlayer introPlayer;
+    private String lastIntroKey;
+
+    private void stopWallpaperIntro() {
+        if (introPlayer != null) {
+            try { introPlayer.stop(); } catch (Throwable ignored) {}
+            try { introPlayer.release(); } catch (Throwable ignored) {}
+            introPlayer = null;
+        }
+        if (introView != null && root != null) {
+            // Null first: removeView destroys the TextureView, whose callback calls this method again.
+            View v = introView;
+            introView = null;
+            root.removeView(v);
+        }
+    }
+
+    private void playWallpaperIntro(LauncherConfig cfg) {
+        if (!cfg.wallpaperIntro || root == null) {
+            stopWallpaperIntro();
+            return;
+        }
+        String mp4 = WallpaperView.introAssetFor(this, cfg.wallpaper, cfg.wallpaperBg);
+        if (mp4 == null) {
+            stopWallpaperIntro();
+            return;
+        }
+        String key = Theme.cur().name + ":" + mp4;
+        if (key.equals(lastIntroKey)) return;
+        lastIntroKey = key;
+        stopWallpaperIntro();
+        java.io.File tmp = new java.io.File(getCacheDir(), "wp_intro.mp4");
+        try (java.io.InputStream in = getAssets().open(mp4);
+             java.io.FileOutputStream out = new java.io.FileOutputStream(tmp)) {
+            byte[] buf = new byte[16384];
+            int n;
+            while ((n = in.read(buf)) != -1) out.write(buf, 0, n);
+        } catch (Throwable t) {
+            return;
+        }
+        android.view.TextureView tv = new android.view.TextureView(this);
+        tv.setFocusable(false);
+        tv.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        introView = tv;
+        root.addView(tv, 1, new android.widget.FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        tv.setSurfaceTextureListener(new android.view.TextureView.SurfaceTextureListener() {
+            @Override
+            public void onSurfaceTextureAvailable(android.graphics.SurfaceTexture surface, int width, int height) {
+                try {
+                    android.media.MediaPlayer mp = new android.media.MediaPlayer();
+                    introPlayer = mp;
+                    mp.setSurface(new android.view.Surface(surface));
+                    mp.setDataSource(tmp.getAbsolutePath());
+                    mp.setVolume(0f, 0f);
+                    mp.setLooping(false);
+                    mp.setOnCompletionListener(m -> {
+                        if (introView != null) {
+                            introView.animate().alpha(0f).setDuration(300).withEndAction(MainActivity.this::stopWallpaperIntro).start();
+                        } else {
+                            stopWallpaperIntro();
+                        }
+                    });
+                    mp.setOnErrorListener((m, what, extra) -> {
+                        stopWallpaperIntro();
+                        return true;
+                    });
+                    mp.setOnPreparedListener(android.media.MediaPlayer::start);
+                    mp.prepareAsync();
+                } catch (Throwable e) {
+                    stopWallpaperIntro();
+                }
+            }
+            @Override public void onSurfaceTextureSizeChanged(android.graphics.SurfaceTexture s, int w, int h) {}
+            @Override public boolean onSurfaceTextureDestroyed(android.graphics.SurfaceTexture s) { stopWallpaperIntro(); return true; }
+            @Override public void onSurfaceTextureUpdated(android.graphics.SurfaceTexture s) {}
+        });
+    }
+
     /** v2.10: every bundled Omarchy theme (like the PC's theme menu), then its backgrounds. */
     private AsciiMenu.Page themesPage() {
         LauncherConfig cfg = LauncherConfig.get(this);
         AsciiMenu.Page p = new AsciiMenu.Page(str(R.string.v210_sys_themes));
         String lBg = str(R.string.menu_wallpaper), lSync = str(R.string.wp_sync_pc);
+        String lRandTheme = str(R.string.set_random_theme), lRandWp = str(R.string.set_random_wallpaper);
         p.add(lBg, "›", r -> push(wallpaperPage()));
+        p.add(lRandTheme, str(cfg.randomTheme ? R.string.on : R.string.off), r -> {
+            boolean n = !cfg.randomTheme;
+            applyLive("themes", lRandTheme, j -> j.put("random_theme", n));
+            return true;
+        });
+        p.add(lRandWp, str(cfg.randomWallpaper ? R.string.on : R.string.off), r -> {
+            boolean n = !cfg.randomWallpaper;
+            applyLive("themes", lRandWp, j -> j.put("random_wallpaper", n));
+            return true;
+        });
         p.add(lSync, str(cfg.syncPcWallpaper ? R.string.on : R.string.off), r -> {
             boolean n = !cfg.syncPcWallpaper;
             applyLive("themes", lSync, j -> j.put("syncPcWallpaper", n));
             return true;
         });
         for (String n : Theme.names(this)) {
-            p.add(n, n.equals(Theme.cur().name) ? str(R.string.mark_current) : "", r -> {
+            p.add(n, !cfg.randomTheme && n.equals(Theme.cur().name) ? str(R.string.mark_current) : (n.equals(Theme.cur().name) ? "●" : ""), r -> {
                 applyLive("themes", n, j -> {
-                    org.json.JSONObject t = new org.json.JSONObject();
-                    t.put("name", n);
-                    t.put("source", "tv");
-                    j.put("theme", t);
+                    LauncherConfig.lockTheme(j, n);
                     j.put("wallpaper_bg", 0);
-                    if ("procedural".equals(j.optString("wallpaper"))) j.put("wallpaper", "omarchy");
+                    if ("procedural".equals(j.optString("wallpaper")) || j.optString("wallpaper").startsWith("wallpapers/")) {
+                        j.put("wallpaper", "omarchy");
+                    }
                 });
                 return true;
             });
@@ -2181,7 +2862,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
                 final int idx = i;
                 String label = "★ " + n + (bgs.length > 1 ? " · " + (i + 1) + "/" + bgs.length : "");
                 p.add(label, n.equals(Theme.cur().name) ? str(R.string.mark_current) : "", r -> {
-                    applyLive("themes", label, j -> com.omarchytv.home.link.CustomThemes.select(ld, n, idx, j));
+                    applyLive("themes", label, j -> {
+                        com.omarchytv.home.link.CustomThemes.select(ld, n, idx, j);
+                        j.put("random_theme", false);
+                        j.put("random_wallpaper", false);
+                    });
                     return true;
                 });
             }
@@ -2198,26 +2883,32 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
     private AsciiMenu.Page wallpaperPage() {
         LauncherConfig cfg = LauncherConfig.get(this);
         AsciiMenu.Page p = new AsciiMenu.Page(str(R.string.menu_wallpaper));
-        boolean omarchy = !"procedural".equals(cfg.wallpaper) && !cfg.wallpaper.startsWith("/");
+        String lRandWp = str(R.string.set_random_wallpaper);
+        p.add(lRandWp, str(cfg.randomWallpaper ? R.string.on : R.string.off), r -> {
+            boolean n = !cfg.randomWallpaper;
+            applyLive("wallpaper", lRandWp, j -> j.put("random_wallpaper", n));
+            return true;
+        });
+        boolean omarchy = !"procedural".equals(cfg.wallpaper) && !cfg.wallpaper.startsWith("/") && !cfg.wallpaper.startsWith("wallpapers/");
         String[] bgs = WallpaperView.backgrounds(this, Theme.cur().name);
         int cur = bgs.length > 0 ? cfg.wallpaperBg % bgs.length : 0;
         String lNext = str(R.string.wp_next);
         if (bgs.length > 1) p.add(lNext, (cur + 1) + "/" + bgs.length, r -> {
             int n = (cur + 1) % bgs.length;
-            applyLive("wallpaper", lNext, j -> j.put("wallpaper", "omarchy").put("wallpaper_bg", n));
+            applyLive("wallpaper", lNext, j -> LauncherConfig.lockWallpaper(j, "omarchy", n));
             return true;
         });
         for (int i = 0; i < bgs.length; i++) {
             final int idx = i;
             String f = bgs[i].substring(bgs[i].lastIndexOf('/') + 1).replaceFirst("^\\d+-", "").replaceFirst("\\.webp$", "");
             String label = Theme.cur().name + " · " + f;
-            p.add(label, omarchy && idx == cur ? str(R.string.mark_current) : "", r -> {
-                applyLive("wallpaper", label, j -> j.put("wallpaper", "omarchy").put("wallpaper_bg", idx));
+            p.add(label, !cfg.randomWallpaper && omarchy && idx == cur ? str(R.string.mark_current) : (omarchy && idx == cur ? "●" : ""), r -> {
+                applyLive("wallpaper", label, j -> LauncherConfig.lockWallpaper(j, "omarchy", idx));
                 return true;
             });
         }
         p.add(str(R.string.wp_procedural), "procedural".equals(cfg.wallpaper) ? str(R.string.mark_current) : "", r -> {
-            applyLive("wallpaper", str(R.string.wp_procedural), j -> j.put("wallpaper", "procedural"));
+            applyLive("wallpaper", str(R.string.wp_procedural), j -> LauncherConfig.lockWallpaper(j, "procedural", 0));
             return true;
         });
         String lSync = str(R.string.wp_sync_pc);
@@ -2237,7 +2928,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
 
     private AsciiMenu.Page screensaverPage() {
         LauncherConfig cfg = LauncherConfig.get(this);
-        String[] logos = {"omarchy-tv", "omarchy", "original"};
+        String[] logos = {"aquarium", "aquarium-classic", "omarchy-tv", "omarchy", "cinemarchy", "original"};
         String[] sizes = {"small", "medium", "large"};
         String lLogo = str(R.string.set_logo), lSize = str(R.string.ss_size), lClock = str(R.string.ss_clock);
         AsciiMenu.Page p = new AsciiMenu.Page(str(R.string.menu_screensaver));
@@ -2247,7 +2938,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         });
         p.add(lLogo, logoLabel(cfg.screensaverArt), r -> {
             String n = next(logos, cfg.screensaverArt);
-            applyLive("screensaver", lLogo, j -> screensaver(j).put("art", n));
+            applyLive("screensaver", lLogo, j -> screensaver(j).put("art", n).put("mode", n.startsWith("aquarium") ? "aquarium" : "logo"));
             return true;
         });
         p.add(lSize, sizeLabel(cfg.screensaverSize), r -> {
@@ -2265,6 +2956,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         p.add(lClock, str(cfg.screensaverClock ? R.string.on : R.string.off), r -> {
             boolean n = !cfg.screensaverClock;
             applyLive("screensaver", lClock, j -> screensaver(j).put("clock", n));
+            return true;
+        });
+        String lSound = "Aquarium ST3 Synth Audio";
+        p.add(lSound, str(cfg.saverSound ? R.string.on : R.string.off), r -> {
+            boolean n = !cfg.saverSound;
+            applyLive("screensaver", lSound, j -> screensaver(j).put("sound", n));
             return true;
         });
         // v2.10: "Avvia salvaschermo dopo": 1 min, 2,5 min (default, as Omarchy), 5 min, 10 min, never.
@@ -2553,6 +3250,33 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
     private AsciiMenu.Page grokBotPage() {
         AsciiMenu.Page p = new AsciiMenu.Page(str(R.string.grok_bot_hub));
         LauncherConfig.WebApp grokBot = LauncherConfig.BUILTIN_AI_WEBAPPS[0];
+        LauncherConfig gc = LauncherConfig.get(this);
+        p.add("Chat with the Grok Bot companion", "OK ›", r -> {
+            handler.post(() -> openCompanionChat(false));
+            return false;
+        });
+        String lOv = "Floating companion on the home screen";
+        p.add(lOv, str(gc.companionOverlay ? R.string.on : R.string.off), r -> {
+            boolean n = !gc.companionOverlay;
+            applyLive("grok-bot", lOv, j -> companionPlugins(j).put("companionOverlay", n));
+            return true;
+        });
+        String lCorner = "Companion corner";
+        p.add(lCorner, gc.companionCorner, r -> {
+            String n = CompanionPlacement.next(gc.companionCorner);
+            applyLive("grok-bot", lCorner, j -> companionPlugins(j).put("companionCorner", n));
+            return true;
+        });
+        String lOff = "Companion offset (sideways · up/down, dp)";
+        p.add(lOff, gc.companionOffsetX + " · " + gc.companionOffsetY, r -> {
+            int[] steps = {0, 24, 48, 96, 160};
+            int i = 0;
+            while (i < steps.length && steps[i] != gc.companionOffsetX) i++;
+            int nx = steps[(i + 1) % steps.length];
+            applyLive("grok-bot", lOff, j -> companionPlugins(j).put("companionOffsetX", nx).put("companionOffsetY", nx / 2));
+            return true;
+        });
+        p.hint("Long-press Menu on the remote to reach the companion, then OK to chat.");
         p.add("Grok Bot (Omarchy TUI)", "tui ›", r -> {
             LauncherConfig.update(this, j -> LauncherConfig.ensureWebApp(j, grokBot, true));
             builtWith = LauncherConfig.get(this);
@@ -2600,6 +3324,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
     }
 
     private String logoLabel(String l) {
+        if ("aquarium".equals(l)) return "Omarchy Aquarium (homage)";
+        if ("aquarium-classic".equals(l)) return "Aquarium Classic";
+        if ("cinemarchy".equals(l)) return "CINEMARCHY";
         return str("omarchy".equals(l) ? R.string.logo_omarchy : "original".equals(l) ? R.string.logo_original : R.string.logo_omarchy_tv);
     }
 
@@ -2800,6 +3527,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             return true;
         }
         resetIdle();
+        if (walker == null && movingPos < 0 && (menu == null || !menu.isShowing()) && companionKey(e)) return true;
         if (walker != null) {
             if (walker.onKey(e)) return true;
             return super.dispatchKeyEvent(e);

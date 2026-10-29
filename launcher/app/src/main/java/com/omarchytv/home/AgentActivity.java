@@ -288,7 +288,7 @@ public class AgentActivity extends Activity implements OmarchyLink.Listener {
             tabs.removeAllViews();
             for (Agents.Agent g : data.list) {
                 TextView t = new TextView(this);
-                t.setTypeface(getResources().getFont(R.font.caskaydia));
+                t.setTypeface(CastUi.font(this));
                 t.setTextSize(14);
                 t.setPadding((int) (10 * d), (int) (4 * d), (int) (10 * d), (int) (4 * d));
                 t.setFocusable(true);

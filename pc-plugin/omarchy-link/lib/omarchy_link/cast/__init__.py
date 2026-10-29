@@ -437,14 +437,16 @@ def screen_argv(cfg: dict) -> list[str]:
         return cmd
     audio = bool(cfg.get("screenAudio", False)) or os.environ.get("OMARCHY_LINK_SCREEN_AUDIO") == "1"  # opt-in audio
     fps = str(max(10, min(60, int(cfg.get("screenFps", 30)))))
+    # 2.13 extended display: capture one named output (e.g. a Hyprland headless monitor) instead of all screens
+    output = os.environ.get("OMARCHY_LINK_SCREEN_OUTPUT") or cfg.get("screenOutput") or ""
     if shutil.which("gpu-screen-recorder"):  # hardware encoder (VAAPI/NVENC), lowest latency on Hyprland
-        return ["gpu-screen-recorder", "-w", "screen", "-f", fps, "-k", "h264", "-c", "mpegts"] + \
+        return ["gpu-screen-recorder", "-w", output or "screen", "-f", fps, "-k", "h264", "-c", "mpegts"] + \
             (["-a", "default_output"] if audio else []) + ["-o", "/dev/stdout"]
     if shutil.which("wf-recorder"):
         vaapi = os.path.exists("/dev/dri/renderD128") and cfg.get("screenHwEncode", True)
         enc = ["-c", "h264_vaapi", "-d", "/dev/dri/renderD128"] if vaapi else \
             ["-c", "libx264", "-p", "preset=ultrafast", "-p", "tune=zerolatency", "-x", "yuv420p"]
-        return ["wf-recorder", "-y", "-r", fps] + enc + (["--audio"] if audio else []) + ["-m", "mpegts", "-f", "/dev/stdout"]
+        return ["wf-recorder", "-y", "-r", fps] + (["-o", output] if output else []) + enc + (["--audio"] if audio else []) + ["-m", "mpegts", "-f", "/dev/stdout"]
     raise CastError("screen mirroring needs gpu-screen-recorder or wf-recorder (or \"screenCommand\" in config.json)",
                     "no_recorder")
 
@@ -462,7 +464,7 @@ def link_caps(status: dict) -> dict:
             "uploadMax": int(status.get("castUploadMax") or UPLOAD_MAX_DEFAULT)}
 
 
-WIRE = ("kind", "url", "videoId", "title", "mime", "position", "text", "live", "size")
+WIRE = ("kind", "url", "videoId", "title", "mime", "position", "text", "live", "size", "subtitle")
 
 
 def via_link(client, item: dict, serve_ok: bool = False, wait: bool = False, out=print,
