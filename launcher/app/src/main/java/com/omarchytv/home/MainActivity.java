@@ -1775,37 +1775,48 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         return b.append("] ").append(current).append("dp").toString();
     }
 
-    /** "workspaces": {"order"}: the bar's workspaces by position, then the hidden ones; OK opens move / hide. */
+    /**
+     * "workspaces": numbers or names in the bar, then the bar's workspaces by position and the hidden ones;
+     * OK on one opens move / hide / rename.
+     */
     private AsciiMenu.Page workspacesPage() {
         LauncherConfig cfg = LauncherConfig.get(this);
         AsciiMenu.Page p = new AsciiMenu.Page(str(R.string.set_workspaces));
+        String lLabels = str(R.string.ws_labels);
+        p.add(lLabels, str(cfg.workspaceNamesInBar ? R.string.ws_labels_names : R.string.ws_labels_numbers), r -> {
+            boolean names = !cfg.workspaceNamesInBar;
+            applyLive("workspaces", lLabels, j -> workspacesJson(j).put("labels", names ? "names" : "numbers"));
+            return true;
+        });
         for (int n : cfg.workspaceOrder) {
-            p.add(LauncherConfig.workspaceId(n), String.valueOf(cfg.positionOf(n)), r -> push(workspacePage(n)));
+            p.add(cfg.workspaceName(n), String.valueOf(cfg.positionOf(n)), r -> push(workspacePage(n)));
         }
         for (int n = 1; n <= LauncherConfig.WORKSPACE_IDS.length; n++) {
             final int ws = n;
-            if (!cfg.workspaceShown(ws)) p.add(LauncherConfig.workspaceId(ws), str(R.string.off), r -> push(workspacePage(ws)));
+            if (!cfg.workspaceShown(ws)) p.add(cfg.workspaceName(ws), str(R.string.off), r -> push(workspacePage(ws)));
         }
         p.add(str(R.string.ws_reset), null, r -> {
-            applyLive("workspaces", str(R.string.ws_reset), j -> {
-                org.json.JSONObject w = j.optJSONObject("workspaces");
-                if (w != null) w.remove("order");
-            });
+            applyLive("workspaces", str(R.string.ws_reset), j -> j.remove("workspaces"));
             return false;
         });
         p.hint(str(R.string.ws_hint));
         return p;
     }
 
-    /** One workspace: move it left / right in the bar, hide it or show it again (at the end). Home can't be hidden. */
+    /** One workspace: move it left / right in the bar, hide it or show it again (at the end), rename it. Home can't be hidden. */
     private AsciiMenu.Page workspacePage(int n) {
-        List<Integer> order = new ArrayList<>(LauncherConfig.get(this).workspaceOrder);
+        LauncherConfig cfg = LauncherConfig.get(this);
+        List<Integer> order = new ArrayList<>(cfg.workspaceOrder);
         int pos = order.indexOf(n);
-        AsciiMenu.Page p = new AsciiMenu.Page(LauncherConfig.workspaceId(n));
+        AsciiMenu.Page p = new AsciiMenu.Page(cfg.workspaceName(n));
         if (pos > 0) p.add(str(R.string.ws_move_left), null, r -> saveWorkspaceOrder(n, order, () -> Collections.swap(order, pos, pos - 1)));
         if (pos >= 0 && pos < order.size() - 1) p.add(str(R.string.ws_move_right), null, r -> saveWorkspaceOrder(n, order, () -> Collections.swap(order, pos, pos + 1)));
         if (n != 1 && pos >= 0) p.add(str(R.string.ws_hide), null, r -> saveWorkspaceOrder(n, order, () -> order.remove(pos)));
         if (pos < 0) p.add(str(R.string.ws_show), null, r -> saveWorkspaceOrder(n, order, () -> order.add(n)));
+        p.add(str(R.string.ws_rename), null, r -> {
+            handler.post(() -> renameWorkspaceDialog(n));
+            return false;
+        });
         return p;
     }
 
@@ -1814,12 +1825,42 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         change.run();
         org.json.JSONArray names = new org.json.JSONArray();
         for (int ws : order) names.put(LauncherConfig.workspaceId(ws));
-        applyLive("workspaces", LauncherConfig.workspaceId(n), j -> {
-            org.json.JSONObject w = j.optJSONObject("workspaces");
-            if (w == null) j.put("workspaces", w = new org.json.JSONObject());
-            w.put("order", names);
-        });
+        applyLive("workspaces", LauncherConfig.get(this).workspaceName(n), j -> workspacesJson(j).put("order", names));
         return false;
+    }
+
+    /** "workspaces": {"names"}: an empty name (or the id itself) goes back to the id. */
+    private void renameWorkspaceDialog(int n) {
+        String id = LauncherConfig.workspaceId(n);
+        android.widget.EditText e = new android.widget.EditText(this);
+        e.setSingleLine(true);
+        e.setText(LauncherConfig.get(this).workspaceName(n));
+        e.setSelection(e.getText().length());
+        e.setHint(id);
+        e.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        e.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(12)});
+        new android.app.AlertDialog.Builder(this)
+                .setTitle(str(R.string.ws_rename) + "  ·  " + id)
+                .setView(e)
+                .setPositiveButton(android.R.string.ok, (d, w) -> {
+                    String v = LauncherConfig.workspaceNamePart(e.getText().toString());
+                    boolean reset = v.isEmpty() || v.equals(id);
+                    applyLive("workspaces", reset ? id : v, j -> {
+                        org.json.JSONObject names = workspacesJson(j).optJSONObject("names");
+                        if (names == null) workspacesJson(j).put("names", names = new org.json.JSONObject());
+                        if (reset) names.remove(id);
+                        else names.put(id, v);
+                    });
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    /** omarchytv.json "workspaces", created when missing. */
+    private static org.json.JSONObject workspacesJson(org.json.JSONObject j) throws org.json.JSONException {
+        org.json.JSONObject w = j.optJSONObject("workspaces");
+        if (w == null) j.put("workspaces", w = new org.json.JSONObject());
+        return w;
     }
 
     /** v2.10 "Disponi riquadri": pick a home panel, move it with the D-pad (OK saves, Back cancels), or reset. */

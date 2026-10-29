@@ -91,6 +91,10 @@
     <string name="ws_show">Einblenden</string>
     <string name="ws_reset">Arbeitsbereiche zurücksetzen</string>
     <string name="ws_hint">Nummer = Position in der Leiste</string>
+    <string name="ws_labels">Leistenbeschriftung</string>
+    <string name="ws_labels_numbers">Nummern</string>
+    <string name="ws_labels_names">Namen</string>
+    <string name="ws_rename">Umbenennen</string>
     <string name="hidden_none">keine ausgeblendeten Apps</string>
     <string name="unhide">wieder zeigen</string>
     <string name="ss_size">Logogröße</string>

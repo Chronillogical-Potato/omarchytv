@@ -101,6 +101,10 @@
     <string name="ws_show">Show</string>
     <string name="ws_reset">Reset workspaces</string>
     <string name="ws_hint">Number = position in the bar</string>
+    <string name="ws_labels">Bar labels</string>
+    <string name="ws_labels_numbers">numbers</string>
+    <string name="ws_labels_names">names</string>
+    <string name="ws_rename">Rename</string>
     <string name="hidden_none">no hidden apps</string>
     <string name="unhide">show again</string>
     <string name="ss_size">Logo size</string>
