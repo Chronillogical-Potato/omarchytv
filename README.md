@@ -55,7 +55,7 @@ All releases are on **[GitHub Releases](https://github.com/piermark/omarchytv/re
 
 **🔊 [Watch the screensaver with sound (MP4, 0.9 MB)](https://github.com/piermark/omarchytv/releases/download/v2.13.0-beta/omarchytv-aquarium-demo-with-sound.mp4)** · [view in the repo](https://github.com/piermark/omarchytv/blob/main/docs/media/aquarium-homage-demo.mp4)
 
-<video src="https://raw.githubusercontent.com/piermark/omarchytv/main/docs/media/aquarium-homage-demo.mp4" controls muted width="720"></video>
+<video src="https://raw.githubusercontent.com/piermark/omarchytv/main/docs/media/aquarium-homage-demo.mp4" controls width="720"></video>
 
 | Android TV · Home | Android TV · Cinemarchy 0.1.0-alpha | Android TV · Grok Bot Companion |
 |---|---|---|
