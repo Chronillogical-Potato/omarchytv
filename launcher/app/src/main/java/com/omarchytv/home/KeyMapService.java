@@ -16,7 +16,8 @@ import android.widget.Toast;
  * Optional "OmarchyTV remote buttons" accessibility service: runs the bindings of omarchytv.json "keys" for single,
  * double, triple and long presses of a remote key, in any app. The accessibility input filter sees key events
  * before the system's own key hooks (such as the SHIELD Netflix button launching Netflix), so a bound key is
- * consumed here; a key without bindings is never touched. It listens to no events and reads no window content.
+ * consumed here. A key is only touched if it has bindings AND comes from a remote listed in assets/remotes.json
+ * (matched by vendor / product id) whose profile lists that button; anything else passes through. It listens to no events and reads no window content.
  * Enable in Settings > Accessibility, or over adb (replaces any other enabled services):
  *   adb shell settings put secure enabled_accessibility_services com.omarchytv.home/.KeyMapService
  *   adb shell settings put secure accessibility_enabled 1
@@ -47,6 +48,7 @@ public class KeyMapService extends AccessibilityService {
     protected boolean onKeyEvent(KeyEvent e) {
         int code = e.getKeyCode();
         LauncherConfig.KeyBinding[] b = LauncherConfig.get(this).keys.get(code);
+        if (b != null && !RemoteProfiles.handles(this, e)) b = null;   // only profiled buttons of known remotes
         if (b == null) {
             if (code == activeKey) reset();   // unbound while a press was in progress
             return false;
