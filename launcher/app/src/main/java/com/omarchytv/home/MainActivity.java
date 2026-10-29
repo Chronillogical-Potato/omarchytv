@@ -879,6 +879,19 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         }
         builtWith = cfg;
         resumed = true;
+        // KEYCODE_ASSIST never reaches dispatchKeyEvent: the system starts the Assistant role holder instead. With
+        // OmarchyTV holding that role, the mic key lands here and opens Walker, like "voiceKey": "launcher"; pressed
+        // again while Walker is open it starts voice search, like Walker's own mic key.
+        if (Intent.ACTION_ASSIST.equals(getIntent().getAction())) {
+            setIntent(new Intent(getIntent()).setAction(Intent.ACTION_MAIN));
+            handler.post(() -> {
+                if (walker == null) openWalker();
+                else {
+                    walkerVoice = true;
+                    startVoiceSearch();
+                }
+            });
+        }
         OmarchyLink.setHomeVisible(true);
         hideSaver();   // back from the screensaver window (own process)
         Theme.apply(getWindow().getDecorView());
@@ -2518,6 +2531,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);   // HOME pressed while on home: wake up from the screensaver
         if (intent.getBooleanExtra(HomeCheck.EXTRA_ASK, false)) setIntent(intent);   // HomeCheck from boot
+        if (Intent.ACTION_ASSIST.equals(intent.getAction())) setIntent(intent);   // mic key, handled in onResume
         hideSaver();
         resetIdle();
         if (home != null && walker == null && (menu == null || !menu.isShowing())) {   // HOME key: back to workspace 1
