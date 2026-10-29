@@ -331,7 +331,7 @@
     <string name="keys_intent_value">Intent</string>
     <string name="keys_intent_title">Intent-URI</string>
     <string name="keys_intent_bad">Keine gültige Intent-URI</string>
-    <string name="keys_hint">Der Dienst „OmarchyTV Fernbedienungstasten“ muss aktiv sein (OK in der ersten Zeile öffnet die Bedienungshilfen). Tasten ohne Belegung behalten ihr normales Verhalten.</string>
+    <string name="keys_hint">Benötigt den Dienst „OmarchyTV Fernbedienungstasten“ (OK in der ersten Zeile). Nicht belegte Tasten funktionieren wie gewohnt.</string>
     <string name="keys_action_walker">Suche (Walker)</string>
     <string name="keys_action_voice">Sprachsuche</string>
     <string name="keys_action_home">Start</string>

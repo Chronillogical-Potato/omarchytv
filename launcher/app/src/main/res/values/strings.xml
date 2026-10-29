@@ -344,7 +344,7 @@
     <string name="keys_intent_value">intent</string>
     <string name="keys_intent_title">Intent URI</string>
     <string name="keys_intent_bad">Not a valid intent URI</string>
-    <string name="keys_hint">The \"OmarchyTV remote buttons\" service must be on (OK on the first row opens Accessibility settings). Buttons without a binding keep their normal behaviour.</string>
+    <string name="keys_hint">Needs the \"OmarchyTV remote buttons\" service (OK on the first row). Unbound buttons work as usual.</string>
     <string name="keys_action_walker">Search (Walker)</string>
     <string name="keys_action_voice">Voice search</string>
     <string name="keys_action_home">Home</string>

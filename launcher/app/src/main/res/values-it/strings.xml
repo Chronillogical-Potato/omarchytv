@@ -331,7 +331,7 @@
     <string name="keys_intent_value">intent</string>
     <string name="keys_intent_title">URI intent</string>
     <string name="keys_intent_bad">URI intent non valido</string>
-    <string name="keys_hint">Il servizio \"OmarchyTV tasti telecomando\" deve essere attivo (OK sulla prima riga apre le impostazioni di accessibilità). I tasti senza assegnazione mantengono il comportamento normale.</string>
+    <string name="keys_hint">Richiede il servizio \"OmarchyTV tasti telecomando\" (OK sulla prima riga). I tasti non assegnati funzionano come sempre.</string>
     <string name="keys_action_walker">Cerca (Walker)</string>
     <string name="keys_action_voice">Ricerca vocale</string>
     <string name="keys_action_home">Home</string>
