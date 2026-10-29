@@ -228,6 +228,11 @@ final class AsciiMenu {
                 t.setSingleLine(false);   // v2.10: hints wrap instead of ending in "…" (HomeCheck)
                 t.setMaxLines(4);
                 t.setEllipsize(null);
+                ViewGroup.LayoutParams lp = v.getLayoutParams();   // rows are a fixed 34dp: let a wrapped hint grow
+                lp.height = ViewGroup.LayoutParams.WRAP_CONTENT;
+                v.setLayoutParams(lp);
+                v.setMinimumHeight((int) (34 * density));
+                v.setPadding(v.getPaddingLeft(), (int) (6 * density), v.getPaddingRight(), (int) (6 * density));
                 rows.addView(v);
                 continue;
             }
