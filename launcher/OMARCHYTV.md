@@ -228,6 +228,11 @@ otherwise OK opens Live TV (Android has no public "tune to number" intent).
 - **> search** (logo menu, or the mic/Search key if `"voiceKey": "launcher"`; default leaves it to Google Assistant):
   system speech recognizer, then fuzzy match over apps, web apps and channels ("apri Netflix", "metti Rai uno",
   "canale cinque", "open YouTube"). A clear winner opens directly, otherwise a list.
+  Some remotes (the SHIELD's, for one) send their mic key as `KEYCODE_ASSIST`, which Android hands to the
+  Assistant app before the launcher sees it, so `"voiceKey"` can't catch it. Make OmarchyTV the Assistant app and
+  that key opens Walker from anywhere: `adb shell cmd role add-role-holder android.app.role.ASSISTANT com.omarchytv.home`.
+  Speech recognition stays with Google. Undo: `adb shell cmd role add-role-holder android.app.role.ASSISTANT com.google.android.katniss`
+  (or Settings → Apps → Default apps → Assist app).
 - **> ask**: terminal voice assistant pane; answers come from the paired Omarchy Linux PC (see PLUGINS.md).
   Optional colour key: `"assistant": {"provider":"grok","tts":false,"key":"red"}`.
 - **Omarchy Link alignment** (PROTOCOL.md §8): pairing code in memory only (new code each time the page
