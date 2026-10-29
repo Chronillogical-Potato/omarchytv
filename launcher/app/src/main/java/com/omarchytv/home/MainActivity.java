@@ -761,6 +761,51 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
 
     private boolean walkerVoice;
 
+    /** Intent extra from KeyMapService: the id of an OmarchyTV action to run (see LauncherConfig.KEY_ACTIONS). */
+    static final String EXTRA_ACTION = "com.omarchytv.home.extra.ACTION";
+
+    /** Runs a "keys" action binding. Unknown ids do nothing. */
+    private void runKeyAction(String id) {
+        if (home == null || movingPos >= 0) return;
+        if (id.startsWith("workspace-") || id.equals("home")) {
+            if (walker != null) walker.close();
+            if (menu != null && menu.isShowing()) menu.dismiss();
+            int ws = id.equals("home") ? 1 : id.charAt(id.length() - 1) - '0';
+            setWorkspace(ws);
+            home.onHomeShown();
+            return;
+        }
+        switch (id) {
+            case "walker":
+                openWalker();
+                break;
+            case "voice":
+                openWalker();
+                walkerVoice = true;
+                startVoiceSearch();
+                break;
+            case "ask":
+                AskActivity.open(this);
+                break;
+            case "menu":
+                if (walker != null) walker.close();
+                showMenu(null, null);
+                break;
+            case "screensaver":
+                if (walker != null) walker.close();
+                if (menu != null && menu.isShowing()) menu.dismiss();
+                startSaver();
+                break;
+            case "next-theme": {
+                String next = AskActivity.nextThemeName(this);
+                if (next != null) applyLive(null, null, AskActivity.themeEdit(next));
+                break;
+            }
+            default:
+                break;
+        }
+    }
+
     private boolean resumed, linkRefreshing, linkConfigPending;
     private String pendingSourcesId;
     /** "> omarchy" shortcuts section (between apps and "> tv"). */
@@ -928,6 +973,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
                 grid.postDelayed(() -> showMenu(page, row), 60);
             }
         });
+        // A remote key binding (KeyMapService) asked for an action: run it once, now that the home is up.
+        String keyAction = getIntent().getStringExtra(EXTRA_ACTION);
+        if (keyAction != null) {
+            getIntent().removeExtra(EXTRA_ACTION);
+            grid.post(() -> runKeyAction(keyAction));
+        }
     }
 
     @Override
@@ -2394,6 +2445,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             resetIdle();   // something else is on screen: wait a full timeout after it closes
             return;
         }
+        startSaver();
+    }
+
+    private void startSaver() {
         saverShown = true;
         OmarchyLink.setScreensaver(true);
         try {
@@ -2426,6 +2481,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         if (intent.getBooleanExtra(HomeCheck.EXTRA_ASK, false)) setIntent(intent);   // HomeCheck from boot
         hideSaver();
         resetIdle();
+        if (intent.hasExtra(EXTRA_ACTION)) {   // a key binding, not the HOME key: onResume runs it
+            setIntent(intent);
+            return;
+        }
         if (home != null && walker == null && (menu == null || !menu.isShowing())) {   // HOME key: back to workspace 1
             if (workspace != 1) setWorkspace(1);
             home.onHomeShown();
