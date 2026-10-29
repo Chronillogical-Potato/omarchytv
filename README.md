@@ -17,6 +17,12 @@ Published: **29 October 2026 (pre-release)** · Version **2.13.0-beta** (`versio
 
 *Default theme since 2.10.2-beta: Tokyo Night with Tom Ballard's "Liftoff Sunset" wallpaper, used with permission (see [Credits](#credits-and-third-party-software)).*
 
+**Animated wallpapers come alive when you open the launcher or press Home** (artwork and animations by [Erik Johansson](https://github.com/erikrjohansson), MIT). Click a frame to play the clip:
+
+| Eyes Wide (Last Horizon) | Cumulus: Airship | Cumulus: Lighthouse |
+|---|---|---|
+| [![OmarchyTV home with the animated Eyes Wide wallpaper](docs/media/webos-home-eyes-wide-video.jpg)](https://github.com/piermark/omarchytv/raw/main/docs/media/webos-home-eyes-wide.mp4) | [![OmarchyTV home with the animated Cumulus airship](docs/media/webos-home-cumulus-airship-video.jpg)](https://github.com/piermark/omarchytv/raw/main/docs/media/webos-home-cumulus-airship.mp4) | [![OmarchyTV home with the animated Cumulus lighthouse](docs/media/webos-home-cumulus-lighthouse-video.jpg)](https://github.com/piermark/omarchytv/raw/main/docs/media/webos-home-cumulus-lighthouse.mp4) |
+
 | Workspace 2 · TV | Workspace 4 · PC | Workspace 5 |
 |---|---|---|
 | ![TV](docs/screenshots/ws2.svg) | ![PC](docs/screenshots/ws4.svg) | ![Workspace 5](docs/screenshots/ws5.svg) |
