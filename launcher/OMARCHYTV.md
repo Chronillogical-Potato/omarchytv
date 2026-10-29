@@ -228,6 +228,36 @@ otherwise OK opens Live TV (Android has no public "tune to number" intent).
 - **> search** (logo menu, or the mic/Search key if `"voiceKey": "launcher"`; default leaves it to Google Assistant):
   system speech recognizer, then fuzzy match over apps, web apps and channels ("apri Netflix", "metti Rai uno",
   "canale cinque", "open YouTube"). A clear winner opens directly, otherwise a list.
+- **Remote buttons** (Launcher settings → Remote buttons, or `"keys"` in the config): bind a remote key to an app,
+  an intent or an OmarchyTV action, separately for a single, double, triple and long press. Example (the SHIELD
+  Netflix button):
+  ```json
+  "keys": {
+    "BUTTON_12": {
+      "single": {"app": "org.smarttube.stable"},
+      "double": {"action": "walker"},
+      "triple": {"intent": "intent:#Intent;action=android.settings.SETTINGS;end"},
+      "long":   {"action": "voice"}
+    }
+  }
+  ```
+  Key names are Android `KeyEvent` keycode names without `KEYCODE_` (`BUTTON_12`, `PROG_RED`, …); unknown names are
+  ignored. A press type has exactly one of `app` (package name, started like its tile), `intent` (an
+  `Intent.toUri(Intent.URI_INTENT_SCHEME)` string: started as an activity, sent as a broadcast if no activity
+  matches) or `action` (an OmarchyTV action id); anything else counts as unbound. Action ids: `walker` (search),
+  `voice` (search by voice), `home`, `ask`, `menu`, `screensaver`, `next-theme`, `workspace-1` … `workspace-5`.
+  Quick presses less than about 0.35 s apart count together; a press type that isn't bound falls back to the
+  highest bound count below it (double with only single bound runs single), and a lone single press runs at once
+  when nothing higher is bound. A long press (about 0.5 s) runs while the key is held.
+  **A key with no bindings is left alone** (system behaviour unchanged); a bound key is consumed in every app, so on
+  the SHIELD remote `BUTTON_12` no longer launches Netflix. This needs the **OmarchyTV remote buttons** accessibility
+  service (`KeyMapService`; it sees key presses only, no screen content): enable it in Settings → Accessibility, or
+  over adb (`put` replaces any other enabled services, so list them all, colon-separated):
+  ```
+  adb shell settings put secure enabled_accessibility_services com.omarchytv.home/.KeyMapService
+  adb shell settings put secure accessibility_enabled 1
+  ```
+  The config is re-read on every key press; no restart needed.
 - **> ask**: terminal voice assistant pane; answers come from the paired Omarchy Linux PC (see PLUGINS.md).
   Optional colour key: `"assistant": {"provider":"grok","tts":false,"key":"red"}`.
 - **Omarchy Link alignment** (PROTOCOL.md §8): pairing code in memory only (new code each time the page
