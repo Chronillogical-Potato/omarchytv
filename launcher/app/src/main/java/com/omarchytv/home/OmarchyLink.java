@@ -197,11 +197,22 @@ public final class OmarchyLink implements LinkServer.Host {
         return r == null || !r.live() ? java.util.Collections.<LinkStore.Pc>emptyList() : r.server.store().list();
     }
 
-    /** "> ask": returns null when sent, else "not_connected" / "busy". */
-    static String ask(JSONObject data) {
+    /**
+     * "> ask", written on the Link worker (never on the UI thread: a socket write there throws
+     * NetworkOnMainThreadException). {@code done} runs on the UI thread with null when sent, else
+     * "not_connected" / "busy".
+     */
+    static void ask(JSONObject data, java.util.function.Consumer<String> done) {
         OmarchyLink r = runtime;
         // Instant answer when no PC is connected: the screen says "PC offline" right away.
-        return r == null || !r.live() ? "not_connected" : r.server.ask(data);
+        if (r == null || !r.live()) {
+            done.accept("not_connected");
+            return;
+        }
+        bg.execute(() -> {
+            String e = r.server.ask(data);
+            main.post(() -> done.accept(e));
+        });
     }
 
     /** AI-pane source switches: the full list of enabled ids, in display order. Null when sent. */
