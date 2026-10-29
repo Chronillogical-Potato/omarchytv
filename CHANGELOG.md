@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+
+- **Send to TV (Cinemarchy) in the Omarchy menu:** I added a "Send to TV (Cinemarchy)" row to the Omarchy menu (`Super+Alt+Space`, Omarchy 4.5+). It opens a file picker (zenity, kdialog or yad, otherwise a list of your newest videos in the Omarchy menu), finds a subtitle file with the same name (`.srt`, `.vtt` or `.ass`, which I convert to SRT) and runs `omarchy-tv send`; the result arrives as a notification. `share/install-file-manager.sh` adds it and `--uninstall` removes it, or use `omarchy-tv menu-entry install | remove | status`. I only touch my own `omarchytv-send` id in `~/.config/omarchy/extensions/omarchy-menu.jsonc`: your other entries stay, a `.bak` is kept, and a file that does not parse is left alone. Only the PC plugin changed.
+
 ## [2.13.0-beta] — 2026-10-29 (pre-release, `versionCode 21`)
 
 Artifacts: `omarchytv-release-2.13.0-beta.apk` (Android TV), `omarchytv-webos-2.13.0-testing.ipk` (LG webOS), `OmarchyTV-tizen-2.13.0-beta-unsigned.wgt` (Samsung Tizen, unsigned testing), `omarchytv-mobile-2.13.0-beta.apk` (phone), `omarchy-tv-pc-plugin-2.13.0-beta.tar.gz` plus separate `omarchy-tv` and `omarchy-link` tarballs, and `SHA256SUMS`.

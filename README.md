@@ -82,7 +82,7 @@ All releases are on **[GitHub Releases](https://github.com/piermark/omarchytv/re
 - **Queue with subtitles:** `omarchy-tv send URL --queue --sub subs.srt` (local .srt/.vtt sent inline, or a subtitle URL).
 - **Wireless debugging pairing (Android 11+):** `omarchy-tv adb-pair 192.168.1.9:37000 123456 --connect 192.168.1.9:5555` (wraps `adb pair`).
 - **Universal Android TV & Fire TV Support (`minSdk 24`):** Supports Android 7.0+ (`API 24+`), including Fire TV Stick (Fire OS 6, 7, 8), Google TV, Sony Bravia, Nvidia Shield, TCL, Hisense, Xiaomi, and Sharp AQUOS, plus LG webOS (`.ipk`) and Samsung Tizen (`.wgt`).
-- **Send to TV:** `omarchy-tv send <file|URL> [--sub subs.srt] [--queue]`, plus a file-manager "Send to TV" action (`pc-plugin/omarchy-tv/share/install-file-manager.sh`).
+- **Send to TV:** `omarchy-tv send <file|URL> [--sub subs.srt] [--queue]`, plus **Send to TV (Cinemarchy)** in the Omarchy menu and a file-manager "Send to TV" action (`pc-plugin/omarchy-tv/share/install-file-manager.sh`).
 - **Samsung Tizen (experimental):** build a `.wgt` with `tizen/build-wgt.sh`; guide in `tizen/INSTALL-TIZEN.md`. Not tested on a Samsung TV yet.
 - **webOS hidden apps:** "Show all hidden apps" and translated labels in the Hidden apps menu.
 - **Phone companion:** type `IP:PORT` to use a custom ADB port.
@@ -331,7 +331,7 @@ omarchy-tv send ~/Videos/film.mkv --sub film.srt      # streams the file over th
 omarchy-tv send https://example.com/clip.mp4 --queue  # adds a link to Cinemarchy's Up-Next queue
 omarchy-tv send film.mkv --title "Film" --at 12:30
 ```
-Subtitles can be a local `.srt`/`.vtt` or a URL. For a right-click action, run `pc-plugin/omarchy-tv/share/install-file-manager.sh` once: it adds **Open With → Send to TV (Cinemarchy)** and **Scripts → Send to TV** in the file manager (`--uninstall` removes them).
+Subtitles can be a local `.srt`/`.vtt`/`.ass` or a URL; a subtitle file with the same name next to the video (`film.srt`, `film.vtt`, `film.ass`) is picked up automatically, and `.ass` is converted to SRT on the PC. Run `pc-plugin/omarchy-tv/share/install-file-manager.sh` once: it adds **Send to TV (Cinemarchy)** to the Omarchy menu (`Super+Alt+Space`, Omarchy 4.5+), plus **Open With → Send to TV (Cinemarchy)** and **Scripts → Send to TV** in the file manager (`--uninstall` removes all three). The menu entry opens a file picker (zenity, kdialog or yad if installed, otherwise a list of your newest videos in `~/Videos`, `~/Downloads` and `~/Movies`) and runs `omarchy-tv send --pick`; the result shows up as a notification. On its own: `omarchy-tv menu-entry install | remove | status`. It only adds or removes its own `omarchytv-send` row in `~/.config/omarchy/extensions/omarchy-menu.jsonc`, keeps your other entries and leaves a `.bak` copy.
 
 #### Grok Bot companion on the TV (experimental)
 - **Android TV:** long-press **Menu** on the remote to select the floating bot, then **OK** opens the chat with keyboard and voice input. In `Settings → Grok Bot & AI` pick `Companion corner` (bottom-right, bottom-left, top-right, top-left), or switch `Floating companion on the home screen` off: the Grok Bot logo then disappears.

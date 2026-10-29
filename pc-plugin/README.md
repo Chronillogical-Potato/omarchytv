@@ -36,6 +36,7 @@ Optional integrations:
 - **Keybinding** (Hyprland): `bindd = SUPER ALT, T, OmarchyTV, exec, omarchy-tv`.
 - **Omarchy menu entry** (Omarchy 4.5+, `~/.config/omarchy/extensions/omarchy-menu.jsonc`):
   add `"omarchytv": {"icon":"󰔂","label":"OmarchyTV","action":"omarchy-tv"},` inside its `{ }`, then `omarchy menu refresh`.
+  **Send to TV (Cinemarchy)** is added there for you by `omarchy-tv/share/install-file-manager.sh` (or `omarchy-tv menu-entry install`; `--uninstall` / `menu-entry remove` takes it out).
 
 Everything is LAN-only and opt-in. Screen sharing is off until you start it. `screenAudio`, `screenFps`, `screenMirrorFromTv` (`"confirm"` | `"allow"` | `"off"`) and `statsIntervalS` go in `~/.config/omarchy-link/config.json`.
 

@@ -4,7 +4,8 @@
   omarchy-tv [menu]                     Omarchy menu (omarchy-menu-select; Walker on older Omarchy; gum / numbered list over SSH)
   omarchy-tv status | pair | remote KEY | cast [TARGET]
   omarchy-tv play <PATH|URL> | pause | resume | stop | seek <SEC> | queue | ls | handoff | snippets | iptv | cinemarchy
-  omarchy-tv send <FILE|URL> [--sub FILE.srt|.vtt|URL] [--queue] [--title T] [--at MM:SS]
+  omarchy-tv send <FILE|URL> [--sub FILE.srt|.vtt|.ass|URL] [--queue] [--title T] [--at MM:SS] | send --pick
+  omarchy-tv menu-entry install | remove | status   "Send to TV (Cinemarchy)" in the Omarchy menu (Omarchy 4.5+)
   omarchy-tv iptv list | add <M3U_URL> [--name NAME] [--epg XMLTV_URL] | remove <URL_OR_NAME>
   omarchy-tv wg push <wg0.conf> | up NAME | down NAME [--tv IP:5555]   WireGuard on the TV (official app)
   omarchy-tv adb-pair HOST:PAIRPORT CODE [--connect HOST:PORT]   Android 11+ Wireless debugging pairing (wraps adb pair)
@@ -356,7 +357,10 @@ def main(argv):
         return wireguard.run(rest, say=ui.say)
     if cmd == "send":
         from omarchy_tv import send
-        return send.run(rest, client)
+        return send.run(rest, client, picker=lambda: send.pick_file(ui.choose), notify=ui.notify)
+    if cmd == "menu-entry":
+        from omarchy_tv import menu_entry
+        return menu_entry.run(rest, os.path.realpath(__file__), say=ui.say)
     if cmd in ("queue", "ls", "cinemarchy"):
         c = client()
         r = c.request("GET", "/v1/cinemarchy/library")
