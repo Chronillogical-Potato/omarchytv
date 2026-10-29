@@ -1210,6 +1210,22 @@
     else launchApp({ name: "LG Settings", appId: "com.palm.app.settings" });
   }
 
+  // Home widgets that can take focus, in on-screen order (state.widgetIdx: 0 terminal, 1 weather,
+  // 2 pc, 3 ai credits). Hidden ones (Home widgets menu) are skipped, so ▲ ▼ never stop on nothing.
+  function focusableWidgets() {
+    return [cfg.widgets.term, cfg.widgets.weather, cfg.widgets.pc, cfg.widgets.ai]
+      .map(function (on, i) { return on ? i : -1; })
+      .filter(function (i) { return i >= 0; });
+  }
+
+  // Moving into the widget row: land on a visible widget, or report that there is none.
+  function enterWidgets() {
+    var vw = focusableWidgets();
+    if (!vw.length) return false;
+    if (vw.indexOf(state.widgetIdx) < 0) state.widgetIdx = vw[0];
+    return true;
+  }
+
   // Keyboard / LG Remote Navigation
   var LEGACY_KEYS = { 8: "Backspace", 13: "Enter", 27: "Escape", 37: "ArrowLeft", 38: "ArrowUp", 39: "ArrowRight", 40: "ArrowDown" };
   window.addEventListener("keydown", function (e) {
@@ -1274,7 +1290,7 @@
       if (k === "ArrowRight") { state.barIdx = Math.min(10, state.barIdx + 1); renderAll(); e.preventDefault(); return; }
       if (k === "ArrowLeft") { state.barIdx = Math.max(0, state.barIdx - 1); renderAll(); e.preventDefault(); return; }
       if (k === "ArrowDown") {
-        if (state.ws === 0) state.zone = "widgets";
+        if (state.ws === 0) state.zone = enterWidgets() ? "widgets" : "dock";
         else state.zone = "ws" + (state.ws + 1);
         renderAll(); e.preventDefault(); return;
       }
@@ -1283,8 +1299,12 @@
     }
 
     if (state.ws === 0 && state.zone === "widgets") {
-      if (k === "ArrowRight") { state.widgetIdx = Math.min(3, state.widgetIdx + 1); renderAll(); e.preventDefault(); return; }
-      if (k === "ArrowLeft") { state.widgetIdx = Math.max(0, state.widgetIdx - 1); renderAll(); e.preventDefault(); return; }
+      if (k === "ArrowRight" || k === "ArrowLeft") {
+        var vw = focusableWidgets(), at = vw.indexOf(state.widgetIdx);
+        var next = vw[Math.max(0, Math.min(vw.length - 1, at + (k === "ArrowRight" ? 1 : -1)))];
+        if (next !== undefined) state.widgetIdx = next;
+        renderAll(); e.preventDefault(); return;
+      }
       if (k === "ArrowUp") { state.zone = "bar"; renderAll(); e.preventDefault(); return; }
       if (k === "ArrowDown") { state.zone = "dock"; renderAll(); e.preventDefault(); return; }
       if (k === "Enter") {
@@ -1300,7 +1320,7 @@
       var apps = visibleApps();
       if (k === "ArrowRight") { state.dockIdx = Math.min(apps.length - 1, state.dockIdx + 1); renderAll(); e.preventDefault(); return; }
       if (k === "ArrowLeft") { state.dockIdx = Math.max(0, state.dockIdx - 1); renderAll(); e.preventDefault(); return; }
-      if (k === "ArrowUp") { state.zone = "widgets"; renderAll(); e.preventDefault(); return; }
+      if (k === "ArrowUp") { state.zone = enterWidgets() ? "widgets" : "bar"; renderAll(); e.preventDefault(); return; }
       if (k === "Enter") { pressOk(apps[state.dockIdx]); e.preventDefault(); return; }
     }
 
