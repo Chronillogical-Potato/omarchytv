@@ -243,7 +243,8 @@ otherwise OK opens Live TV (Android has no public "tune to number" intent).
 - Reorder or hide workspaces: logo menu → Launcher settings → Workspaces, or
   `"workspaces": {"order": ["home", "apps", "pc", "system"]}` (names: `home`, `tv`, `apps`, `pc`, `system`). The bar
   numbers them 1..n in that order, the number keys and CH+/CH− follow it, and the ones left out are hidden. Home
-  always stays (first when left out).
+  always stays (first when left out). `"labels": "names"` shows names in the bar instead of numbers (the keys
+  still go by position), and `"names": {"pc": "cachy"}` renames a workspace (12 characters at most).
 - Calmer look, same v2.1 character (wallpaper, wordmark + prompt, panes, dock): bigger tiles (198×111 dp),
   1px hairlines instead of 2px boxes, unfocused banners desaturated/dimmed (full colour on focus),
   smaller `> App` title, panes clock → weather → compact AI credits (bars and %, no amounts).

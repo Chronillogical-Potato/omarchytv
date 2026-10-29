@@ -514,6 +514,7 @@ final class HomeV29 extends FrameLayout {
             ws[i].setTypeface(on ? tfBold : tf);
             ws[i].setPaintFlags(on ? ws[i].getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG : ws[i].getPaintFlags() & ~Paint.UNDERLINE_TEXT_FLAG);
             ws[i].setVisibility(c.workspaceAt(i + 1) > 0 ? VISIBLE : GONE);
+            ws[i].setText(c.workspaceNamesInBar && c.workspaceAt(i + 1) > 0 ? c.workspaceName(c.workspaceAt(i + 1)) : String.valueOf(i + 1));
         }
         tint(menuBtn, t.fgBright);
         for (View b : barIcons) tint(b, t.fgBright);

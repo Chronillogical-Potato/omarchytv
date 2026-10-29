@@ -26,6 +26,17 @@ public class WorkspaceOrderTest {
     }
 
     @Test
+    public void customNamesForKnownWorkspacesOnlyCleanedAndCapped() throws Exception {
+        JSONObject ws = new JSONObject().put("names", new JSONObject()
+                .put("pc", "  cachy ").put("apps", "").put("nope", "x").put("system", "a\tvery long name here"));
+        java.util.Map<Integer, String> names = LauncherConfig.workspaceNames(ws);
+        assertEquals("cachy", names.get(4));
+        assertEquals("avery long n", names.get(5));
+        assertEquals(2, names.size());
+        assertEquals(0, LauncherConfig.workspaceNames(null).size());
+    }
+
+    @Test
     public void unknownAndRepeatedNamesAreDroppedAndHomeIsKept() throws Exception {
         assertEquals(Arrays.asList(1, 4, 3), LauncherConfig.workspaceOrder(order("PC", "nope", "pc", " apps ")));
         assertEquals(Arrays.asList(3, 1), LauncherConfig.workspaceOrder(order("apps", "home")));

@@ -199,6 +199,12 @@ final class LauncherConfig {
      */
     final List<Integer> workspaceOrder;
 
+    /** The bar shows workspace names instead of numbers ("workspaces": {"labels": "names"}; default "numbers"). */
+    final boolean workspaceNamesInBar;
+
+    /** Renamed workspaces ("workspaces": {"names": {"pc": "cachy"}}), by workspace number; the rest use their id. */
+    private final java.util.Map<Integer, String> workspaceNames;
+
     /** omarchytv.json "barWeather": true puts icon + temperature in the bar, left of the status icons (default off). */
     final boolean barWeather;
 
@@ -480,7 +486,10 @@ final class LauncherConfig {
         voiceKey = j != null && "assistant".equals(j.optString("voiceKey")) ? "assistant" : "launcher";
         JSONObject tv = j != null ? j.optJSONObject("tv") : null;
         tvEnabled = tv == null || tv.optBoolean("enabled", true);
-        workspaceOrder = Collections.unmodifiableList(workspaceOrder(j != null ? j.optJSONObject("workspaces") : null));
+        JSONObject workspaces = j != null ? j.optJSONObject("workspaces") : null;
+        workspaceOrder = Collections.unmodifiableList(workspaceOrder(workspaces));
+        workspaceNamesInBar = workspaces != null && "names".equals(workspaces.optString("labels"));
+        workspaceNames = Collections.unmodifiableMap(workspaceNames(workspaces));
         JSONObject rp = j != null ? j.optJSONObject("remotePanes") : null;
         String rpUrl = rp != null ? rp.optString("url", "").trim() : "";
         remotePanesUrl = rpUrl.startsWith("https://") && rpUrl.length() <= 512 ? rpUrl : "";
@@ -634,6 +643,29 @@ final class LauncherConfig {
         }
         if (!order.contains(1)) order.add(0, 1);
         return order;
+    }
+
+    /** "workspaces": {"names"} by workspace number: known ids only, names cleaned by {@link #workspaceNamePart}. */
+    static java.util.Map<Integer, String> workspaceNames(JSONObject ws) {
+        JSONObject names = ws != null ? ws.optJSONObject("names") : null;
+        java.util.Map<Integer, String> out = new java.util.HashMap<>();
+        for (int n = 1; names != null && n <= WORKSPACE_IDS.length; n++) {
+            String v = workspaceNamePart(names.optString(WORKSPACE_IDS[n - 1], ""));
+            if (!v.isEmpty()) out.put(n, v);
+        }
+        return out;
+    }
+
+    /** A workspace name as typed: control characters dropped, trimmed, at most 12 characters ("" = use the id). */
+    static String workspaceNamePart(String raw) {
+        String v = raw == null ? "" : raw.replaceAll("\\p{Cntrl}", "").trim();
+        return v.length() > 12 ? v.substring(0, 12).trim() : v;
+    }
+
+    /** The name shown for workspace {@code n}: its custom name, else its id. */
+    String workspaceName(int n) {
+        String v = workspaceNames.get(n);
+        return v != null ? v : workspaceId(n);
     }
 
     static String workspaceId(int n) {
