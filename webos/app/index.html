@@ -302,13 +302,19 @@ html, body {
   z-index: 10;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+}
+
+#widgets-wrap > * + * {
+  margin-top: 12px;
 }
 
 #widgets-row1 {
   display: flex;
-  gap: 16px;
   width: 100%;
+}
+
+#widgets-row1 > * + * {
+  margin-left: 16px;
 }
 
 .widget-col {
