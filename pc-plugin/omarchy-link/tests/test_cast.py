@@ -235,6 +235,15 @@ class CastE2E(unittest.TestCase):
         d = json.loads(cli("cast", "--devices", "--json").stdout)
         self.assertEqual((d["catt"], d["link"]["cast"]), (False, True))
 
+    def test_macos_clipboard(self):
+        # pbpaste is macOS's clipboard reader; it is only tried when wl-paste and xclip are missing
+        tv = self.tv()
+        stub("pbpaste", "#!/bin/sh\nprintf 'https://youtu.be/dQw4w9WgXcQ'\n")
+        self.assertEqual(self.jcast("--clipboard")["app"], "youtube")
+        stub("pbpaste", "#!/bin/sh\nprintf 'Wi-Fi: casa / pass: 1234\\nsecond line'\n")
+        self.assertEqual(self.jcast("--clipboard")["kind"], "text")
+        self.assertEqual(tv.casts[-1]["text"], "Wi-Fi: casa / pass: 1234\nsecond line")
+
     def test_desktop_entries(self):
         cli("desktop")
         apps = helpers.HOME / ".local/share/applications"

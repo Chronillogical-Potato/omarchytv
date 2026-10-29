@@ -79,5 +79,5 @@ That is fine for slides, photos and videos, but not for games or typing.
 ## Requirements
 
 - `catt` for the Cast route: `pipx install catt` or AUR `catt`. It is BSD-2-Clause and uses pychromecast (MIT) and yt-dlp.
-- `wl-clipboard` for `--clipboard`.
+- `wl-clipboard` for `--clipboard` (macOS: the built-in `pbpaste`).
 - `gpu-screen-recorder` or `wf-recorder` for `--screen`.
