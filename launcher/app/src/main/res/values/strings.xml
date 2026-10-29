@@ -94,6 +94,17 @@
     <string name="ctx_info">App info</string>
     <string name="ctx_uninstall">Uninstall</string>
     <string name="set_hidden">Hidden apps</string>
+    <string name="set_workspaces">Workspaces</string>
+    <string name="ws_move_left">Move left</string>
+    <string name="ws_move_right">Move right</string>
+    <string name="ws_hide">Hide</string>
+    <string name="ws_show">Show</string>
+    <string name="ws_reset">Reset workspaces</string>
+    <string name="ws_hint">Number = position in the bar</string>
+    <string name="ws_labels">Bar labels</string>
+    <string name="ws_labels_numbers">numbers</string>
+    <string name="ws_labels_names">names</string>
+    <string name="ws_rename">Rename</string>
     <string name="hidden_none">no hidden apps</string>
     <string name="unhide">show again</string>
     <string name="ss_size">Logo size</string>
@@ -298,7 +309,7 @@
     <string name="v29_set_input">Inputs</string>
     <string name="v210_tv_hints">OK watch TV · ▲ bar · long OK: Walker</string>
     <string name="v210_app_hints">OK open · ▲ bar · long OK: Move / Hide</string>
-    <string name="v210_grid_hints">OK open · long OK: Move / Hide · 1-5 workspaces</string>
+    <string name="v210_grid_hints">OK open · long OK: Move / Hide · 1-%1$d workspaces</string>
     <string name="v210_pc_link">Connect Omarchy Linux</string>
     <string name="v210_pc_link_hint">Pair the PC to see its status, AI credits and deploys here.</string>
     <string name="v210_pc_pair">pair</string>

@@ -84,6 +84,17 @@
     <string name="ctx_info">App-Info</string>
     <string name="ctx_uninstall">Deinstallieren</string>
     <string name="set_hidden">Ausgeblendete Apps</string>
+    <string name="set_workspaces">Arbeitsbereiche</string>
+    <string name="ws_move_left">Nach links</string>
+    <string name="ws_move_right">Nach rechts</string>
+    <string name="ws_hide">Ausblenden</string>
+    <string name="ws_show">Einblenden</string>
+    <string name="ws_reset">Arbeitsbereiche zurücksetzen</string>
+    <string name="ws_hint">Nummer = Position in der Leiste</string>
+    <string name="ws_labels">Leistenbeschriftung</string>
+    <string name="ws_labels_numbers">Nummern</string>
+    <string name="ws_labels_names">Namen</string>
+    <string name="ws_rename">Umbenennen</string>
     <string name="hidden_none">keine ausgeblendeten Apps</string>
     <string name="unhide">wieder zeigen</string>
     <string name="ss_size">Logogröße</string>
@@ -285,7 +296,7 @@
     <string name="v29_set_input">Eingänge</string>
     <string name="v210_tv_hints">OK fernsehen · ▲ Leiste · lang OK: Walker</string>
     <string name="v210_app_hints">OK öffnen · ▲ Leiste · lang OK: Verschieben / Ausblenden</string>
-    <string name="v210_grid_hints">OK öffnen · lang OK: Verschieben / Ausblenden · 1-5 Workspaces</string>
+    <string name="v210_grid_hints">OK öffnen · lang OK: Verschieben / Ausblenden · 1-%1$d Workspaces</string>
     <string name="v210_pc_link">Omarchy Linux verbinden</string>
     <string name="v210_pc_link_hint">Koppel den PC, um hier Status, AI-Guthaben und Deploys zu sehen.</string>
     <string name="v210_pc_pair">koppeln</string>

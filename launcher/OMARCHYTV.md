@@ -240,6 +240,11 @@ otherwise OK opens Live TV (Android has no public "tune to number" intent).
   hairline, with **one wide tile "TV"** that starts the TV's Live TV app the way its own launcher would
   (Sony: `com.sony.dtv.tvx` leanback launch intent → last channel). The Live TV app is not repeated in
   the app grid. HDMI etc. stay in the Inputs pill. Toggle: logo menu → TV, or `"tv": {"enabled": false}`.
+- Reorder, hide or rename workspaces, or show names in the bar: logo menu → Launcher settings → Workspaces, or
+  `"workspaces": {"order": ["home", "apps", "pc", "system"]}` (names: `home`, `tv`, `apps`, `pc`, `system`). The bar
+  numbers them 1..n in that order, the number keys and CH+/CH− follow it, and the ones left out are hidden. Home
+  always stays (first when left out). `"labels": "names"` shows names in the bar instead of numbers (the keys
+  still go by position), and `"names": {"pc": "cachy"}` renames a workspace (12 characters at most).
 - Calmer look, same v2.1 character (wallpaper, wordmark + prompt, panes, dock): bigger tiles (198×111 dp),
   1px hairlines instead of 2px boxes, unfocused banners desaturated/dimmed (full colour on focus),
   smaller `> App` title, panes clock → weather → compact AI credits (bars and %, no amounts).

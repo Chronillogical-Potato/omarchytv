@@ -420,6 +420,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
 
     private void setWorkspace(int ws) {
         if (ws < 1 || ws > 5) return;
+        if (!LauncherConfig.get(this).workspaceShown(ws)) ws = 1;   // left out of "workspaces": {"order"}, e.g. a saved reopen
         workspace = ws;
         reopenWs = ws;
         home.setWorkspace(ws);
@@ -1438,6 +1439,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             case "wallpaper": return wallpaperPage();
             case "themes": return themesPage();
             case "arrange": return arrangePage();
+            case "workspaces": return workspacesPage();
             case "screensaver": return screensaverPage();
             case "hidden": return hiddenPage();
             case "link": return linkPage();
@@ -1596,6 +1598,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             return false;
         });
         p.add(str(R.string.set_hidden), String.valueOf(cfg.hidden.size()), r -> push(hiddenPage()));
+        p.add(str(R.string.set_workspaces), "›", r -> push(workspacesPage()));
         p.add(str(R.string.set_reset_order), null, r -> {
             LauncherConfig.update(this, j -> {
                 j.remove("order");
@@ -1770,6 +1773,94 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
         StringBuilder b = new StringBuilder("[");
         for (Integer v : values) b.append(v <= current ? '■' : '□');
         return b.append("] ").append(current).append("dp").toString();
+    }
+
+    /**
+     * "workspaces": numbers or names in the bar, then the bar's workspaces by position and the hidden ones;
+     * OK on one opens move / hide / rename.
+     */
+    private AsciiMenu.Page workspacesPage() {
+        LauncherConfig cfg = LauncherConfig.get(this);
+        AsciiMenu.Page p = new AsciiMenu.Page(str(R.string.set_workspaces));
+        String lLabels = str(R.string.ws_labels);
+        p.add(lLabels, str(cfg.workspaceNamesInBar ? R.string.ws_labels_names : R.string.ws_labels_numbers), r -> {
+            boolean names = !cfg.workspaceNamesInBar;
+            applyLive("workspaces", lLabels, j -> workspacesJson(j).put("labels", names ? "names" : "numbers"));
+            return true;
+        });
+        for (int n : cfg.workspaceOrder) {
+            p.add(cfg.workspaceName(n), String.valueOf(cfg.positionOf(n)), r -> push(workspacePage(n)));
+        }
+        for (int n = 1; n <= LauncherConfig.WORKSPACE_IDS.length; n++) {
+            final int ws = n;
+            if (!cfg.workspaceShown(ws)) p.add(cfg.workspaceName(ws), str(R.string.off), r -> push(workspacePage(ws)));
+        }
+        p.add(str(R.string.ws_reset), null, r -> {
+            applyLive("workspaces", str(R.string.ws_reset), j -> j.remove("workspaces"));
+            return false;
+        });
+        p.hint(str(R.string.ws_hint));
+        return p;
+    }
+
+    /** One workspace: move it left / right in the bar, hide it or show it again (at the end), rename it. Home can't be hidden. */
+    private AsciiMenu.Page workspacePage(int n) {
+        LauncherConfig cfg = LauncherConfig.get(this);
+        List<Integer> order = new ArrayList<>(cfg.workspaceOrder);
+        int pos = order.indexOf(n);
+        AsciiMenu.Page p = new AsciiMenu.Page(cfg.workspaceName(n));
+        if (pos > 0) p.add(str(R.string.ws_move_left), null, r -> saveWorkspaceOrder(n, order, () -> Collections.swap(order, pos, pos - 1)));
+        if (pos >= 0 && pos < order.size() - 1) p.add(str(R.string.ws_move_right), null, r -> saveWorkspaceOrder(n, order, () -> Collections.swap(order, pos, pos + 1)));
+        if (n != 1 && pos >= 0) p.add(str(R.string.ws_hide), null, r -> saveWorkspaceOrder(n, order, () -> order.remove(pos)));
+        if (pos < 0) p.add(str(R.string.ws_show), null, r -> saveWorkspaceOrder(n, order, () -> order.add(n)));
+        p.add(str(R.string.ws_rename), null, r -> {
+            handler.post(() -> renameWorkspaceDialog(n));
+            return false;
+        });
+        return p;
+    }
+
+    /** Applies {@code change} to {@code order}, saves it as "workspaces": {"order"} and reopens the list on workspace {@code n}. */
+    private boolean saveWorkspaceOrder(int n, List<Integer> order, Runnable change) {
+        change.run();
+        org.json.JSONArray names = new org.json.JSONArray();
+        for (int ws : order) names.put(LauncherConfig.workspaceId(ws));
+        applyLive("workspaces", LauncherConfig.get(this).workspaceName(n), j -> workspacesJson(j).put("order", names));
+        return false;
+    }
+
+    /** "workspaces": {"names"}: an empty name (or the id itself) goes back to the id. */
+    private void renameWorkspaceDialog(int n) {
+        String id = LauncherConfig.workspaceId(n);
+        android.widget.EditText e = new android.widget.EditText(this);
+        e.setSingleLine(true);
+        e.setText(LauncherConfig.get(this).workspaceName(n));
+        e.setSelection(e.getText().length());
+        e.setHint(id);
+        e.setInputType(android.text.InputType.TYPE_CLASS_TEXT | android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+        e.setFilters(new android.text.InputFilter[]{new android.text.InputFilter.LengthFilter(12)});
+        new android.app.AlertDialog.Builder(this)
+                .setTitle(str(R.string.ws_rename) + "  ·  " + id)
+                .setView(e)
+                .setPositiveButton(android.R.string.ok, (d, w) -> {
+                    String v = LauncherConfig.workspaceNamePart(e.getText().toString());
+                    boolean reset = v.isEmpty() || v.equals(id);
+                    applyLive("workspaces", reset ? id : v, j -> {
+                        org.json.JSONObject names = workspacesJson(j).optJSONObject("names");
+                        if (names == null) workspacesJson(j).put("names", names = new org.json.JSONObject());
+                        if (reset) names.remove(id);
+                        else names.put(id, v);
+                    });
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    /** omarchytv.json "workspaces", created when missing. */
+    private static org.json.JSONObject workspacesJson(org.json.JSONObject j) throws org.json.JSONException {
+        org.json.JSONObject w = j.optJSONObject("workspaces");
+        if (w == null) j.put("workspaces", w = new org.json.JSONObject());
+        return w;
     }
 
     /** v2.10 "Disponi riquadri": pick a home panel, move it with the D-pad (OK saves, Back cancels), or reset. */
@@ -2458,12 +2549,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             }
             // v2.10 workspaces: 1-5 jump, CH+/CH− next/previous (only reaches us while the launcher is in front).
             if (kc >= KeyEvent.KEYCODE_1 && kc <= KeyEvent.KEYCODE_5) {
-                if (e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0) setWorkspace(kc - KeyEvent.KEYCODE_0);
+                int n = LauncherConfig.get(this).workspaceAt(kc - KeyEvent.KEYCODE_0);   // the key is the bar position
+                if (e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0 && n > 0) setWorkspace(n);
                 return true;
             }
             if (kc == KeyEvent.KEYCODE_CHANNEL_UP || kc == KeyEvent.KEYCODE_CHANNEL_DOWN || kc == KeyEvent.KEYCODE_PAGE_UP || kc == KeyEvent.KEYCODE_PAGE_DOWN) {
                 boolean up = kc == KeyEvent.KEYCODE_CHANNEL_UP || kc == KeyEvent.KEYCODE_PAGE_DOWN;
-                if (e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0) setWorkspace(up ? workspace % 5 + 1 : (workspace + 3) % 5 + 1);
+                if (e.getAction() == KeyEvent.ACTION_DOWN && e.getRepeatCount() == 0) setWorkspace(LauncherConfig.get(this).nextWorkspace(workspace, up ? 1 : -1));
                 return true;
             }
             if (workspace != 1 && kc == KeyEvent.KEYCODE_BACK) {
@@ -3183,7 +3275,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener, T
             return;
         }
         if (hdmi.size() > 1) {
-            if (home != null) setWorkspace(2);
+            if (home != null && LauncherConfig.get(this).workspaceShown(2)) setWorkspace(2);
             else showInputs();
             return;
         }

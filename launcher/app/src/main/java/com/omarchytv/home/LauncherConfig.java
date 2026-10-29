@@ -189,6 +189,22 @@ final class LauncherConfig {
     /** "> tv" section with the single Live TV tile (omarchytv.json "tv": {"enabled": true}). */
     final boolean tvEnabled;
 
+    /** Workspace names for "workspaces": {"order"}, index + 1 = the workspace (1 home · 2 tv · 3 apps · 4 pc · 5 system). */
+    static final String[] WORKSPACE_IDS = {"home", "tv", "apps", "pc", "system"};
+
+    /**
+     * Workspaces in bar order (omarchytv.json "workspaces": {"order": ["home", "apps", "pc", "system"]}): the bar
+     * numbers them 1..n by position, the 1-5 keys and CH+/CH− follow it, and the ones left out are hidden.
+     * Default all five in their usual order; home is always kept (put first when missing).
+     */
+    final List<Integer> workspaceOrder;
+
+    /** The bar shows workspace names instead of numbers ("workspaces": {"labels": "names"}; default "numbers"). */
+    final boolean workspaceNamesInBar;
+
+    /** Renamed workspaces ("workspaces": {"names": {"pc": "cachy"}}), by workspace number; the rest use their id. */
+    private final java.util.Map<Integer, String> workspaceNames;
+
     /** omarchytv.json "barWeather": true puts icon + temperature in the bar, left of the status icons (default off). */
     final boolean barWeather;
 
@@ -470,6 +486,10 @@ final class LauncherConfig {
         voiceKey = j != null && "assistant".equals(j.optString("voiceKey")) ? "assistant" : "launcher";
         JSONObject tv = j != null ? j.optJSONObject("tv") : null;
         tvEnabled = tv == null || tv.optBoolean("enabled", true);
+        JSONObject workspaces = j != null ? j.optJSONObject("workspaces") : null;
+        workspaceOrder = Collections.unmodifiableList(workspaceOrder(workspaces));
+        workspaceNamesInBar = workspaces != null && "names".equals(workspaces.optString("labels"));
+        workspaceNames = Collections.unmodifiableMap(workspaceNames(workspaces));
         JSONObject rp = j != null ? j.optJSONObject("remotePanes") : null;
         String rpUrl = rp != null ? rp.optString("url", "").trim() : "";
         remotePanesUrl = rpUrl.startsWith("https://") && rpUrl.length() <= 512 ? rpUrl : "";
@@ -609,6 +629,71 @@ final class LauncherConfig {
     }
 
     /** Current config; re-parsed when the JSON file changed since the last call. Never throws. */
+    /** "workspaces": {"order"} as workspace numbers: known names once each, home first when left out. */
+    static List<Integer> workspaceOrder(JSONObject ws) {
+        JSONArray names = ws != null ? ws.optJSONArray("order") : null;
+        List<Integer> order = new ArrayList<>();
+        if (names == null) {
+            for (int n = 1; n <= WORKSPACE_IDS.length; n++) order.add(n);
+            return order;
+        }
+        for (int i = 0; i < names.length(); i++) {
+            int n = Arrays.asList(WORKSPACE_IDS).indexOf(names.optString(i).trim().toLowerCase(java.util.Locale.ROOT)) + 1;
+            if (n > 0 && !order.contains(n)) order.add(n);
+        }
+        if (!order.contains(1)) order.add(0, 1);
+        return order;
+    }
+
+    /** "workspaces": {"names"} by workspace number: known ids only, names cleaned by {@link #workspaceNamePart}. */
+    static java.util.Map<Integer, String> workspaceNames(JSONObject ws) {
+        JSONObject names = ws != null ? ws.optJSONObject("names") : null;
+        java.util.Map<Integer, String> out = new java.util.HashMap<>();
+        for (int n = 1; names != null && n <= WORKSPACE_IDS.length; n++) {
+            String v = workspaceNamePart(names.optString(WORKSPACE_IDS[n - 1], ""));
+            if (!v.isEmpty()) out.put(n, v);
+        }
+        return out;
+    }
+
+    /** A workspace name as typed: control characters dropped, trimmed, at most 12 characters ("" = use the id). */
+    static String workspaceNamePart(String raw) {
+        String v = raw == null ? "" : raw.replaceAll("\\p{Cntrl}", "").trim();
+        return v.length() > 12 ? v.substring(0, 12).trim() : v;
+    }
+
+    /** The name shown for workspace {@code n}: its custom name, else its id. */
+    String workspaceName(int n) {
+        String v = workspaceNames.get(n);
+        return v != null ? v : workspaceId(n);
+    }
+
+    static String workspaceId(int n) {
+        return n >= 1 && n <= WORKSPACE_IDS.length ? WORKSPACE_IDS[n - 1] : "";
+    }
+
+    boolean workspaceShown(int n) {
+        return workspaceOrder.contains(n);
+    }
+
+    /** The workspace at bar position {@code pos} (1-based), or 0 when there is none. */
+    int workspaceAt(int pos) {
+        return pos >= 1 && pos <= workspaceOrder.size() ? workspaceOrder.get(pos - 1) : 0;
+    }
+
+    /** Bar position (1-based) of workspace {@code n}, or 0 when it's hidden. */
+    int positionOf(int n) {
+        return workspaceOrder.indexOf(n) + 1;
+    }
+
+    /** The workspace next to {@code from} in bar order, {@code step} ±1, wrapping around; home when it's hidden. */
+    int nextWorkspace(int from, int step) {
+        int pos = positionOf(from);
+        if (pos == 0) return 1;
+        int count = workspaceOrder.size();
+        return workspaceOrder.get(((pos - 1 + step) % count + count) % count);
+    }
+
     static synchronized LauncherConfig get(Context c) {
         Context app = c.getApplicationContext();
         File f = file(app);
