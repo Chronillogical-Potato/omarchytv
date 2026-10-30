@@ -73,7 +73,7 @@ window.addEventListener('mousedown',dismiss,true);
     var homageOk=false;
     if(variant!=='classic'&&window.OmarchyHomage){
       try{
-        var hz=window.OmarchyHomage.run(aqc,S,{soundOn:aqSoundOn});
+        var hz=window.OmarchyHomage.run(aqc,S,{soundOn:aqSoundOn,renderScale:(window.tizen||window.OMARCHY_PLATFORM==='tizen')?0.5:1}); // half-res only on Samsung Tizen (#60)
         toggleAqSound=function(){aqSoundOn=hz.toggleSound();};
         homageOk=true;
       }catch(err){log('homage aquarium failed, falling back to classic: '+err.message);}

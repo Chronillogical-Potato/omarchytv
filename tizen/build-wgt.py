@@ -31,7 +31,11 @@ for prefix, source in [("fonts", main / "res/font"), ("wallpapers", main / "asse
                        ("licenses", main / "assets/licenses"), ("saver", main / "assets/saver")]:
     for path in source.rglob("*"):
         if path.is_file() and (prefix != "fonts" or path.suffix == ".ttf"):
-            payload[prefix + "/" + path.relative_to(source).as_posix()] = path.read_bytes()
+            name = prefix + "/" + path.relative_to(source).as_posix()
+            # Like webos/build-ipk.sh, keep the shared web app's saver/index.html (the webOS page with the
+            # Aquarium); the Android page has no Aquarium and the wrong font path.
+            if name != "saver/index.html" or name not in payload:
+                payload[name] = path.read_bytes()
 icons = (root / "webos/build-ipk.sh").read_text()
 for marker, name in [("B64_ICON", "icon.png"), ("B64_LARGE", "largeIcon.png"), ("B64_SPLASH", "splash.png")]:
     match = re.search(r"<< '" + marker + r"'[^\n]*\n(.*?)\n" + marker, icons, re.S)

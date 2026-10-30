@@ -234,6 +234,8 @@
     var soundOn = opts.soundOn !== false, actx = null, graph = null, songOff = 0, schedTo = 0, timer = null, hudBoost = 0;
     var cw = 17, ch = 30, fs = 26, W = 1920, H = 1080, lastDraw = 0, lastSec = 0;
     var lensBuf = document.createElement('canvas'), lctx = lensBuf.getContext('2d');
+    // <1 draws the scene at a lower internal resolution and lets CSS stretch it to fullscreen (slow TV CPUs).
+    var rs = opts.renderScale > 0 && opts.renderScale <= 1 ? opts.renderScale : 1;
 
     function pal() {
       var p = (S && S.palette && S.palette()) || {};
@@ -619,7 +621,8 @@
       // 30 fps cap: it's a screensaver. 25 ms draws on every other 60 Hz frame; 31 ms sometimes skipped two.
       if (opts.capFps !== 0 && now - lastDraw < 25) { G.requestAnimationFrame(frame); return; }
       var sec = (now - startMs) / 1000, dt = clamp(sec - lastSec, 0, 0.1); lastSec = sec; lastDraw = now;
-      if (cv.width !== (G.innerWidth || 1920) || cv.height !== (G.innerHeight || 1080)) { cv.width = G.innerWidth || 1920; cv.height = G.innerHeight || 1080; glyphs = {}; glyphN = 0; }
+      var tw = Math.round((G.innerWidth || 1920) * rs), th = Math.round((G.innerHeight || 1080) * rs);
+      if (cv.width !== tw || cv.height !== th) { cv.width = tw; cv.height = th; glyphs = {}; glyphN = 0; chunkImgs = {}; }
       W = cv.width; H = cv.height; cw = W / COLS; ch = H / ROWS; fs = Math.min(cw * 1.65, ch * 0.88);
       // Re-read the palette every 5 s, but only drop the glyph cache when it changed: rebuilding every
       // glyph each time caused a visible pause.
