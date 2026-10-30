@@ -22,7 +22,7 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
       ws4_heading: "Connect Omarchy Linux",
       ws4_desc: "Pair the PC over LAN HTTP (http://<pc-ip>:8765/v1/status) to see live CPU/RAM, AI credits and deploys on LG webOS.",
       sys_webos: "webOS TV settings", sys_themes: "Themes", sys_trans: "Transparency", sys_widgets: "Home widgets",
-      sys_arrange: "Arrange panels", sys_saver: "Screensaver", sys_saver_idle: "Start screensaver after",
+      sys_arrange: "Arrange panels", sys_saver: "Screensaver", sys_text_size: "Text size", ts_small: "Small", ts_normal: "Normal", ts_large: "Large", ts_xlarge: "Extra large", sys_saver_idle: "Start screensaver after",
       walker_none: "no matching apps",
       sys_logo_anim: "Animated logo", sys_text_tiles: "Text tiles (terminal style)", sys_all: "All OmarchyTV settings", sys_about: "About & licences",
       tile_move: "Move", tile_hide: "Hide", tile_cancel: "Cancel", move_hint: "◀▶▲▼ move · OK save · Back cancel",
@@ -50,7 +50,7 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
       ws4_heading: "Collega Omarchy Linux",
       ws4_desc: "Abbina il PC via HTTP LAN (http://<ip-pc>:8765/v1/status) per vedere stato, crediti IA e deploy qui.",
       sys_webos: "Impostazioni TV webOS", sys_themes: "Temi", sys_trans: "Trasparenza", sys_widgets: "Widget della Home",
-      sys_arrange: "Disponi pannelli", sys_saver: "Salvaschermo", sys_saver_idle: "Avvia salvaschermo dopo",
+      sys_arrange: "Disponi pannelli", sys_saver: "Salvaschermo", sys_text_size: "Dimensione testo", ts_small: "Piccolo", ts_normal: "Normale", ts_large: "Grande", ts_xlarge: "Molto grande", sys_saver_idle: "Avvia salvaschermo dopo",
       walker_none: "nessuna app trovata",
       sys_logo_anim: "Logo animato", sys_text_tiles: "Tile solo testo (stile terminale)", sys_all: "Tutte le impostazioni OmarchyTV", sys_about: "Info e licenze",
       tile_move: "Sposta", tile_hide: "Nascondi", tile_cancel: "Annulla", move_hint: "◀▶▲▼ sposta · OK salva · Indietro annulla",
@@ -78,7 +78,7 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
       ws4_heading: "Omarchy Linux verbinden",
       ws4_desc: "Koppeln Sie den PC über LAN HTTP (http://<pc-ip>:8765/v1/status), um Status, KI-Guthaben und Deploys anzuzeigen.",
       sys_webos: "webOS TV-Einstellungen", sys_themes: "Themen", sys_trans: "Transparenz", sys_widgets: "Startseiten-Widgets",
-      sys_arrange: "Panels anordnen", sys_saver: "Bildschirmschoner", sys_saver_idle: "Bildschirmschoner starten nach",
+      sys_arrange: "Panels anordnen", sys_saver: "Bildschirmschoner", sys_text_size: "Textgröße", ts_small: "Klein", ts_normal: "Normal", ts_large: "Groß", ts_xlarge: "Sehr groß", sys_saver_idle: "Bildschirmschoner starten nach",
       walker_none: "keine passende App",
       sys_logo_anim: "Animiertes Logo", sys_text_tiles: "Text-Kacheln (Terminal-Stil)", sys_all: "Alle OmarchyTV-Einstellungen", sys_about: "Info & Lizenzen",
       tile_move: "Verschieben", tile_hide: "Ausblenden", tile_cancel: "Abbrechen", move_hint: "◀▶▲▼ verschieben · OK speichern · Zurück abbrechen",
@@ -113,6 +113,7 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
     logoAnim: true,
     textTiles: false,
     tvEnabled: true,
+    textScale: 1,         // launcher text size: 0.9 / 1 (default) / 1.15 / 1.3, CSS var --ts
     saverIdleMin: 2.5,
     saverMode: "aquarium",
     saverArt: "aquarium",
@@ -315,6 +316,19 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
       cyan: t.cyan || n.cyan || "#7dcfff"
     };
   }
+
+  var TEXT_SCALES = [[0.9, "ts_small"], [1, "ts_normal"], [1.15, "ts_large"], [1.3, "ts_xlarge"]];
+  function textScaleLabel() {
+    for (var i = 0; i < TEXT_SCALES.length; i++) if (TEXT_SCALES[i][0] === cfg.textScale) return tr(TEXT_SCALES[i][1]) + " " + Math.round(cfg.textScale * 100) + "%";
+    return Math.round(cfg.textScale * 100) + "%";
+  }
+  // Every font-size in index.html and the tiles is calc(Npx * var(--ts, 1)), so this scales all launcher text.
+  function applyTextScale() {
+    var ok = TEXT_SCALES.some(function (t) { return t[0] === cfg.textScale; });
+    if (!ok) cfg.textScale = 1;
+    try { document.documentElement.style.setProperty("--ts", String(cfg.textScale)); } catch (e) {}
+  }
+  applyTextScale();
 
   function applyTheme() {
     var t = currentThemeObj();
@@ -650,7 +664,7 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
       return '<div class="tile-banner" style="background:var(--t-bg-alt);">' +
         '<svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="var(--t-accent)" stroke-width="2">' +
         '<rect x="2" y="3" width="20" height="14"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>' +
-        '<div style="font-size:28px;font-weight:700;color:var(--t-fg-bright);margin-top:6px;">' + app.name + '</div></div>';
+        '<div style="font-size:calc(28px * var(--ts, 1));font-weight:700;color:var(--t-fg-bright);margin-top:6px;">' + app.name + '</div></div>';
     }
     // Tizen: the app's own installed icon wins over text tiles; if every candidate breaks, a generic app icon + name.
     if (app.iconPaths) {
@@ -665,7 +679,7 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
       return '<div class="tile-banner" style="background:var(--t-bg-alt);"><div class="tile-text-only">' + app.name + '</div></div>';
     }
     return '<div class="tile-banner" style="background:' + (app.bg || "var(--t-bg-alt)") + ';">' +
-      '<div style="font-size:30px;font-weight:700;letter-spacing:1.2px;color:' + (app.fg || "var(--t-fg-bright)") + ';">' + (app.sub || app.name) + '</div>' +
+      '<div style="font-size:calc(30px * var(--ts, 1));font-weight:700;letter-spacing:1.2px;color:' + (app.fg || "var(--t-fg-bright)") + ';">' + (app.sub || app.name) + '</div>' +
       '</div>';
   }
 
@@ -827,6 +841,11 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
         var opts = [1, 2.5, 5, 10, 0];
         cfg.saverIdleMin = opts[(opts.indexOf(cfg.saverIdleMin) + 1) % opts.length];
         saveCfg(); renderAll();
+      } },
+      { label: tr("sys_text_size"), val: textScaleLabel(), act: function () {
+        var i = 0; while (i < TEXT_SCALES.length && TEXT_SCALES[i][0] !== cfg.textScale) i++;
+        cfg.textScale = TEXT_SCALES[(i + 1) % TEXT_SCALES.length][0];
+        applyTextScale(); saveCfg(); renderAll();
       } },
       { label: tr("sys_logo_anim"), val: cfg.logoAnim ? "on" : "off", act: function () { cfg.logoAnim = !cfg.logoAnim; saveCfg(); renderAll(); animateLogo(); } },
       { label: tr("sys_text_tiles"), val: cfg.textTiles ? "on" : "off", act: function () { cfg.textTiles = !cfg.textTiles; saveCfg(); renderAll(); } },

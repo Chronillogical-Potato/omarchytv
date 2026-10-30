@@ -113,7 +113,7 @@ html, body {
   align-items: center;
   justify-content: center;
   padding: 0 11px;
-  font-size: 20px;
+  font-size: calc(20px * var(--ts, 1));
   color: var(--t-fg-dim);
   cursor: pointer;
   position: relative;
@@ -139,7 +139,7 @@ html, body {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 22px;
+  font-size: calc(22px * var(--ts, 1));
   color: var(--t-fg-bright);
   letter-spacing: 0.3px;
   white-space: nowrap;
@@ -186,7 +186,7 @@ html, body {
   top: 58px;
   right: 32px;
   padding: 6px 14px;
-  font-size: 17px;
+  font-size: calc(17px * var(--ts, 1));
   color: var(--t-fg-bright);
   background: var(--popup-bg);
   border: 2px solid var(--t-accent);
@@ -236,7 +236,7 @@ html, body {
 
 .box-legend {
   padding: 0 8px;
-  font-size: 19px;
+  font-size: calc(19px * var(--ts, 1));
   line-height: 1;
   color: var(--t-cyan);
   white-space: nowrap;
@@ -261,7 +261,7 @@ html, body {
 }
 
 #term-prompt {
-  font-size: 20px;
+  font-size: calc(20px * var(--ts, 1));
   line-height: 1.3;
   white-space: pre;
 }
@@ -279,7 +279,7 @@ html, body {
 
 #term-logo {
   padding-top: 8px;
-  font-size: 8px;
+  font-size: calc(8px * var(--ts, 1));
   line-height: 1.15;
   color: var(--t-accent);
   white-space: pre;
@@ -288,7 +288,7 @@ html, body {
 
 #term-info {
   padding-top: 10px;
-  font-size: 20px;
+  font-size: calc(20px * var(--ts, 1));
   line-height: 1.32;
   white-space: pre;
 }
@@ -325,14 +325,14 @@ html, body {
 }
 
 #wx-temp {
-  font-size: 50px;
+  font-size: calc(50px * var(--ts, 1));
   line-height: 1.08;
   color: var(--t-accent);
   margin-top: 2px;
 }
 
 #wx-line1, #wx-line2 {
-  font-size: 19px;
+  font-size: calc(19px * var(--ts, 1));
   line-height: 1.35;
   color: var(--t-fg);
   white-space: nowrap;
@@ -345,7 +345,7 @@ html, body {
 }
 
 .widget-body-text {
-  font-size: 20px;
+  font-size: calc(20px * var(--ts, 1));
   line-height: 1.38;
   color: var(--t-fg-dim);
   white-space: pre-line;
@@ -370,13 +370,13 @@ html, body {
 }
 
 .win-title {
-  font-size: 30px;
+  font-size: calc(30px * var(--ts, 1));
   font-weight: 700;
   color: var(--t-accent);
 }
 
 .win-hint {
-  font-size: 18px;
+  font-size: calc(18px * var(--ts, 1));
   color: var(--t-fg);
 }
 
@@ -431,7 +431,7 @@ html, body {
 }
 
 .app-tile .tile-text-only {
-  font-size: 23px;
+  font-size: calc(23px * var(--ts, 1));
   font-weight: 700;
   color: var(--t-fg-bright);
   text-align: center;
@@ -511,7 +511,7 @@ html, body {
   align-items: center;
   justify-content: center;
   padding: 12px 24px;
-  font-size: 22px;
+  font-size: calc(22px * var(--ts, 1));
   color: var(--t-fg-bright);
   background: transparent;
   border: 2px solid var(--t-muted);
@@ -539,7 +539,7 @@ html, body {
   align-items: center;
   justify-content: space-between;
   padding: 13px 20px;
-  font-size: 22px;
+  font-size: calc(22px * var(--ts, 1));
   border: 2px solid transparent;
   cursor: pointer;
 }
@@ -568,7 +568,7 @@ html, body {
   left: 50%;
   transform: translateX(-50%);
   padding: 12px 28px;
-  font-size: 22px;
+  font-size: calc(22px * var(--ts, 1));
   color: var(--t-accent);
   background: var(--popup-bg);
   border: 3px solid var(--t-accent);
@@ -604,14 +604,14 @@ html, body {
 }
 
 #modal-title {
-  font-size: 24px;
+  font-size: calc(24px * var(--ts, 1));
   font-weight: 700;
   color: var(--t-accent);
   margin-bottom: 12px;
 }
 
 #modal-sub {
-  font-size: 18px;
+  font-size: calc(18px * var(--ts, 1));
   color: var(--t-fg-dim);
   margin-bottom: 14px;
   white-space: pre-line;
@@ -628,7 +628,7 @@ html, body {
   border: 2px solid var(--t-accent);
   color: var(--t-fg-bright);
   font-family: 'CaskaydiaMono', monospace;
-  font-size: 22px;
+  font-size: calc(22px * var(--ts, 1));
   padding: 10px 14px;
   outline: none;
 }
@@ -646,7 +646,7 @@ html, body {
   align-items: center;
   justify-content: space-between;
   padding: 11px 16px;
-  font-size: 21px;
+  font-size: calc(21px * var(--ts, 1));
   color: var(--t-fg);
   border-left: 4px solid transparent;
   cursor: pointer;
@@ -654,7 +654,7 @@ html, body {
 
 .modal-item .mi-right {
   color: var(--t-cyan);
-  font-size: 19px;
+  font-size: calc(19px * var(--ts, 1));
 }
 
 .modal-item.focused {
@@ -674,7 +674,7 @@ html, body {
   border: 2px solid var(--t-accent);
   color: var(--t-fg-bright);
   padding: 12px 26px;
-  font-size: 20px;
+  font-size: calc(20px * var(--ts, 1));
   z-index: 200;
   display: none;
 }
@@ -707,9 +707,9 @@ html, body {
 #yt-embed.open{display:block;}
 #yt-embed iframe{position:absolute;left:0;top:0;width:100%;height:86%;border:0;}
 #yt-embed-rail{position:absolute;left:0;right:0;bottom:44px;text-align:center;}
-.yt-chip{display:inline-block;margin:0 6px;padding:6px 14px;border:1px solid var(--t-accent2);color:var(--t-fg);font-size:16px;}
+.yt-chip{display:inline-block;margin:0 6px;padding:6px 14px;border:1px solid var(--t-accent2);color:var(--t-fg);font-size:calc(16px * var(--ts, 1));}
 .yt-chip.focused{background:var(--t-accent);color:var(--t-bg);}
-.yt-note{position:absolute;left:0;right:0;bottom:12px;text-align:center;color:var(--t-fg);opacity:.6;font-size:14px;}
+.yt-note{position:absolute;left:0;right:0;bottom:12px;text-align:center;color:var(--t-fg);opacity:.6;font-size:calc(14px * var(--ts, 1));}
 @keyframes gbBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 #grokbot-companion{animation:gbBob 4.2s ease-in-out infinite;}
 .extra-focused{outline:3px solid var(--t-accent);outline-offset:4px;box-shadow:0 0 18px var(--t-accent);}
@@ -743,7 +743,7 @@ html, body {
 
     <div id="bar-right">
       <!-- SpaceX TV Top-Bar Countdown Pill (Sighmon MIT plugin) -->
-      <div id="spacex-pill" style="display:inline-flex;align-items:center;padding:4px 12px;margin-right:10px;border:1px solid var(--t-accent);background:var(--t-bg-alt);color:var(--t-accent);font-size:15px;font-weight:700;cursor:pointer;" title="SpaceX TV (Sighmon)">🚀 Starship · T-02:14:00</div>
+      <div id="spacex-pill" style="display:inline-flex;align-items:center;padding:4px 12px;margin-right:10px;border:1px solid var(--t-accent);background:var(--t-bg-alt);color:var(--t-accent);font-size:calc(15px * var(--ts, 1));font-weight:700;cursor:pointer;" title="SpaceX TV (Sighmon)">🚀 Starship · T-02:14:00</div>
       <!-- Cinemarchy Hub -->
       <div class="bar-icon-btn" data-bar-idx="6" data-action="cinemarchy" title="Cinemarchy Hub (C)">
         <svg viewBox="0 0 24 24">
@@ -862,8 +862,8 @@ html, body {
 
     <!-- Omarchy Grok Bot Desktop Companion (@tcballard MIT plugin) -->
     <div id="grokbot-companion" class="box" style="position:absolute;right:48px;bottom:340px;padding:10px 18px;border:1px solid var(--t-accent2);background:var(--popup-bg);cursor:pointer;z-index:15;" title="Omarchy Grok Bot Desktop Companion (@tcballard)">
-      <div id="grokbot-eyes" style="font-size:18px;font-weight:700;color:var(--t-accent2);">[ ◉ ◉ ] grokbot</div>
-      <div id="grokbot-sub" style="font-size:14px;color:var(--t-fg);margin-top:3px;">@tcballard · ready</div>
+      <div id="grokbot-eyes" style="font-size:calc(18px * var(--ts, 1));font-weight:700;color:var(--t-accent2);">[ ◉ ◉ ] grokbot</div>
+      <div id="grokbot-sub" style="font-size:calc(14px * var(--ts, 1));color:var(--t-fg);margin-top:3px;">@tcballard · ready</div>
     </div>
   </div>
 
@@ -904,12 +904,12 @@ html, body {
     </div>
     <div id="ws4-content">
       <div class="win-title" id="ws4-heading">Connect Omarchy Linux</div>
-      <div id="ws4-desc" style="font-size:20px;color:var(--t-fg);line-height:1.45;">Pair the PC to see its status, AI credits and deploys here.</div>
+      <div id="ws4-desc" style="font-size:calc(20px * var(--ts, 1));color:var(--t-fg);line-height:1.45;">Pair the PC to see its status, AI credits and deploys here.</div>
       <div style="display:flex;gap:16px;margin-top:8px;">
         <div class="ws4-btn" id="ws4-pair-btn" data-ws4-idx="0">[ pair ]</div>
         <div class="ws4-btn" id="ws4-demo-btn" data-ws4-idx="1">[ simulate connected PC ]</div>
       </div>
-      <div id="ws4-live-details" style="margin-top:18px;font-size:20px;line-height:1.5;white-space:pre-line;color:var(--t-fg);"></div>
+      <div id="ws4-live-details" style="margin-top:18px;font-size:calc(20px * var(--ts, 1));line-height:1.5;white-space:pre-line;color:var(--t-fg);"></div>
     </div>
   </div>
 
