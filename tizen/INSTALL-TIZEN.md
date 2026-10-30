@@ -91,6 +91,10 @@ its type and number, then opens Samsung's native viewer. The TV row selects the
 tuner source instead of reopening the last HDMI input. Connected labels describe
 the source catalogue, not a guarantee that an attached device is powered on.
 
+## Text size (new in `2.13.2-testing`)
+
+**Bigger text on LG webOS and Samsung Tizen:** launcher text can now be enlarged from **Settings > System > Text size**: Small 90%, Normal 100% (default), Large 115% and Extra large 130%. It applies to the whole launcher, it is saved across restarts, and it is translated in English, Italian and German. The Samsung widget uses the same shared app, so the option is identical to webOS.
+
 ## Remote keys and optional integrations
 
 Arrows and OK navigate and open items. Return goes back. Number, colour, channel,

@@ -154,6 +154,10 @@ omarchy-tv webos-serve --port 8765
 
 ---
 
+## Text size (new in `2.13.2-testing`)
+
+**Bigger text on LG webOS and Samsung Tizen:** launcher text can now be enlarged from **Settings > System > Text size**: Small 90%, Normal 100% (default), Large 115% and Extra large 130%. It applies to the whole launcher, it is saved across restarts, and it is translated in English, Italian and German.
+
 ## Controls on LG Magic Remote / Standard IR Remote
 
 - **Down from the app row:** reaches the Grok Bot companion in the corner, then **Right** for the SpaceX TV pill. **OK** opens it, **Up** goes back. The **Blue** key also opens the companion chat.

@@ -75,6 +75,14 @@ All releases are on **[GitHub Releases](https://github.com/piermark/omarchytv/re
 
 ---
 
+## What's New in `2.13.2-testing` (LG webOS + Samsung Tizen)
+
+- **Bigger text on LG webOS and Samsung Tizen:** launcher text can now be enlarged on both TVs from **Settings > System > Text size**: Small 90%, Normal 100% (default), Large 115% and Extra large 130%. It applies to the whole launcher, it is saved across restarts, and it is translated in English, Italian and German.
+- **Crisp Cinemarchy and OMARCHY logos:** the block-art logos are now drawn as vector graphics, so they stay sharp at 1080p and 720p.
+- **Lighter screensaver on Samsung:** on Tizen the Aquarium renders at half resolution (it still fills the screen), thanks to the first Samsung test by Wes (@wesleygrimes, #60). webOS stays at full resolution.
+- **Samsung Tizen improvements** by @fraction12 (#61): installed-app discovery with native artwork, and real TV/HDMI source switching.
+- **Smoother Aquarium screensaver** by @jdtimothy: fewer pauses and audio dropouts, fixed End Credits (#62), and the ducks no longer teleport (#63).
+
 ## What's New in `2.13.0-beta` (`versionCode 21`, pre-release)
 
 - **Default Aquarium screensaver: "asciiquarium × Second Reality" homage + 4-channel tracker audio:** the default screensaver (`saverArt = "aquarium"`, sound on by default, `M` toggles mute) is now a small demo in five parts that loop: **Surface** (ship with OMARCHY on the hull, whale and spout, ducks), **Descent**, **Mid waters** (porthole lens, copper bars, the moving OMARCHY castle), **Abyss** (translucent glenz vector, angler fish, leviathan) and an **end credits** scroller with greetz. Many fish species swim in depth lanes with parallax, fish breathe bubbles, and a shark eats fish. The depth header and the right ruler show the same depth. The palette comes from the current Omarchy theme. Audio is my own 4-channel tracker-style tune at 48 kHz stereo, with tracker panning (L R R L), click-free envelopes, per-part variations, an ambient abyss, and VU meters fed by the real channel levels. For burn-in, the whole picture shifts a few pixels slowly, the HUD fades in and out, and nothing stays still. Rendering is capped at 30 fps.
@@ -282,10 +290,10 @@ Full PC plugin documentation: **[pc-plugin/README.md](pc-plugin/README.md)** and
 
 ---
 
-### 5. LG webOS and Samsung Tizen TVs — Experimental (webOS `2.13.1-testing`, Tizen `2.13.0-testing`)
+### 5. LG webOS and Samsung Tizen TVs — Experimental (`2.13.2-testing` for both)
 - **LG webOS:** `omarchytv-webos-2.13.1-testing.ipk`. Install guide: **[webos/INSTALL-WEBOS.md](webos/INSTALL-WEBOS.md)**.
 - **Samsung Tizen:** `OmarchyTV-tizen-2.13.0-beta-unsigned.wgt` is unsigned: sign it with your own Samsung certificate in Tizen Studio before installing. Guide: **[tizen/INSTALL-TIZEN.md](tizen/INSTALL-TIZEN.md)**.
-- Both share the same web app (`webos/app`), including Cinemarchy 0.1.0-alpha, the Grok Bot companion (Blue key), the plugin marketplace and both Aquariums.
+- Both share the same web app (`webos/app`), including the new **Settings > System > Text size** option (90/100/115/130%), Cinemarchy 0.1.0-alpha, the Grok Bot companion (Blue key), the plugin marketplace and both Aquariums.
 
 ---
 

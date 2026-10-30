@@ -3,7 +3,7 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
 (function () {
   "use strict";
 
-  var DATA = window.OMARCHY_DATA || { version: "2.13.0-beta", themes: {}, wallpapers: {}, logo: "OMARCHY TV", notice: "" };
+  var DATA = window.OMARCHY_DATA || { version: "2.13.2-testing", themes: {}, wallpapers: {}, logo: "OMARCHY TV", notice: "" };
   var START_TIME = Date.now() - (42 * 60 * 1000); // default 42m uptime look
 
   var STRINGS = {
@@ -505,7 +505,7 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
       '<span style="color:' + t.accent + '">' + tr("term_theme") + '</span><span style="color:' + t.fg + '">' + cfg.theme + '</span>\n' +
       '<span style="color:' + t.accent + '">' + tr("term_net") + '</span><span style="color:' + t.fg + '">Wi-Fi</span>\n' +
       '<span style="color:' + t.accent + '">' + tr("term_up") + '</span><span style="color:' + t.fg + '">' + upStr + '</span>' +
-      '<span style="color:' + t.fgDim + '"> · 2.13.0-beta</span>';
+      '<span style="color:' + t.fgDim + '"> · 2.13.2-testing</span>';
   }
 
   function fmtTemp(c) {
@@ -574,7 +574,7 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
       aiBody.style.color = "var(--t-fg)";
       aiBody.textContent = formatAiPane(s);
       if (ws4Live) {
-        ws4Live.textContent = "Connected to " + (s.host || "omarchy-pc") + " (" + (cfg.pcHost || "simulated LAN link") + ")\nCPU: " + s.cpu + "% · RAM: " + s.ram + "% · GPU: " + (s.gpu || "18%") + "\nDeploys: " + (s.deploy || "omarchytv-webos 2.13.0-beta ✓");
+        ws4Live.textContent = "Connected to " + (s.host || "omarchy-pc") + " (" + (cfg.pcHost || "simulated LAN link") + ")\nCPU: " + s.cpu + "% · RAM: " + s.ram + "% · GPU: " + (s.gpu || "18%") + "\nDeploys: " + (s.deploy || "omarchytv-webos 2.13.2-testing ✓");
       }
     } else {
       pcBody.style.color = "var(--t-fg-dim)";
@@ -850,7 +850,7 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
       { label: tr("sys_logo_anim"), val: cfg.logoAnim ? "on" : "off", act: function () { cfg.logoAnim = !cfg.logoAnim; saveCfg(); renderAll(); animateLogo(); } },
       { label: tr("sys_text_tiles"), val: cfg.textTiles ? "on" : "off", act: function () { cfg.textTiles = !cfg.textTiles; saveCfg(); renderAll(); } },
       { label: tr("sys_all"), val: "›", act: openAllSettingsModal },
-      { label: tr("sys_about"), val: "2.13.0-beta ›", act: openAboutModal }
+      { label: tr("sys_about"), val: "2.13.2-testing ›", act: openAboutModal }
     ];
   }
 
@@ -1191,7 +1191,7 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
       state.keepLoaded = null;   // checking
       keepRefresh(function () { if (state.modalOpen) openAllSettingsModal(true); });
     }
-    openModal(tr("sys_all"), "OmarchyTV 2.13.0-beta (LG webOS)", [
+    openModal(tr("sys_all"), "OmarchyTV 2.13.2-testing", [
       { label: "Language", right: cfg.lang || "auto", act: function () {
         var l = ["", "en", "it", "de"];
         cfg.lang = l[(l.indexOf(cfg.lang) + 1) % l.length];
@@ -1301,12 +1301,12 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
   }
 
   function openAboutModal() {
-    var sub = "OmarchyTV 2.13.0-beta for LG webOS (community testing — NOT a beta)\n" +
+    var sub = "OmarchyTV 2.13.2-testing for LG webOS and Samsung Tizen (community testing — NOT a beta)\n" +
       "Based on OmarchyTV v2.13.0-beta for Android TV by Marco Porro (MIT License).\n" +
       "Includes " + Object.keys(DATA.themes).length + " Omarchy themes, " + [].concat.apply([], Object.keys(DATA.wallpapers).map(function (t) { return DATA.wallpapers[t]; })).length +
       " wallpapers (MIT, and 'Liftoff Sunset' by Tom Ballard), and 37 tte.js effects.";
     openModal(tr("sys_about"), sub, [
-      { label: "Version", right: "2.13.1-testing (webOS)", act: closeModal },
+      { label: "Version", right: "2.13.2-testing", act: closeModal },
       { label: "Android base release", right: "2.13.0-beta", act: closeModal },
       { label: "Wallpaper credit (tokyo-night)", right: "Liftoff Sunset — Tom Ballard", act: closeModal },
       { label: "Close", right: "ESC / Back", act: closeModal }
@@ -1639,7 +1639,7 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
   }
 
   function openOmarchyMenu() {
-    openModal("Omarchy Menu", "OmarchyTV 2.13.0-beta (LG webOS)", [
+    openModal("Omarchy Menu", "OmarchyTV 2.13.2-testing", [
       { label: "🎬 Cinemarchy (Media, Streaming, Live TV & Snippets)", right: "C ›", act: function () { openCinemarchyModal(0); } },
       { label: "🧩 " + tr("sys_plugins"), right: ((cfg.pluginSpacexTv ? 1 : 0) + (cfg.pluginGrokbot ? 1 : 0)) + " on ›", act: openPluginsModal },
       { label: "Walker (app launcher)", right: "›", act: openWalkerModal },
@@ -1656,7 +1656,7 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
         if (row) row.right = cfg.aiCredits === "dollars" ? "dollars" : "percent";
         renderModalList();
       } },
-      { label: tr("sys_about"), right: "2.13.0-beta", act: openAboutModal }
+      { label: tr("sys_about"), right: "2.13.2-testing", act: openAboutModal }
     ]);
   }
 
