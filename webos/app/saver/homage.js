@@ -600,11 +600,18 @@
 
     function frame() {
       var now = Date.now();
-      if (opts.capFps !== 0 && now - lastDraw < 31) { G.requestAnimationFrame(frame); return; } // 30 fps cap: it's a screensaver
+      // 30 fps cap: it's a screensaver. 25 ms draws on every other 60 Hz frame; 31 ms sometimes skipped two.
+      if (opts.capFps !== 0 && now - lastDraw < 25) { G.requestAnimationFrame(frame); return; }
       var sec = (now - startMs) / 1000, dt = clamp(sec - lastSec, 0, 0.1); lastSec = sec; lastDraw = now;
       if (cv.width !== (G.innerWidth || 1920) || cv.height !== (G.innerHeight || 1080)) { cv.width = G.innerWidth || 1920; cv.height = G.innerHeight || 1080; glyphs = {}; glyphN = 0; }
       W = cv.width; H = cv.height; cw = W / COLS; ch = H / ROWS; fs = Math.min(cw * 1.65, ch * 0.88);
-      if (sec - palT > 5) { T = pal(); palT = sec; glyphs = {}; glyphN = 0; }
+      // Re-read the palette every 5 s, but only drop the glyph cache when it changed: rebuilding every
+      // glyph each time caused a visible pause.
+      if (sec - palT > 5) {
+        var np = pal(); palT = sec;
+        if (JSON.stringify(np) !== JSON.stringify(T)) { glyphs = {}; glyphN = 0; }
+        T = np;
+      }
       var k = Math.floor(sec / partSec), part = k % 5, fr = (sec - k * partSec) / partSec, depth = depthAt(sec, partSec); lastDepth = depth;
       simulate(dt, sec, part, fr);
       // whole-scene pixel shift: a few px per minute so nothing sits on the same OLED pixels for long
