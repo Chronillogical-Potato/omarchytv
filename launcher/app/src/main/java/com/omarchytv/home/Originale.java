@@ -93,7 +93,13 @@ final class Originale {
             String home = last(a.shell(HOME_Q));
             if (!home.startsWith(c.getPackageName() + "/")) {
                 for (String pkg : enabled) a.shell("pm enable --user 0 " + pkg);   // never leave the TV without a home
-                return false;
+                // Google TV / Philips (#57, #22): set-home-activity is ignored there and the stock home stays the
+                // system default, so the check above can never pass. The HomeOverride accessibility service is what
+                // brings OmarchyTV up on those TVs: with it on, leaving Originale means letting it act again.
+                if (!HomeOverride.enabled()) return false;
+                p.edit().putBoolean(ON, false).remove(ENABLED).commit();
+                Watchdog.clear(c);
+                return true;
             }
             p.edit().putBoolean(ON, false).remove(ENABLED).commit();
             Watchdog.clear(c);

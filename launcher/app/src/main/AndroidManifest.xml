@@ -220,10 +220,11 @@
              settings put secure screensaver_components com.omarchytv.home/.OmarchyDream
              settings put secure screensaver_enabled 1 -->
         <!-- v2.10: enabled so DreamManager can find it (Android 9 reported "does not exist" while the component
-             was disabled); it still runs only if picked as the TV's screensaver. Own process like the in-launcher one. -->
+             was disabled); it still runs only if picked as the TV's screensaver.
+             #57: no android:process here. On Android 11+ the system's DreamActivity runs in the app's main process and
+             casts the service's callback Binder directly, so a dream in ":saver" crashed with a ClassCastException. -->
         <service
             android:name=".OmarchyDream"
-            android:process=":saver"
             android:label="@string/dream_omarchy"
             android:exported="true"
             android:permission="android.permission.BIND_DREAM_SERVICE">

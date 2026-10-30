@@ -33,7 +33,9 @@ android {
         disable 'ExpiredTargetSdkVersion'
         // A HOME app is reached with the Home button, not from an app row.
         disable 'MissingLeanbackLauncher'
-        disable 'NewApi'
+        // API > minSdk calls crash Fire OS 6 / Android 7 at runtime (#59): fail the build instead (fatal = lintVitalRelease also aborts assembleRelease).
+        fatal 'NewApi'
+        abortOnError true
     }
 
     testOptions {
