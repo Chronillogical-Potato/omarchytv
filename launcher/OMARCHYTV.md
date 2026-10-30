@@ -442,7 +442,7 @@ the YouTube TV app or a browser is installed; `url` always, because the launcher
 
 | kind | opens | how |
 |---|---|---|
-| `youtube` | YouTube TV app | `vnd.youtube:<videoId>?t=<s>` in `com.google.android.youtube.tv`, then `https://www.youtube.com/watch?v=<id>` in it, then a browser; `409 no_app` if none |
+| `youtube` | YouTube TV app | `https://www.youtube.com/watch?v=<id>&t=<s>s` in `com.google.android.youtube.tv`, then `vnd.youtube:<videoId>?t=<s>` in it, then a browser; `409 no_app` if none |
 | `video`, `audio` | `CastPlayerActivity` | Media3 ExoPlayer (MP4, MKV, WebM, MPEG-TS, MP3/AAC/FLAC/Ogg over http(s) or an upload). `live:true`: 0.5 s buffer (`DefaultLoadControl` 500/2000/250/500 ms), no seek, no "ended" |
 | `image` | `CastViewActivity` | full screen on the theme background, decoded at most at screen size, title in a `> ` prompt header |
 | `text` | `CastViewActivity` | a pane in the theme colours, JetBrains Mono 26 sp, scrollable with the D-pad, plain text only (no links/HTML) |

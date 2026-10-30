@@ -23,7 +23,7 @@ import java.util.List;
  * Opens a validated cast (PROTOCOL.md §6 Cast) with fixed intents only, and routes control to whatever shows
  * it. Nothing here runs unless a paired PC sends a cast: no receivers, no timers, no background work.
  *
- * youtube → the YouTube TV app (vnd.youtube:ID, then https://www.youtube.com/watch?v=ID in it, then a browser);
+ * youtube → the YouTube TV app (https://www.youtube.com/watch?v=ID, then vnd.youtube:ID in it, then a browser);
  * video/audio → {@link CastPlayerActivity} (Media3 ExoPlayer); image/text → {@link CastViewActivity};
  * url → the TV's browser (ACTION_VIEW + CATEGORY_BROWSABLE), else the launcher's own web view.
  */
@@ -113,11 +113,13 @@ final class CastRouter {
         switch (c.kind) {
             case "youtube": {
                 // Only the validated 11-character videoId goes into these fixed URIs.
+                // The watch URL first, as YoutubeEmbedActivity does: YouTube TV 5.30 resolves vnd.youtube: but then
+                // stays on its home screen (or profile picker) instead of playing.
                 long t = Math.round(c.position);
-                i = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + c.videoId + (t > 0 ? "?t=" + t : "")))
-                        .setPackage(YOUTUBE_TV).putExtra("force_fullscreen", true);
                 Uri web = Uri.parse("https://www.youtube.com/watch?v=" + c.videoId + (t > 0 ? "&t=" + t + "s" : ""));
-                if (!resolves(app, i)) i = new Intent(Intent.ACTION_VIEW, web).setPackage(YOUTUBE_TV);
+                i = new Intent(Intent.ACTION_VIEW, web).setPackage(YOUTUBE_TV);
+                if (!resolves(app, i)) i = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + c.videoId
+                        + (t > 0 ? "?t=" + t : ""))).setPackage(YOUTUBE_TV).putExtra("force_fullscreen", true);
                 if (!resolves(app, i)) i = browser(app, web);
                 if (i == null) return "no_app";
                 external = true;

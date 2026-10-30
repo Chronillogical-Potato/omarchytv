@@ -154,7 +154,8 @@ def classify(target: str, kind: str | None = None, title: str | None = None, pos
 
 
 def clipboard() -> str:
-    for argv in (["wl-paste", "--no-newline"], ["xclip", "-o", "-selection", "clipboard"]):
+    # pbpaste: macOS, where neither of the others exists
+    for argv in (["wl-paste", "--no-newline"], ["xclip", "-o", "-selection", "clipboard"], ["pbpaste"]):
         if shutil.which(argv[0]):
             r = subprocess.run(argv, capture_output=True, timeout=5)
             if r.returncode == 0:
