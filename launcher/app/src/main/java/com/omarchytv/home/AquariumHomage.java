@@ -902,7 +902,11 @@ final class AquariumHomage {
                     .setTransferMode(AudioTrack.MODE_STREAM)
                     .build();
             track.play();
-            short[] pcm = new short[buf * 2];
+            // Write 8 blocks per AudioTrack.write(): some vendor audio stacks (Hisense, #57) leak a JNI global
+            // reference per write call, which overflowed the 51,200-entry table after ~5 min at 47 writes/s.
+            final int batch = 8;
+            short[] pcm = new short[buf * 2 * batch];
+            int off = 0;
             float[] gl = new float[4], gr = new float[4];
             for (int k = 0; k < 4; k++) {
                 double a = (PAN[k] + 1) * Math.PI / 4;
@@ -1004,8 +1008,8 @@ final class AquariumHomage {
                     R = (R + rr * 0.35f) * 0.75f;
                     L = L / (1 + Math.abs(L) * 0.3f);
                     R = R / (1 + Math.abs(R) * 0.3f);
-                    pcm[i * 2] = on ? (short) Math.max(-32767, Math.min(32767, L * 32000)) : 0;
-                    pcm[i * 2 + 1] = on ? (short) Math.max(-32767, Math.min(32767, R * 32000)) : 0;
+                    pcm[off + i * 2] = on ? (short) Math.max(-32767, Math.min(32767, L * 32000)) : 0;
+                    pcm[off + i * 2 + 1] = on ? (short) Math.max(-32767, Math.min(32767, R * 32000)) : 0;
                 }
                 for (int vi = voices.size() - 1; vi >= 0; vi--) {
                     Ev e = voices.get(vi).e;
@@ -1013,7 +1017,8 @@ final class AquariumHomage {
                 }
                 for (int k = 0; k < 4; k++) vu[k] = on ? Math.min(1f, (float) Math.sqrt(sum[k] / buf) * 9f) : 0;
                 n += buf;
-                track.write(pcm, 0, pcm.length);
+                off += buf * 2;
+                if (off == pcm.length) { track.write(pcm, 0, pcm.length); off = 0; }
             }
         } catch (Throwable ignored) {
         } finally {
