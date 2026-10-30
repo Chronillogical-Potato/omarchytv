@@ -409,13 +409,47 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
     return use24h() ? ("0" + h).slice(-2) + ":" + m : ((h + 11) % 12 + 1) + ":" + m + (h >= 12 ? " PM" : " AM");
   }
 
+  // Block-letter logos (only "█", "▀", "▄" and spaces) drawn as one SVG path instead of text: TV fonts at
+  // 8-9 px merged or swapped the block glyphs, so the wordmark looked squashed or garbled (LG 32LQ63006LA, #60).
+  // One path per logo has no seams between cells and stays crisp at any scale. cellW/cellH in px per character.
+  function blockArt(text, cellW, cellH, extraStyle) {
+    var lines = String(text || "").split("\n"), cols = 0, d = "";
+    for (var y = 0; y < lines.length; y++) {
+      var ln = lines[y]; if (ln.length > cols) cols = ln.length;
+      for (var half = 0; half < 2; half++) {
+        var x = 0;
+        while (x < ln.length) {
+          var c = ln.charAt(x), on = c === "\u2588" || (half === 0 ? c === "\u2580" : c === "\u2584");
+          if (!on) { x++; continue; }
+          var x0 = x;
+          while (x < ln.length) {
+            c = ln.charAt(x);
+            if (!(c === "\u2588" || (half === 0 ? c === "\u2580" : c === "\u2584"))) break;
+            x++;
+          }
+          d += "M" + x0 + " " + (y * 2 + half) + "h" + (x - x0) + "v1h-" + (x - x0) + "z";
+        }
+      }
+    }
+    if (!cols) return "";
+    return '<svg class="block-art" role="img" aria-label="logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + cols + " " + (lines.length * 2) +
+      '" preserveAspectRatio="xMinYMin meet" style="display:block;max-width:100%;height:auto;width:' + Math.round(cols * cellW) + 'px;' + (extraStyle || "") +
+      '"><path fill="currentColor" d="' + d + '"/></svg>';
+  }
+
   var logoTimer = null;
+  // Final logo: the block art as SVG (same 8 px font cell as #term-logo: 0.6 x 1.15 em); plain text otherwise.
+  function setLogo(el, target) {
+    if (/^[\u2588\u2580\u2584 \n]+$/.test(target) && /[\u2588\u2580\u2584]/.test(target)) el.innerHTML = blockArt(target, 4.8, 9.2);
+    else el.textContent = target;
+  }
+
   function animateLogo() {
     var el = document.getElementById("term-logo");
     var target = DATA.logo || "OMARCHY TV";
     if (logoTimer) clearInterval(logoTimer);
     if (!cfg.logoAnim) {
-      el.textContent = target;
+      setLogo(el, target);
       return;
     }
     var glyphs = "░▒▓█▄▀■□▪▫01";
@@ -425,7 +459,7 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
       if (step >= total) {
         clearInterval(logoTimer);
         logoTimer = null;
-        el.textContent = target;
+        setLogo(el, target);
         return;
       }
       var ratio = step / total;
@@ -1579,7 +1613,7 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
     var subEl = document.getElementById("modal-sub");
     if (subEl && DATA.cinemarchyLogo) {
       subEl.style.display = "block";
-      subEl.innerHTML = '<pre style="font-size:9px;line-height:1.05;color:var(--t-accent);margin-bottom:8px;overflow:hidden;">' + DATA.cinemarchyLogo + '</pre>' +
+      subEl.innerHTML = '<div style="color:var(--t-accent);margin-bottom:10px;">' + blockArt(DATA.cinemarchyLogo, 6.3, 12) + '</div>' +
         '<div style="margin-bottom:6px;"><span style="border:1px solid var(--t-accent);color:var(--t-accent);padding:0 5px;font-weight:bold;">ALPHA</span> Cinemarchy ' + CINEMARCHY_VERSION + ' (preview)</div>' +
         '<div>Press 1-4 or OK on the top row to switch tabs</div>';
     }
