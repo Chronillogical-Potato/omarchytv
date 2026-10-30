@@ -419,7 +419,9 @@
         sprite(wSpr, wx, wy, T.accent, T.fgBright, 1, 1, RULER_COL);
         if (Math.sin(sec * 0.35) > 0.2) sprite(SPOUT[Math.floor(sec * 4) % 3], wx + 1, water - 3, T.cyan, null, 0.9, 1, RULER_COL);
         for (var d = 0; d < 3; d++) {
-          var dx = ((shipX + 52 + d * 6) % (RULER_COL + 10)) - 4 + Math.sin(sec * 0.3 + d), dy = water - 1.3 + Math.sin(sec * 2.1 + d) * 0.18;
+          // Same 152-column loop as the ship (off-screen at both ends), so the ducks swim off the right edge,
+          // come back in from the left and don't jump when the ship wraps.
+          var dx = ((sec * 1.6 + 52 + d * 6) % (COLS + 40)) - 20 + Math.sin(sec * 0.3 + d), dy = water - 1.3 + Math.sin(sec * 2.1 + d) * 0.18;
           sprite(DUCK, dx, dy, T.yellow, null, 1, 1, RULER_COL);
         }
       }
