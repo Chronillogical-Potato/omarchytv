@@ -11,6 +11,12 @@ Validated on Samsung UN55U7900FFXZA, Tizen 9, firmware
 The install procedure below uses the standard Tizen Studio tools. Local hardware
 validation used an existing Samsung certificate and developer connection.
 
+## Download (`2.13.6-testing`)
+
+- **Unsigned widget:** [`OmarchyTV-tizen-2.13.6-testing-unsigned.wgt`](https://github.com/piermark/omarchytv/releases/download/v2.13.2-testing-webos-tizen/OmarchyTV-tizen-2.13.6-testing-unsigned.wgt) ([GitLab](https://gitlab.com/piermark/omarchytv/-/releases/v2.13.2-testing-webos-tizen))
+  - SHA-256: `f08c4ba27df84a1f0a3846f182f610c1cf1b3c30eae6989535ad7f10805408d8`
+  - It's unsigned: sign it with your own Samsung certificate (below) before installing. It's numbered 2.13.6, above the earlier 2.13.5 test widget, so it installs over it.
+
 ## Build an unsigned widget
 
 Run from the repository root with Python 3 installed:

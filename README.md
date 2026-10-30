@@ -6,7 +6,7 @@ Created by **[Marco Porro](https://www.marcoporro.it)** ([x.com/MarcoPorro](http
 
 Official Synchronized Repositories: **[GitHub (`github.com/piermark/omarchytv`)](https://github.com/piermark/omarchytv)** · **[GitLab (`gitlab.com/piermark/omarchytv`)](https://gitlab.com/piermark/omarchytv)**
 
-Published: **29 October 2026 (pre-release)** · Version **2.13.0-beta** (`versionCode 21` — Android TV, PC/Mac Plugin & Mobile Companion) / **2.13.1-testing** (LG webOS) & **2.13.0-testing** (Samsung Tizen), experimental · Cinemarchy **0.1.0-alpha** · License **MIT**
+Published: **29 October 2026 (pre-release)** · Version **2.13.0-beta** (`versionCode 21` — Android TV, PC/Mac Plugin & Mobile Companion) / **2.13.2-testing** (LG webOS) & **2.13.6-testing** (Samsung Tizen), experimental · Cinemarchy **0.1.0-alpha** · License **MIT**
 
 > [!WARNING]
 > **BETA SOFTWARE: THINGS MAY NOT WORK.** OmarchyTV has been tested on several devices (Sony KD-55XE9005 on Android 9,
@@ -42,8 +42,8 @@ I sign every Android APK with the OmarchyTV release certificate (`SHA-256: 90aa6
 | Artifact | Download | Platform | Version | Size | SHA-256 |
 |---|---|---|---|---|---|
 | **`omarchytv-release-2.13.0-beta.apk`** | **[GitHub](https://github.com/piermark/omarchytv/releases/download/v2.13.0-beta/omarchytv-release-2.13.0-beta.apk)** · **[GitLab](https://gitlab.com/piermark/omarchytv/-/releases/v2.13.0-beta)** | Android TV / Google TV / Fire OS (`com.omarchytv.home`, `minSdk 24`, `targetSdk 34`) | `2.13.0-beta` (`versionCode 21`) | `8.2 MB` | `53d88d14ffad8933048570e7ae324d11bba0907ff0a8252ad142eb6ac564b2ea` |
-| **`omarchytv-webos-2.13.1-testing.ipk`** | **[GitHub](https://github.com/piermark/omarchytv/releases/download/v2.13.1-testing-webos/omarchytv-webos-2.13.1-testing.ipk)** · **[GitLab](https://gitlab.com/piermark/omarchytv/-/releases/v2.13.1-testing-webos)** | LG webOS TV (`com.omarchytv.home`, experimental) | `2.13.1-testing` | `6.1 MB` | `bd2965a9605a7d96d834b64242f4c1b13b1242b278c1ba2a9142ac1fb4fdb472` |
-| **`OmarchyTV-tizen-2.13.0-beta-unsigned.wgt`** | **[GitHub](https://github.com/piermark/omarchytv/releases/download/v2.13.0-beta/OmarchyTV-tizen-2.13.0-beta-unsigned.wgt)** · **[GitLab](https://gitlab.com/piermark/omarchytv/-/releases/v2.13.0-beta)** | Samsung Tizen TV (unsigned testing build, sign it in Tizen Studio; see [INSTALL-TIZEN.md](tizen/INSTALL-TIZEN.md)) | `2.13.0-beta` | `6.5 MB` | `b3af5fa83eab75dbaedb9d2d7fb7e6088c077812083347a572dba4ffb5529e10` |
+| **`omarchytv-webos-2.13.2-testing.ipk`** | **[GitHub](https://github.com/piermark/omarchytv/releases/download/v2.13.2-testing-webos-tizen/omarchytv-webos-2.13.2-testing.ipk)** · **[GitLab](https://gitlab.com/piermark/omarchytv/-/releases/v2.13.2-testing-webos-tizen)** | LG webOS TV (`com.omarchytv.home`, experimental) | `2.13.2-testing` | `6.1 MB` | `6f8782375bf22ed9899f82293d9d58cfe31561836b6acee699581c908b8bd6e8` |
+| **`OmarchyTV-tizen-2.13.6-testing-unsigned.wgt`** | **[GitHub](https://github.com/piermark/omarchytv/releases/download/v2.13.2-testing-webos-tizen/OmarchyTV-tizen-2.13.6-testing-unsigned.wgt)** · **[GitLab](https://gitlab.com/piermark/omarchytv/-/releases/v2.13.2-testing-webos-tizen)** | Samsung Tizen TV (unsigned testing build, sign it in Tizen Studio; see [INSTALL-TIZEN.md](tizen/INSTALL-TIZEN.md)) | `2.13.6-testing` | `6.5 MB` | `f08c4ba27df84a1f0a3846f182f610c1cf1b3c30eae6989535ad7f10805408d8` |
 | **`omarchytv-mobile-2.13.0-beta.apk`** | **[GitHub](https://github.com/piermark/omarchytv/releases/download/v2.13.0-beta/omarchytv-mobile-2.13.0-beta.apk)** · **[GitLab](https://gitlab.com/piermark/omarchytv/-/releases/v2.13.0-beta)** | Android phone installer & companion (`com.omarchytv.mobile`, `minSdk 26`) | `2.13.0-beta` (`versionCode 21300`) | `177 KB` | `e45a5c0f7ccd662279d34e80ffbf4e9581061603012e8814e5941e8909b67f79` |
 | **`omarchy-tv-pc-plugin-2.13.0-beta.tar.gz`** | **[GitHub](https://github.com/piermark/omarchytv/releases/download/v2.13.0-beta/omarchy-tv-pc-plugin-2.13.0-beta.tar.gz)** · **[GitLab](https://gitlab.com/piermark/omarchytv/-/releases/v2.13.0-beta)** | Omarchy Linux / macOS (`omarchy-tv` + `omarchy-link`) | `2.13.0-beta` | `221 KB` | `968c5ffb79f5b88254df6ff922888027c1776c49bcf154980f1427c3338521bf` |
 | **`omarchy-tv-2.13.0-beta.tar.gz`** | **[GitHub](https://github.com/piermark/omarchytv/releases/download/v2.13.0-beta/omarchy-tv-2.13.0-beta.tar.gz)** · **[GitLab](https://gitlab.com/piermark/omarchytv/-/releases/v2.13.0-beta)** | PC plugin `omarchy-tv` only | `2.13.0-beta` | `53 KB` | `620641f5f6c2448b4288f472cac2f09a3b870b8a08f8a7fec22344802fe99271` |
@@ -75,7 +75,9 @@ All releases are on **[GitHub Releases](https://github.com/piermark/omarchytv/re
 
 ---
 
-## What's New in `2.13.2-testing` (LG webOS + Samsung Tizen)
+## What's New in `2.13.2-testing` (LG webOS) / `2.13.6-testing` (Samsung Tizen)
+
+One shared web app, two version numbers: the Samsung widget is numbered 2.13.6 so it installs over the earlier 2.13.5 test widget. Release: [GitHub](https://github.com/piermark/omarchytv/releases/tag/v2.13.2-testing-webos-tizen) · [GitLab](https://gitlab.com/piermark/omarchytv/-/releases/v2.13.2-testing-webos-tizen).
 
 - **Bigger text on LG webOS and Samsung Tizen:** launcher text can now be enlarged on both TVs from **Settings > System > Text size**: Small 90%, Normal 100% (default), Large 115% and Extra large 130%. It applies to the whole launcher, it is saved across restarts, and it is translated in English, Italian and German.
 - **Crisp Cinemarchy and OMARCHY logos:** the block-art logos are now drawn as vector graphics, so they stay sharp at 1080p and 720p.
@@ -290,9 +292,9 @@ Full PC plugin documentation: **[pc-plugin/README.md](pc-plugin/README.md)** and
 
 ---
 
-### 5. LG webOS and Samsung Tizen TVs — Experimental (`2.13.2-testing` for both)
-- **LG webOS:** `omarchytv-webos-2.13.1-testing.ipk`. Install guide: **[webos/INSTALL-WEBOS.md](webos/INSTALL-WEBOS.md)**.
-- **Samsung Tizen:** `OmarchyTV-tizen-2.13.0-beta-unsigned.wgt` is unsigned: sign it with your own Samsung certificate in Tizen Studio before installing. Guide: **[tizen/INSTALL-TIZEN.md](tizen/INSTALL-TIZEN.md)**.
+### 5. LG webOS and Samsung Tizen TVs — Experimental (webOS `2.13.2-testing`, Tizen `2.13.6-testing`)
+- **LG webOS:** `omarchytv-webos-2.13.2-testing.ipk`. Install guide: **[webos/INSTALL-WEBOS.md](webos/INSTALL-WEBOS.md)**.
+- **Samsung Tizen:** `OmarchyTV-tizen-2.13.6-testing-unsigned.wgt` is unsigned: sign it with your own Samsung certificate in Tizen Studio before installing. Guide: **[tizen/INSTALL-TIZEN.md](tizen/INSTALL-TIZEN.md)**.
 - Both share the same web app (`webos/app`), including the new **Settings > System > Text size** option (90/100/115/130%), Cinemarchy 0.1.0-alpha, the Grok Bot companion (Blue key), the plugin marketplace and both Aquariums.
 
 ---
@@ -397,6 +399,8 @@ omarchy-tv adb-lock --tv 192.168.1.9:5555                                 # clos
 | Noblex TV (Hisense platform) | 11 | ? | 2.11.0-beta | ok (community) | tested by @ilafayajose |
 | Philips 55OLED718/12 | 14 | ? | 2.13.0-beta | ok (community) | Google TV Home lock: works with the HomeOverride accessibility workaround (no root, survives reboot); OmarchyDream + ASCII Aquarium verified; physical remote Home not verified. Tested by @sevos ([#22](https://github.com/piermark/omarchytv/issues/22)) |
 | LG 32LQ63006LA (2022) | webOS 22 | — | 2.13.1-testing (webOS) | ok | installed with Developer Mode + `ares-cli`; Cinemarchy YouTube playback, dock apps, Grok Bot companion and SpaceX TV verified with the remote |
+| Samsung UN65CU7000FXZA (2023) | Tizen 9.0 | — | 2.13.0-beta (Tizen .wgt) | ok (community) | installs and launches on a retail Samsung, signed with a Samsung certificate; tested by Wes (@wesleygrimes) ([#60](https://github.com/piermark/omarchytv/issues/60)) |
+| Amazon Fire TV Stick HD AFTSS | 9 (Fire OS 7.7.1.3) | 138 (Amazon WebView) | 2.13.0-beta | works (community) | installs and launches; HomeOverride works but has Fire OS quirks (double Home events, accessibility reset on reboot); tested by @podzpau ([#58](https://github.com/piermark/omarchytv/issues/58)) |
 
 Tested yours? Open an issue with the "TV report" template.
 
