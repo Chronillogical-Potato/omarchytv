@@ -230,7 +230,7 @@
     opts = opts || {};
     var ctx = cv.getContext('2d');
     var partSec = (S && S.partSeconds && S.partSeconds()) || opts.partSec || 75;
-    var startMs = Date.now(), rnd = mulberry(1993), glyphs = {}, glyphN = 0, chunky = {};
+    var startMs = Date.now(), rnd = mulberry(1993), glyphs = {}, glyphN = 0, chunky = {}, chunkImgs = {};
     var soundOn = opts.soundOn !== false, actx = null, graph = null, songOff = 0, schedTo = 0, timer = null, hudBoost = 0;
     var cw = 17, ch = 30, fs = 26, W = 1920, H = 1080, lastDraw = 0, lastSec = 0;
     var lensBuf = document.createElement('canvas'), lctx = lensBuf.getContext('2d');
@@ -247,13 +247,15 @@
       if (timer) return;
       try {
         var AC = G.AudioContext || G.webkitAudioContext; if (!AC) return;
-        if (!actx) { actx = new AC(); graph = buildGraph(actx); }
+        // A screensaver doesn't need low latency; a bigger buffer (171 ms on an LG C1 vs 43 ms default)
+        // keeps the audio from crackling while the CPU is busy drawing. Older engines may reject the option.
+        if (!actx) { try { actx = new AC({ latencyHint: 0.2 }); } catch (lh) { actx = new AC(); } graph = buildGraph(actx); }
         if (actx.state === 'suspended' && actx.resume) actx.resume();
       } catch (x) { return; }
       songOff = actx.currentTime - songSec(); schedTo = songSec();
       timer = setInterval(function () {
         if (!soundOn || !actx) return;
-        var now = actx.currentTime - songOff, to = now + 0.3;
+        var now = actx.currentTime - songOff, to = now + 1.0; // 1 s ahead so a slow frame can't drop notes
         if (schedTo < now) schedTo = now;
         if (to > schedTo) { try { playEvents(graph, songEvents(schedTo, to, partSec), songOff); } catch (x) { } schedTo = to; }
       }, 70);
@@ -311,6 +313,17 @@
       var d = x.getImageData(0, 0, 8, 16).data, bits = [];
       for (var i = 0; i < 128; i++) bits.push(d[i * 4 + 3] > 100 ? 1 : 0);
       chunky[c] = bits; return bits;
+    }
+    // A whole chunky letter (yellow-to-magenta rows) drawn once into its own canvas, so the scroller blits
+    // one image per letter instead of up to 128 fillRect calls.
+    function chunkImg(c, px) {
+      var key = c + '|' + px, g = chunkImgs[key];
+      if (g) return g;
+      var bits = chunk(c);
+      g = document.createElement('canvas'); g.width = 8 * px; g.height = 16 * px;
+      var x = g.getContext('2d');
+      for (var y = 0; y < 16; y++) { x.fillStyle = mix(T.yellow, T.magenta, y / 15); for (var b = 0; b < 8; b++) if (bits[y * 8 + b]) x.fillRect(b * px, y * px, px - 1, px - 1); }
+      chunkImgs[key] = g; return g;
     }
 
     // ---- world state
@@ -474,7 +487,9 @@
       var sc = [0.72, 0.86, 1][z], dim = [0.6, 0.3, 0][z];
       for (var i = 0; i < fish.length; i++) {
         var f = fish[i]; if (f.z !== z || f.eaten > 0) continue;
-        var col = T[f.sp.col] || T.fg; if (dim) col = mix(col, bg(lastDepth), dim);
+        // Dim toward the background in 25 m steps: an exact per-frame depth makes a new colour (and new
+        // glyph canvases) every frame while descending, which thrashes the glyph cache.
+        var col = T[f.sp.col] || T.fg; if (dim) col = mix(col, bg(Math.round(lastDepth / 25) * 25), dim);
         sprite(f.art, f.x, f.y + Math.sin(sec * f.wf + f.ph) * f.wa, col, z === 2 ? T.fgBright : null, 1, sc, RULER_COL);
       }
     }
@@ -573,12 +588,11 @@
     function bigScroller(sec, rowC) {
       var px = Math.max(3, Math.round(ch * 0.4)), cwid = 8 * px + px, speed = 160;
       var x0 = -((sec * speed) % cwid), first = Math.floor((sec * speed) / cwid), n = Math.ceil(RULER_COL * cw / cwid) + 1;
-      var rows = []; for (var r = 0; r < 16; r++) rows.push(mix(T.yellow, T.magenta, r / 15));
       for (var i = 0; i < n; i++) {
         var c = GREETZ.charAt((first + i) % GREETZ.length); if (c === ' ') continue;
-        var bits = chunk(c), bx = x0 + i * cwid, by = rowC * ch + Math.sin(sec * 2.2 + (bx / 140)) * ch * 2.2;
+        var bx = x0 + i * cwid, by = rowC * ch + Math.sin(sec * 2.2 + (bx / 140)) * ch * 2.2;
         if (bx > RULER_COL * cw) break;
-        for (var y = 0; y < 16; y++) { ctx.fillStyle = rows[y]; for (var x = 0; x < 8; x++) if (bits[y * 8 + x]) ctx.fillRect(bx + x * px, by + y * px, px - 1, px - 1); }
+        ctx.drawImage(chunkImg(c, px), bx, by);
       }
     }
     function lens(sec, shiftX, shiftY, alpha) {
@@ -600,11 +614,18 @@
 
     function frame() {
       var now = Date.now();
-      if (opts.capFps !== 0 && now - lastDraw < 31) { G.requestAnimationFrame(frame); return; } // 30 fps cap: it's a screensaver
+      // 30 fps cap: it's a screensaver. 25 ms draws on every other 60 Hz frame; 31 ms sometimes skipped two.
+      if (opts.capFps !== 0 && now - lastDraw < 25) { G.requestAnimationFrame(frame); return; }
       var sec = (now - startMs) / 1000, dt = clamp(sec - lastSec, 0, 0.1); lastSec = sec; lastDraw = now;
       if (cv.width !== (G.innerWidth || 1920) || cv.height !== (G.innerHeight || 1080)) { cv.width = G.innerWidth || 1920; cv.height = G.innerHeight || 1080; glyphs = {}; glyphN = 0; }
       W = cv.width; H = cv.height; cw = W / COLS; ch = H / ROWS; fs = Math.min(cw * 1.65, ch * 0.88);
-      if (sec - palT > 5) { T = pal(); palT = sec; glyphs = {}; glyphN = 0; }
+      // Re-read the palette every 5 s, but only drop the glyph cache when it changed: rebuilding every
+      // glyph each time caused a visible pause.
+      if (sec - palT > 5) {
+        var np = pal(); palT = sec;
+        if (JSON.stringify(np) !== JSON.stringify(T)) { glyphs = {}; glyphN = 0; chunkImgs = {}; }
+        T = np;
+      }
       var k = Math.floor(sec / partSec), part = k % 5, fr = (sec - k * partSec) / partSec, depth = depthAt(sec, partSec); lastDepth = depth;
       simulate(dt, sec, part, fr);
       // whole-scene pixel shift: a few px per minute so nothing sits on the same OLED pixels for long
@@ -628,7 +649,7 @@
       G.requestAnimationFrame(frame);
     }
     for (var i = 0; i < 4; i++) spawnFish(0, false);
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { glyphs = {}; glyphN = 0; chunky = {}; });
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { glyphs = {}; glyphN = 0; chunky = {}; chunkImgs = {}; });
     G.requestAnimationFrame(frame);
     return api;
   }
