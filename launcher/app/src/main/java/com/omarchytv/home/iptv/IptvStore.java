@@ -11,7 +11,6 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -124,7 +123,7 @@ public final class IptvStore {
 
     public static byte[] fetch(Context c, String url, String cacheName, long maxAgeMs) throws Exception {
         File f = new File(c.getCacheDir(), "iptv-" + cacheName);
-        if (f.isFile() && System.currentTimeMillis() - f.lastModified() < maxAgeMs) return Files.readAllBytes(f.toPath());
+        if (f.isFile() && System.currentTimeMillis() - f.lastModified() < maxAgeMs) return com.omarchytv.home.ApiCompat.readAllBytes(f);
         HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
         conn.setConnectTimeout(6000);
         conn.setReadTimeout(15000);
@@ -139,12 +138,12 @@ public final class IptvStore {
                 out.write(buf, 0, n);
             }
         } catch (Exception e) {
-            if (f.isFile()) return Files.readAllBytes(f.toPath());   // offline: stale cache is better than nothing
+            if (f.isFile()) return com.omarchytv.home.ApiCompat.readAllBytes(f);   // offline: stale cache is better than nothing
             throw e;
         } finally {
             conn.disconnect();
         }
-        return Files.readAllBytes(f.toPath());
+        return com.omarchytv.home.ApiCompat.readAllBytes(f);
     }
 
     public static String key(String url) {

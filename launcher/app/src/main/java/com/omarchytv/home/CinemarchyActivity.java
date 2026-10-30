@@ -500,7 +500,7 @@ public final class CinemarchyActivity extends Activity {
                         err = "feed unreadable";
                     } else {
                         java.io.File tmp = new java.io.File(cache.getPath() + ".tmp");
-                        java.nio.file.Files.write(tmp.toPath(), raw);
+                        ApiCompat.write(tmp, raw);
                         if (!tmp.renameTo(cache)) tmp.delete();
                         at = System.currentTimeMillis();
                     }
@@ -510,7 +510,7 @@ public final class CinemarchyActivity extends Activity {
             }
             if (got.isEmpty() && cache.isFile()) {
                 try {
-                    got = DhhFeed.parse(java.nio.file.Files.readAllBytes(cache.toPath()));
+                    got = DhhFeed.parse(ApiCompat.readAllBytes(cache));
                 } catch (Throwable ignored) {
                 }
             }

@@ -367,7 +367,7 @@ public final class OmarchyLink implements LinkServer.Host {
         nsd = (NsdManager) app.getSystemService(Context.NSD_SERVICE);
         ConnectivityManager cm = app.getSystemService(ConnectivityManager.class);
         if (cm != null) {
-            cm.registerDefaultNetworkCallback(new ConnectivityManager.NetworkCallback() {
+            ConnectivityManager.NetworkCallback cb = new ConnectivityManager.NetworkCallback() {
                 @Override
                 public void onLinkPropertiesChanged(Network network, LinkProperties lp) {
                     bg.execute(OmarchyLink.this::rebind);
@@ -377,7 +377,11 @@ public final class OmarchyLink implements LinkServer.Host {
                 public void onLost(Network network) {
                     bg.execute(OmarchyLink.this::rebind);
                 }
-            }, main);
+            };
+            // The (callback, Handler) overload is API 26; Fire OS 6 is API 25 (#59, #56). Both callbacks only
+            // hand off to bg, so the 1-arg API 24 overload behaves the same there.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) cm.registerDefaultNetworkCallback(cb, main);
+            else cm.registerDefaultNetworkCallback(cb);
         }
         IntentFilter f = new IntentFilter();
         f.addAction(Intent.ACTION_DREAMING_STARTED);

@@ -71,7 +71,7 @@ public final class LinkStore {
                     JSONObject o = p.optJSONObject(id);
                     if (o == null) continue;
                     try {
-                        pcs.put(id, new Pc(id, o.optString("name", "Omarchy"), java.util.Base64.getDecoder().decode(o.optString("token")),
+                        pcs.put(id, new Pc(id, o.optString("name", "Omarchy"), com.omarchytv.home.ApiCompat.unb64(o.optString("token")),
                                 o.optLong("pairedAt"), o.optLong("lastSeen"), o.optString("lastAddress", "")));
                     } catch (IllegalArgumentException ignored) {
                     }
@@ -90,7 +90,7 @@ public final class LinkStore {
             JSONObject p = new JSONObject();
             for (Pc pc : pcs.values()) {
                 p.put(pc.id, new JSONObject().put("name", pc.name)
-                        .put("token", java.util.Base64.getEncoder().encodeToString(pc.token))
+                        .put("token", com.omarchytv.home.ApiCompat.b64(pc.token))
                         .put("pairedAt", pc.pairedAt).put("lastSeen", pc.lastSeen).put("lastAddress", pc.lastAddress));
             }
             j.put("pcs", p);

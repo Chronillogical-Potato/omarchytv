@@ -7,7 +7,6 @@ import android.content.Intent;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -60,7 +59,7 @@ public final class Watchdog {
     static List<Long> recent(Context c, long now) {
         List<Long> l = new ArrayList<>();
         try {
-            for (String s : new String(Files.readAllBytes(file(c).toPath()), StandardCharsets.UTF_8).split("\n")) {
+            for (String s : new String(ApiCompat.readAllBytes(file(c)), StandardCharsets.UTF_8).split("\n")) {
                 try {
                     long at = Long.parseLong(s.trim());
                     if (at <= now && now - at < WINDOW) l.add(at);

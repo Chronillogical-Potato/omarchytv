@@ -234,7 +234,7 @@ public final class CustomThemes {
     /** Config edit selecting theme {@code name} and its background {@code bg} (no background: keep the wallpaper). */
     public static void select(File linkDir, String name, int bg, JSONObject cfg) throws Exception {
         File dir = new File(root(linkDir), name);
-        byte[] b = java.nio.file.Files.readAllBytes(new File(dir, "theme.json").toPath());
+        byte[] b = com.omarchytv.home.ApiCompat.readAllBytes(new File(dir, "theme.json"));
         JSONObject t = new JSONObject(new String(b, StandardCharsets.UTF_8));
         t.put("source", "custom");
         cfg.put("theme", t);

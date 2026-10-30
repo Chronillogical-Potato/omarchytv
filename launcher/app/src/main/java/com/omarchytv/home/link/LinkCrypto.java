@@ -4,7 +4,6 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
-import java.util.Base64;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -39,14 +38,14 @@ public final class LinkCrypto {
     // ---- encodings ---------------------------------------------------------------------------------
 
     public static String b64u(byte[] data) {
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(data);
+        return com.omarchytv.home.ApiCompat.b64url(data);
     }
 
     /** Decodes base64url with or without padding; throws IllegalArgumentException on garbage. */
     public static byte[] unb64u(String text) {
         String t = text == null ? "" : text.trim();
         while (t.endsWith("=")) t = t.substring(0, t.length() - 1);
-        return Base64.getUrlDecoder().decode(t);
+        return com.omarchytv.home.ApiCompat.unb64url(t);
     }
 
     public static String hex(byte[] b) {

@@ -1001,7 +1001,7 @@ public final class LinkServer {
         } catch (IllegalArgumentException ignored) {
         }
         try {
-            return java.util.Base64.getDecoder().decode(s);
+            return com.omarchytv.home.ApiCompat.unb64(s);
         } catch (IllegalArgumentException ignored) {
             return null;
         }
@@ -2094,7 +2094,7 @@ public final class LinkServer {
         try {
             byte[] d = java.security.MessageDigest.getInstance("SHA-1")
                     .digest((key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11").getBytes(StandardCharsets.ISO_8859_1));
-            return java.util.Base64.getEncoder().encodeToString(d);
+            return com.omarchytv.home.ApiCompat.b64(d);
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
