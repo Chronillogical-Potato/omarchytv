@@ -378,7 +378,11 @@ def cmd_action(a, cfg):
 
 # ------------------------------------------------------------------ cast ("Share to TV")
 def _notify(text: str, title: str = "OmarchyTV") -> None:
-    for argv in (["omarchy-notification-send", "-g", "󰔂", title, text], ["notify-send", "-a", "omarchy-link", title, text]):
+    cmds = [["omarchy-notification-send", "-g", "󰔂", title, text], ["notify-send", "-a", "omarchy-link", title, text]]
+    if sys.platform == "darwin":  # title and text go in as arguments, so quotes in them can't break the AppleScript
+        cmds.append(["osascript", "-e", "on run argv", "-e", "display notification (item 2 of argv) with title (item 1 of argv)",
+                     "-e", "end run", title, text])
+    for argv in cmds:
         if shutil.which(argv[0]):
             subprocess.run(argv, stdin=subprocess.DEVNULL, capture_output=True, timeout=10)
             return

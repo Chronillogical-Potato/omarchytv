@@ -18,7 +18,7 @@ os.environ.pop("OMARCHY_LINK_MDNS", None)
 # every later test. Tests that want a CLI put a stub on PATH themselves.
 AI_CLIS = ("claude", "codex", "gemini", "grok", "ollama", "omarchy-agent-usage-update", "claudebar", "ai-usagebar",
            "catt", "wf-recorder", "gpu-screen-recorder", "wl-paste", "xclip", "pbpaste", "notify-send",
-           "omarchy-notification-send")
+           "omarchy-notification-send", "osascript")
 
 
 def _hide_clis(d: str, n: int) -> str:

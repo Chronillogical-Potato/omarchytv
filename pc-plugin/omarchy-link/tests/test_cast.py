@@ -7,6 +7,7 @@ import subprocess
 import sys
 import time
 import unittest
+from unittest import mock
 import urllib.error
 import urllib.request
 
@@ -14,6 +15,7 @@ import helpers
 from helpers import cli
 from mock_tv import MockTV
 from omarchy_link import cast
+from omarchy_link import cli as cli_mod
 
 BIN = helpers.TMP / "castbin"
 CATT_LOG = helpers.TMP / "catt.log"
@@ -243,6 +245,19 @@ class CastE2E(unittest.TestCase):
         stub("pbpaste", "#!/bin/sh\nprintf 'Wi-Fi: casa / pass: 1234\\nsecond line'\n")
         self.assertEqual(self.jcast("--clipboard")["kind"], "text")
         self.assertEqual(tv.casts[-1]["text"], "Wi-Fi: casa / pass: 1234\nsecond line")
+
+    def test_macos_notification(self):
+        # --notify on macOS: osascript "display notification", with title and text passed as arguments
+        log = helpers.TMP / "osascript.log"
+        log.unlink(missing_ok=True)
+        stub("osascript", f"#!/bin/sh\nprintf '%s\\n' \"$@\" > {log}\n")
+        with mock.patch.object(sys, "platform", "darwin"):
+            cli_mod._notify('it\'s "quoted"', "Sent to TV")
+        self.assertEqual(log.read_text().splitlines()[-2:], ["Sent to TV", 'it\'s "quoted"'])
+        log.unlink()
+        with mock.patch.object(sys, "platform", "linux"):
+            cli_mod._notify("x")
+        self.assertFalse(log.exists())  # never tried off macOS
 
     def test_desktop_entries(self):
         cli("desktop")
