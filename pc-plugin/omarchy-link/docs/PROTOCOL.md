@@ -464,7 +464,7 @@ What the launcher opens (`app` in the answer):
 
 | kind | app | how |
 |---|---|---|
-| `youtube` | `youtube` | `Intent(ACTION_VIEW, "vnd.youtube:<videoId>")` with `t`/`position`, package `com.google.android.youtube.tv`. Fall back to `https://www.youtube.com/watch?v=…` |
+| `youtube` | `youtube` | `Intent(ACTION_VIEW, "https://www.youtube.com/watch?v=<videoId>")` with `t`/`position`, package `com.google.android.youtube.tv`. Fall back to `vnd.youtube:<videoId>` (YouTube TV 5.30 accepts it but does not play it) |
 | `video`, `audio` | `player` | the launcher's own player activity: Media3/ExoPlayer, or `VideoView` as a minimum. Title overlay, Omarchy colours, D-pad play/pause/seek, back to stop. |
 | `image` | `viewer` | full-screen viewer on the theme background, the title in the theme font |
 | `text` | `text` | a full-screen card in the theme colours, large font, scrollable, no links or HTML |
