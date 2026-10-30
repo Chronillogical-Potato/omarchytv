@@ -170,6 +170,56 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
     { id: "settings", name: "LG Settings", appId: "com.palm.app.settings", brand: "settings", bg: "linear-gradient(135deg, #27272a 0%, #18181b 100%)", fg: "#f43f5e", sub: "webOS" }
   ];
 
+  // Samsung Tizen build: tizen-shim.js discovers the installed apps and hands them over as
+  // window.OMARCHY_TIZEN_APPS and/or the "omarchy-tizen-apps" event (detail = the same array), items
+  // { id, name, tizenId, appId?, brand?, iconPath?, iconPaths? }. A valid list replaces the LG apps above; brand
+  // styling is reused from the matching LG tile. Empty or invalid lists are ignored so the dock never empties.
+  // iconPaths are the installed app's icon candidates in order (store cache, then its own icon); iconPath is the
+  // first one, for older adapters. Only local paths are kept.
+  var LG_APPS = DEFAULT_APPS;
+  function tizenIconPath(p) {
+    if (typeof p !== "string" || p.length > 1024 || /[\x00-\x1f"'<>\\]|\/\.\.(\/|$)/.test(p)) return undefined;
+    return /^(file:\/\/)?\/[^\/]/.test(p) ? p : undefined;
+  }
+  function tizenAppList(list) {
+    if (!list || typeof list.length !== "number") return null;
+    var out = [], seen = {};
+    for (var i = 0; i < list.length; i++) {
+      var a = list[i];
+      if (!a || typeof a.id !== "string" || !a.id || typeof a.name !== "string" || !a.name ||
+          typeof a.tizenId !== "string" || !a.tizenId || seen[a.id]) continue;
+      seen[a.id] = true;
+      var brand = typeof a.brand === "string" && a.brand ? a.brand : a.id;
+      var look = LG_APPS.filter(function (x) { return x.brand === brand; })[0] || {};
+      var icons = [];
+      [a.iconPath].concat(Array.isArray(a.iconPaths) ? a.iconPaths.slice(0, 4) : []).forEach(function (p) {
+        p = tizenIconPath(p);
+        if (p && icons.indexOf(p) < 0) icons.push(p);
+      });
+      out.push({ id: a.id, name: a.name.replace(/[<>&"]/g, ""), appId: typeof a.appId === "string" && a.appId ? a.appId : a.tizenId,
+        tizenId: a.tizenId, brand: brand, bg: look.bg, fg: look.fg, sub: look.sub, iconPaths: icons.length ? icons : undefined });
+    }
+    return out.length ? out : null;
+  }
+  function setTizenApps(list) {
+    var apps = tizenAppList(list);
+    if (!apps) return;
+    var dockApp = visibleApps()[state.dockIdx], ws3App = visibleApps()[state.ws3Idx];
+    DEFAULT_APPS = apps;
+    if (state.movingId) {
+      if (!apps.some(function (a) { return a.id === state.movingId; })) { state.movingId = null; cfg.appOrder = state.moveSnapshot || []; state.moveSnapshot = null; }
+      else apps.forEach(function (a) { if (cfg.appOrder.indexOf(a.id) < 0) cfg.appOrder.push(a.id); });
+    }
+    var vis = visibleApps().map(function (a) { return a.id; });
+    if (dockApp && vis.indexOf(dockApp.id) >= 0) state.dockIdx = vis.indexOf(dockApp.id);
+    if (ws3App && vis.indexOf(ws3App.id) >= 0) state.ws3Idx = vis.indexOf(ws3App.id);
+    renderAll();
+  }
+  if (window.OMARCHY_PLATFORM === "tizen") {
+    DEFAULT_APPS = tizenAppList(window.OMARCHY_TIZEN_APPS) || DEFAULT_APPS;
+    window.addEventListener("omarchy-tizen-apps", function (e) { setTizenApps(e && e.detail); });
+  }
+
   var TV_INPUTS = [
     { id: "livetv", name: "TV", sub: "Live TV", appId: "com.webos.app.livetv" },
     { id: "hdmi1", name: "HDMI 1", sub: "HDMI 1", appId: "com.webos.app.hdmi1" },
@@ -177,6 +227,35 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
     { id: "hdmi3", name: "HDMI 3", sub: "HDMI 3", appId: "com.webos.app.hdmi3" },
     { id: "hdmi4", name: "HDMI 4", sub: "HDMI 4", appId: "com.webos.app.hdmi4" }
   ];
+
+  // Samsung Tizen build: the adapter lists the TV's real sources as window.OMARCHY_TIZEN_INPUTS and/or the
+  // "omarchy-tizen-inputs" event (detail = the full list), items { id, name, sub? }, and switches them with
+  // window.OMARCHY_TIZEN_SWITCH_INPUT(id, ok, err). Until then only TV is shown, never guessed HDMI ports.
+  function tizenInputList(list) {
+    if (!Array.isArray(list)) return null;
+    var out = [], seen = {};
+    for (var i = 0; i < list.length && out.length < 16; i++) {
+      var p = list[i];
+      if (!p || typeof p.id !== "string" || !/^[A-Za-z0-9_.-]{1,40}$/.test(p.id) || typeof p.name !== "string" || !p.name || seen[p.id]) continue;
+      seen[p.id] = true;
+      var name = p.name.replace(/[<>&"]/g, "");
+      out.push({ id: p.id, name: name, sub: typeof p.sub === "string" && p.sub ? p.sub.replace(/[<>&"]/g, "") : name, tizenInput: true });
+    }
+    return out.length || list.length === 0 ? out : null;
+  }
+  function setTizenInputs(list) {
+    var inputs = tizenInputList(list);
+    if (!inputs) return;
+    var cur = TV_INPUTS[state.ws2Idx], ids = inputs.map(function (p) { return p.id; });
+    TV_INPUTS = inputs;
+    state.ws2Idx = cur && ids.indexOf(cur.id) >= 0 ? ids.indexOf(cur.id) : Math.max(0, Math.min(state.ws2Idx, inputs.length - 1));
+    if (state.modalOpen && state.cineTab === 2) openCinemarchyModal(2, state.modalIdx);
+    renderAll();
+  }
+  if (window.OMARCHY_PLATFORM === "tizen") {
+    TV_INPUTS = tizenInputList(window.OMARCHY_TIZEN_INPUTS) || [{ id: "tv", name: "TV", sub: "TV", tizenInput: true }];
+    window.addEventListener("omarchy-tizen-inputs", function (e) { setTizenInputs(e && e.detail); });
+  }
 
   var state = {
     ws: 0,
@@ -520,12 +599,33 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
     });
   }
 
+  var brokenIcons = {};   // icon paths that failed to load: never tried again, the next candidate is used instead
+  function tileIcon(app) { return (app.iconPaths || []).filter(function (p) { return !brokenIcons[p]; })[0]; }
+  function appTileClass(app) { return "app-tile" + (app.iconPaths && !tileIcon(app) ? " icon-failed" : ""); }
+  function wireTileIcon(tile, app) {
+    var src = tileIcon(app), img = src && tile.querySelector("img.tile-icon");
+    if (img) img.onerror = function () {
+      brokenIcons[src] = true;
+      src = tileIcon(app);
+      if (src) img.src = src; else tile.className += " icon-failed";
+    };
+  }
+
   function buildTileHTML(app) {
     if (app.brand === "tv") {
       return '<div class="tile-banner" style="background:var(--t-bg-alt);">' +
         '<svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="var(--t-accent)" stroke-width="2">' +
         '<rect x="2" y="3" width="20" height="14"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>' +
         '<div style="font-size:28px;font-weight:700;color:var(--t-fg-bright);margin-top:6px;">' + app.name + '</div></div>';
+    }
+    // Tizen: the app's own installed icon wins over text tiles; if every candidate breaks, a generic app icon + name.
+    if (app.iconPaths) {
+      var icon = tileIcon(app);
+      var fallback = '<div class="tile-fallback"><svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="var(--t-accent)" stroke-width="2">' +
+        '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>' +
+        '<div class="tile-text-only">' + app.name + '</div></div>';
+      return '<div class="tile-banner tile-art" style="background:' + (app.bg || "var(--t-bg-alt)") + ';">' +
+        (icon ? '<img class="tile-icon" src="' + escHtml(icon) + '" alt="">' : "") + fallback + '</div>';
     }
     if (cfg.textTiles) {
       return '<div class="tile-banner" style="background:var(--t-bg-alt);"><div class="tile-text-only">' + app.name + '</div></div>';
@@ -547,8 +647,9 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
     slice.forEach(function (app, i) {
       var realIdx = state.dockScroll + i;
       var d = document.createElement("div");
-      d.className = "app-tile" + (state.ws === 0 && state.zone === "dock" && state.dockIdx === realIdx ? " focused" : "") + (app.id === state.movingId ? " moving" : "");
+      d.className = appTileClass(app) + (state.ws === 0 && state.zone === "dock" && state.dockIdx === realIdx ? " focused" : "") + (app.id === state.movingId ? " moving" : "");
       d.innerHTML = buildTileHTML(app);
+      wireTileIcon(d, app);
       d.onclick = function () { state.zone = "dock"; state.dockIdx = realIdx; renderAll(); launchApp(app); };
       // renderAll() rebuilds the strip, so only re-render when focus actually moves; otherwise the
       // tile under the pointer is replaced on every hover and a click never lands.
@@ -621,8 +722,8 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
         g2.appendChild(d);
       });
       var curInp = TV_INPUTS[state.ws2Idx] || TV_INPUTS[0];
-      document.getElementById("ws2-title").textContent = curInp.sub;
-      document.getElementById("ws2-hint").textContent = tr("hint_ws2");
+      document.getElementById("ws2-title").textContent = curInp ? curInp.sub : "No inputs available";
+      document.getElementById("ws2-hint").textContent = curInp ? tr("hint_ws2") : "Return to Home to refresh inputs";
     }
 
     // WS3: All Apps Grid
@@ -630,10 +731,12 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
       var g3 = document.getElementById("ws3-grid");
       g3.innerHTML = "";
       var all = visibleApps();
+      if (state.ws3Idx >= all.length) state.ws3Idx = Math.max(0, all.length - 1);
       all.forEach(function (app, i) {
         var d = document.createElement("div");
-        d.className = "app-tile" + (state.zone === "ws3" && state.ws3Idx === i ? " focused" : "") + (app.id === state.movingId ? " moving" : "");
+        d.className = appTileClass(app) + (state.zone === "ws3" && state.ws3Idx === i ? " focused" : "") + (app.id === state.movingId ? " moving" : "");
         d.innerHTML = buildTileHTML(app);
+        wireTileIcon(d, app);
         d.onclick = function () { state.zone = "ws3"; state.ws3Idx = i; renderAll(); launchApp(app); };
         g3.appendChild(d);
       });
@@ -1089,9 +1192,10 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
 
   function openHiddenAppsModal() {
     // Drop ids of apps that no longer exist (e.g. removed from DEFAULT_APPS) so the count stays honest.
+    // Not on Tizen: the installed-app list can still be loading or briefly miss an app being updated.
     var known = DEFAULT_APPS.map(function (a) { return a.id; });
     var pruned = cfg.hiddenApps.filter(function (id) { return known.indexOf(id) >= 0; });
-    if (pruned.length !== cfg.hiddenApps.length) { cfg.hiddenApps = pruned; saveCfg(); }
+    if (window.OMARCHY_PLATFORM !== "tizen" && pruned.length !== cfg.hiddenApps.length) { cfg.hiddenApps = pruned; saveCfg(); }
     var items = DEFAULT_APPS.filter(function (a) { return cfg.hiddenApps.indexOf(a.id) >= 0; }).map(function (a) {
       return { label: a.name, right: tr("hidden_show"), act: function () {
         cfg.hiddenApps = cfg.hiddenApps.filter(function (id) { return id !== a.id; });
@@ -1430,7 +1534,7 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
     else { closeModal(); openYoutubeApp(v.id); }
   }
 
-  function openCinemarchyModal(tabIdx) {
+  function openCinemarchyModal(tabIdx, focusIdx) {
     pushLightsTheme(currentThemeObj(), true);
     var tab = tabIdx || 0;
     var tabs = ["[1] @dhh37", "[2] Streaming", "[3] Live TV", "[4] Player & tools"];
@@ -1456,7 +1560,8 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
       });
     } else if (tab === 2) {
       TV_INPUTS.forEach(function (inp) {
-        items.push({ label: escHtml(inp.name + " · " + inp.sub), right: "watch ›", act: function () { closeModal(); launchApp(inp); } });
+        var label = inp.tizenInput && inp.sub.indexOf(inp.name) === 0 ? inp.sub : inp.name + " · " + inp.sub;   // Tizen sub: "HDMI 1 · Connected"
+        items.push({ label: escHtml(label), right: "watch ›", act: function () { closeModal(); launchApp(inp); } });
       });
     } else {
       items.push({ label: "Play @dhh37 inside Cinemarchy (official YouTube embed)", right: cfg.embedPlayer ? "on" : "off", act: function () {
@@ -1469,7 +1574,7 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
       } });
     }
     state.cineTab = tab;
-    openModal("CINEMARCHY · " + tabs[tab], "", items);
+    openModal("CINEMARCHY · " + tabs[tab], "", items, false, null, { focusIdx: focusIdx });
     state.modalDigit = function (n) { if (n >= 1 && n <= 4) openCinemarchyModal(n - 1); };
     var subEl = document.getElementById("modal-sub");
     if (subEl && DATA.cinemarchyLogo) {
@@ -1632,11 +1737,24 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
 
   function launchApp(app) {
     if (!app) return;
+    if (app.tizenInput) {   // Samsung source switch through the Tizen adapter, see tizen-shim.js
+      var fail = function (err) { showToast("Could not switch to " + app.name + ": " + ((err && (err.message || err.name)) || "input switch failed")); };
+      if (typeof window.OMARCHY_TIZEN_SWITCH_INPUT !== "function") { showToast(app.name + " is not available on this TV"); return; }
+      try { window.OMARCHY_TIZEN_SWITCH_INPUT(app.id, function () {}, fail); } catch (e) { fail(e); }
+      return;
+    }
     try {
       if (app.appId && lunaLaunch(app.appId)) return;
-      var tzId = app.tizenId || (window.OMARCHY_TIZEN_IDS || {})[app.id];
-      if (window.tizen && window.tizen.application && tzId) {   // Samsung Tizen build (tizen/), see tizen-shim.js
-        window.tizen.application.launch(tzId);
+      if (window.tizen && window.tizen.application) {   // Samsung Tizen build (tizen/), see tizen-shim.js
+        var tzId = app.tizenId || (window.OMARCHY_TIZEN_IDS || {})[app.id];
+        if (!tzId) { showToast(app.name + " is not available on this TV"); return; }
+        try {
+          window.tizen.application.launch(tzId, null, function (err) {
+            showToast("Could not open " + app.name + ": " + ((err && (err.message || err.name)) || "launch failed"));
+          });
+        } catch (e) {
+          showToast("Could not open " + app.name + ": " + ((e && e.message) || "launch failed"));
+        }
         return;
       }
       if (window.PalmServiceBridge) {
@@ -1972,7 +2090,7 @@ var CINEMARCHY_VERSION = "0.1.0-alpha";
     }
 
     if (state.ws === 1 && state.zone === "ws2") {
-      if (k === "ArrowRight") { state.ws2Idx = Math.min(TV_INPUTS.length - 1, state.ws2Idx + 1); renderAll(); e.preventDefault(); return; }
+      if (k === "ArrowRight") { state.ws2Idx = Math.max(0, Math.min(TV_INPUTS.length - 1, state.ws2Idx + 1)); renderAll(); e.preventDefault(); return; }
       if (k === "ArrowLeft") { state.ws2Idx = Math.max(0, state.ws2Idx - 1); renderAll(); e.preventDefault(); return; }
       // 4 tiles per row (#ws2-grid): ▼ goes to the row below, ▲ to the row above or the bar
       if (k === "ArrowDown") { if (state.ws2Idx + 4 < TV_INPUTS.length) { state.ws2Idx += 4; renderAll(); } e.preventDefault(); return; }
